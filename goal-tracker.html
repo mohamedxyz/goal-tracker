@@ -1,4 +1,19 @@
 <!doctype html>
+<!--
+  Goal Tracker — single-file edition
+  Versioning: MAJOR.MINOR.PATCH (semver.org). Bump APP_VERSION below on every change.
+    PATCH = bug fix · MINOR = new feature · MAJOR = breaks old backups or data
+
+  Changelog
+  0.7.0  Hide habits already done today; completion sounds with on/off switch; version shown in Data tab
+  0.6.0  Habit history calendar: toggle any past day, ★ marks the creation day, best streak
+  0.5.1  Fix: empty (0 KB) exports on Android; copy/paste backup as text; clearer import errors
+  0.5.0  (Installable PWA edition only, no single-file changes)
+  0.4.0  Edit tasks, goals and habits after creation
+  0.3.0  Dashboard: activity heatmap, tasks chart, goal rings, habit consistency
+  0.2.0  Light/dark/auto theme, warmer palette
+  0.1.0  First build: tasks, weekly/monthly/annual/5-year goals, habits, IndexedDB storage, JSON export/import
+-->
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -147,6 +162,10 @@ dialog#editDlg::backdrop{background:rgba(30,18,10,.45)}
 .cd.on .star{color:var(--on-ok)}
 .star-inline{font-style:normal;color:var(--warn)}
 .cal-foot{margin-top:10px;justify-content:space-between}
+.habits-bar{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 0 12px}
+.habits-bar h2{margin:0}
+.habits-bar .meta{margin:0}
+.allclear{color:var(--ok);font-weight:600;text-align:center;padding:18px;border:1px dashed var(--line);border-radius:12px}
 #tip{position:fixed;z-index:50;pointer-events:none;background:var(--text);color:var(--bg);font-size:12px;line-height:1.35;padding:6px 9px;border-radius:8px;white-space:nowrap;opacity:0;transition:opacity .1s;transform:translate(-50%,calc(-100% - 10px))}
 #tip.show{opacity:1}
 </style>
@@ -399,7 +418,7 @@ function viewDash(){
     <h2>Due today</h2>${due.length?`<ul class="list">${due.map(taskItem).join('')}</ul>`:`<div class="empty">Nothing due. Add tasks in the Tasks tab.</div>`}
     <h2>This week's goals</h2>${wk.length?`<div class="goals">${wk.map(goalCard).join('')}</div>`:`<div class="empty">No weekly goals for ${currentPeriod('weekly')}.</div>`}
   </div><div>
-    <h2>Habits</h2>${S.habits.length?`<div class="goals">${S.habits.map(h=>habitCard(h,false)).join('')}</div>`:`<div class="empty">No habits yet.</div>`}
+    <h2>Habits</h2>${habitList(false)}
   </div></div>`;
 }
 function viewTasks(){
@@ -440,20 +459,36 @@ function viewHabits(){
     <input type="text" name="name" placeholder="New habit (e.g. Code 1 hour)…" required>
     <select name="target" title="Target days per week">${[7,6,5,4,3,2,1].map(n=>`<option value="${n}">${n}×/week</option>`).join('')}</select>
     <button class="btn">Add habit</button></form>
-  ${S.habits.length?`<div class="goals">${S.habits.map(h=>habitCard(h,true)).join('')}</div>`:`<div class="empty">No habits yet. Tap a day to check it off.</div>`}`;
+  ${habitList(true)}`;
+}
+// Shared by the dashboard and Habits tab; honours the "hide done today" switch.
+function habitList(full){
+  if(!S.habits.length)return `<div class="empty">No habits yet.${full?' Tap a day to check it off.':''}</div>`;
+  const today=TODAY();const doneToday=S.habits.filter(h=>logged(h.id,today)).length;
+  const shown=S.hideDone?S.habits.filter(h=>!logged(h.id,today)):S.habits;
+  const bar=`<div class="filters"><button class="chip ${S.hideDone?'on':''}" data-action="toggle-hide-done" aria-pressed="${S.hideDone}">${S.hideDone?'✓ Hiding done today':'Hide done today'}</button>
+    <span class="meta" style="align-self:center">${doneToday}/${S.habits.length} done${S.hideDone&&doneToday?` · ${doneToday} hidden`:''}</span></div>`;
+  const list=shown.length?`<div class="goals">${shown.map(h=>habitCard(h,full)).join('')}</div>`:`<div class="allclear">All habits done for today 🎉</div>`;
+  return bar+list;
 }
 function viewData(){
   return `<div class="card settings">
     <div class="title">Your data</div>
     <div class="meta">${S.tasks.length} tasks · ${S.goals.length} goals · ${S.habits.length} habits · ${S.logs.size} check-ins</div>
     <p class="meta">Stored in this browser's IndexedDB. Export regularly to back up or move to another device.</p>
+    <p class="meta"><span>Version <b>${APP_VERSION}</b></span></p>
     <div class="row">
       <button class="ghost" data-action="export">Export JSON</button>
       <button class="ghost" data-action="import">Import JSON</button>
       <button class="ghost" data-action="backup-copy">Copy backup text</button>
       <button class="ghost" data-action="backup-paste">Paste backup text</button>
       <button class="ghost" data-action="wipe" style="color:var(--bad)">Erase everything</button>
-    </div></div>`;
+    </div></div>
+  <div class="card settings" style="margin-top:12px">
+    <div class="title">Sounds</div>
+    <div class="meta">A short chime when you complete a task or check off a habit.</div>
+    <div class="row"><button class="ghost" data-action="toggle-sound" aria-pressed="${Sound.on}">${Sound.on?'🔊 Sounds on':'🔇 Sounds off'}</button></div>
+  </div>`;
 }
 
 function render(){
@@ -510,7 +545,7 @@ dlg.addEventListener('submit',async e=>{
   const v=Object.fromEntries(new FormData(f));const id=f.dataset.id;const kind=f.dataset.edit;
   if(kind==='task'){const t=S.tasks.find(x=>x.id===id);const done=!!v.done;
     Object.assign(t,{title:v.title.trim(),due:v.due||null,priority:v.priority,goalId:v.goalId||null});
-    if(done!==t.done){t.done=done;t.doneAt=done?Date.now():null}
+    if(done!==t.done){t.done=done;t.doneAt=done?Date.now():null;if(done)Sound.play('task')}
     await DB.put('tasks',t)}
   if(kind==='goal'){const g=goalById(id);const old=g.horizon;
     Object.assign(g,{title:v.title.trim(),horizon:v.horizon,period:v.period.trim(),parentId:v.parentId||null,notes:(v.notes||'').trim(),done:!!v.done});
@@ -550,11 +585,38 @@ function drawHabit(){
 }
 document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('[role=button][data-action]')){e.preventDefault();e.target.click()}});
 
+/* ---------- Version ---------- */
+const APP_VERSION='0.7.0';
+
+/* ---------- Completion sounds (synthesised, no audio files) ---------- */
+const Sound={
+  ctx:null,on:true,
+  load(){try{this.on=localStorage.getItem('gt-sound')!=='off'}catch(e){}},
+  set(v){this.on=v;try{localStorage.setItem('gt-sound',v?'on':'off')}catch(e){}},
+  play(kind){
+    if(!this.on)return;
+    try{
+      const C=this.ctx||(this.ctx=new (window.AudioContext||window.webkitAudioContext)());
+      if(C.state==='suspended')C.resume();
+      // task: bright rising C–E–G arpeggio · habit: softer two-note "pop"
+      const notes=kind==='task'?[[1046.5,0],[1318.5,.07],[1568,.14]]:[[784,0],[1174.7,.08]];
+      const t0=C.currentTime+.01;
+      for(const[f,dt]of notes){
+        const o=C.createOscillator(),g=C.createGain();o.type='triangle';o.frequency.value=f;
+        g.gain.setValueAtTime(.0001,t0+dt);g.gain.exponentialRampToValueAtTime(.16,t0+dt+.012);g.gain.exponentialRampToValueAtTime(.0001,t0+dt+.38);
+        o.connect(g).connect(C.destination);o.start(t0+dt);o.stop(t0+dt+.42);
+      }
+    }catch(e){}
+  }
+};
+Sound.load();
+try{S.hideDone=localStorage.getItem('gt-hide-done')==='1'}catch(e){S.hideDone=false}
+
 /* ---------- Actions ---------- */
 async function toggleLog(hid,date){
   const id=hid+'|'+date;
   if(S.logs.has(id)){S.logs.delete(id);await DB.del('logs',id)}
-  else{S.logs.add(id);await DB.put('logs',{id,habitId:hid,date})}
+  else{S.logs.add(id);await DB.put('logs',{id,habitId:hid,date});Sound.play('habit')}
 }
 const actions={
   'open-habit'(el){openHabit(el.dataset.id);return false},
@@ -564,7 +626,9 @@ const actions={
   'edit-task'(el){openEdit('task',el.dataset.id);return false},
   'edit-goal'(el){openEdit('goal',el.dataset.id);return false},
   'edit-habit'(el){openEdit('habit',el.dataset.id);return false},
-  async 'toggle-task'(el){const t=S.tasks.find(x=>x.id===el.dataset.id);t.done=!t.done;t.doneAt=t.done?Date.now():null;await DB.put('tasks',t)},
+  async 'toggle-task'(el){const t=S.tasks.find(x=>x.id===el.dataset.id);t.done=!t.done;t.doneAt=t.done?Date.now():null;if(t.done)Sound.play('task');await DB.put('tasks',t)},
+  'toggle-hide-done'(){S.hideDone=!S.hideDone;try{localStorage.setItem('gt-hide-done',S.hideDone?'1':'0')}catch(e){}},
+  'toggle-sound'(){Sound.set(!Sound.on);if(Sound.on)Sound.play('task')},
   async 'del-task'(el){S.tasks=S.tasks.filter(x=>x.id!==el.dataset.id);await DB.del('tasks',el.dataset.id)},
   'task-filter'(el){S.taskFilter=el.dataset.v},
   horizon(el){S.horizon=el.dataset.v},
