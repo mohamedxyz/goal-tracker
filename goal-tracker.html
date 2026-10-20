@@ -5,6 +5,7 @@
     PATCH = bug fix · MINOR = new feature · MAJOR = breaks old backups or data
 
   Changelog
+  0.22.0 Undo after deleting a task, goal, habit or the completed-archive clean-up: a 6-second Undo button restores it with its links and history
   0.21.0 Focus timer (⏱ in the header): pick a number goal measured in hours or minutes, start, stop: the time is added to the goal; survives reload
   0.20.0 Search (🔍 in the header): finds tasks (including archived and checklist items), goals and habits as you type; tap a result to open it
   0.19.0 Checklists inside tasks: one item per line, tick items off from the task row, "2/4" progress chip; repeats start with a fresh checklist
@@ -230,6 +231,7 @@ form[data-kind=number] .f-num,form[data-kind=rollup] .f-roll{display:flex;flex-w
 .rv .rv-actions .ok{color:var(--ok)} .rv .rv-actions .bad{color:var(--bad)}
 .rv .rv-note{width:100%;margin-top:8px;font-size:13px}
 #toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom));transform:translate(-50%,20px);opacity:0;pointer-events:none;z-index:60;background:var(--text);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:14px;box-shadow:0 10px 30px rgba(0,0,0,.25);transition:.2s;max-width:calc(100vw - 32px)}
+#toast.act{pointer-events:auto}#toast button{margin-left:10px;background:none;border:1px solid currentColor;color:inherit;border-radius:8px;padding:2px 10px;font:inherit;font-weight:700;cursor:pointer}
 #toast.show{opacity:1;transform:translate(-50%,0)}
 /* ---------- Compact habits ---------- */
 .card.hcompact{padding:8px 12px}
@@ -920,7 +922,7 @@ function drawHabit(){
 document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('[role=button][data-action]')){e.preventDefault();e.target.click()}});
 
 /* ---------- Version ---------- */
-const APP_VERSION='0.21.0';
+const APP_VERSION='0.22.0';
 
 /* ---------- Completion sounds (synthesised, no audio files) ---------- */
 const Sound={
@@ -1025,7 +1027,10 @@ function drawReview(){
 // Show the right extra fields (target/unit, sub-goal count) for the chosen goal kind.
 document.addEventListener('change',e=>{if(e.target.name==='kind'&&e.target.form)e.target.form.dataset.kind=e.target.value});
 let toastTimer;
-function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),2800)}
+function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.remove('act');t.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),2800)}
+let undoFn=null;
+function toastUndo(msg,fn){const t=$('#toast');undoFn=fn;t.innerHTML=`${esc(msg)} <button type="button" data-undo>Undo</button>`;t.classList.add('show','act');clearTimeout(toastTimer);toastTimer=setTimeout(()=>{t.classList.remove('show','act');undoFn=null},6000)}
+$('#toast').addEventListener('click',async e=>{if(!e.target.closest('[data-undo]')||!undoFn)return;const f=undoFn;undoFn=null;$('#toast').classList.remove('show','act');await f();Sound.play('undo');render()});
 
 /* ---------- Checklists ---------- */
 function parseItems(txt,old=[]){
@@ -1075,6 +1080,7 @@ const actions={
     const gone=S.tasks.filter(t=>t.archived&&t.done);
     if(!gone.length||!confirm(`Permanently delete ${gone.length} completed archived task${gone.length>1?'s':''}?\n\nThis can't be undone. Not-completed archived tasks are kept.`))return false;
     for(const t of gone)await DB.del('tasks',t.id);S.tasks=S.tasks.filter(t=>!gone.includes(t));
+    toastUndo(`Deleted ${gone.length} archived task${gone.length>1?'s':''}.`,async()=>{for(const t of gone){S.tasks.push(t);await DB.put('tasks',t)}});
   },
   'open-habit'(el){openHabit(el.dataset.id);return false},
   async 'cal-toggle'(el){await toggleLog(cal.id,el.dataset.date);drawHabit()},
@@ -1098,6 +1104,7 @@ const actions={
     const t=S.tasks.find(x=>x.id===el.dataset.id);if(!t)return false;
     if(!confirm(`Delete "${t.title}"?\n\nThis can't be undone.${t.archived?'':' Tip: archive it instead to keep its history.'}`))return false;
     S.tasks=S.tasks.filter(x=>x.id!==t.id);await DB.del('tasks',t.id);
+    toastUndo('Task deleted.',async()=>{S.tasks.push(t);await DB.put('tasks',t)});
   },
   'task-filter'(el){S.taskFilter=el.dataset.v},
   horizon(el){S.horizon=el.dataset.v},
@@ -1118,15 +1125,21 @@ const actions={
   async 'goal-progress'(el){const g=goalById(el.dataset.id);g.progress=+el.value;await DB.put('goals',g)},
   async 'del-goal'(el){
     const id=el.dataset.id;if(!confirm('Delete this goal? Linked tasks and sub-goals are kept but unlinked.'))return false;
-    for(const t of S.tasks.filter(t=>t.goalId===id)){t.goalId=null;await DB.put('tasks',t)}
-    for(const c of S.goals.filter(c=>c.parentId===id)){c.parentId=null;await DB.put('goals',c)}
+    const gone=goalById(id);const lt=S.tasks.filter(t=>t.goalId===id),lc=S.goals.filter(c=>c.parentId===id);
+    for(const t of lt){t.goalId=null;await DB.put('tasks',t)}
+    for(const c of lc){c.parentId=null;await DB.put('goals',c)}
     S.goals=S.goals.filter(g=>g.id!==id);await DB.del('goals',id);
+    toastUndo('Goal deleted.',async()=>{S.goals.push(gone);await DB.put('goals',gone);
+      for(const t of lt){t.goalId=id;await DB.put('tasks',t)}for(const c of lc){c.parentId=id;await DB.put('goals',c)}});
   },
   async 'toggle-log'(el){await toggleLog(el.dataset.id,el.dataset.date)},
   async 'del-habit'(el){
     const id=el.dataset.id;if(!confirm('Delete this habit and its history?'))return false;
+    const gone=S.habits.find(h=>h.id===id);const keys=[...S.logs].filter(k=>k.startsWith(id+'|'));
     S.habits=S.habits.filter(h=>h.id!==id);await DB.del('habits',id);
-    for(const k of [...S.logs].filter(k=>k.startsWith(id+'|'))){S.logs.delete(k);await DB.del('logs',k)}
+    for(const k of keys){S.logs.delete(k);await DB.del('logs',k)}
+    toastUndo('Habit deleted.',async()=>{S.habits.push(gone);await DB.put('habits',gone);
+      for(const k of keys){const i=k.lastIndexOf('|');S.logs.add(k);await DB.put('logs',{id:k,habitId:k.slice(0,i),date:k.slice(i+1)})}});
   },
   export(){
     const json=JSON.stringify(backupData());const name=`goal-tracker-${TODAY()}.json`;
