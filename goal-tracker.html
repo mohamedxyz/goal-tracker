@@ -5,6 +5,7 @@
     PATCH = bug fix · MINOR = new feature · MAJOR = breaks old backups or data
 
   Changelog
+  0.9.0  Completed tasks stay in the Tasks tab (dimmed, at the bottom); task notes; confirm before deleting; archive with full task details and "delete completed"
   0.8.0  "Defeat" sound when unchecking; dashboard shows only today's tasks and habits (one-tap check for today)
   0.7.0  Hide habits already done today; completion sounds with on/off switch; version shown in Data tab
   0.6.0  Habit history calendar: toggle any past day, ★ marks the creation day, best streak
@@ -61,6 +62,21 @@ ul.list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;ga
 .title{font-weight:550;overflow-wrap:anywhere}
 .meta{color:var(--muted);font-size:12.5px;display:flex;flex-wrap:wrap;gap:4px 10px;margin-top:2px}
 .done .title{text-decoration:line-through;color:var(--muted)}
+.item.dim{opacity:.55;transition:opacity .15s}
+.item.dim:hover,.item.dim:focus-within{opacity:.85}
+.tnotes{color:var(--muted);font-size:13px;margin-top:3px;white-space:pre-wrap;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.divider{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:12.5px;font-weight:600;margin:18px 0 8px}
+.divider::after{content:'';flex:1;height:1px;background:var(--line)}
+.arch-head{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.arch .kvs{display:grid;grid-template-columns:1fr 1fr;gap:6px 16px;margin-top:10px;font-size:13px}
+@media (max-width:520px){.arch .kvs{grid-template-columns:1fr}}
+.kv{display:flex;justify-content:space-between;gap:10px;border-bottom:1px dashed var(--line);padding-bottom:4px}
+.kv span:first-child{color:var(--muted)}
+.kv span:last-child{text-align:right;overflow-wrap:anywhere}
+.okc{color:var(--ok);font-weight:600}
+.arch.notdone .title{color:var(--muted)}
+button.danger{color:var(--bad)}
+.bar-row{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px}
 .tag{padding:1px 7px;border-radius:999px;background:var(--soft);color:var(--accent);font-size:11.5px}
 .p-high{color:var(--bad)} .p-med{color:var(--warn)} .overdue{color:var(--bad);font-weight:600}
 .seg{display:flex;gap:4px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:4px;margin-bottom:14px;overflow-x:auto}
@@ -281,19 +297,26 @@ function weekCount(h){
 function rate30(h){let n=0;for(let i=0;i<30;i++)if(logged(h.id,ds(addDays(new Date(),-i))))n++;return Math.round(n/30*100)}
 
 /* ---------- Components ---------- */
+const ARCHIVE_ICON='<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="5" rx="1"/><path d="M5 9v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9M10 13h4"/></svg>';
+function fmtWhen(ts){if(!ts)return'';const d=new Date(ts);const y=d.getFullYear()!==new Date().getFullYear();
+  return d.toLocaleString(undefined,{month:'short',day:'numeric',...(y?{year:'numeric'}:{}),hour:'numeric',minute:'2-digit'})}
+function fmtDay(s){return s?new Date(s+'T00:00').toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric',year:'numeric'}):'—'}
 function taskItem(t){
   const g=t.goalId&&goalById(t.goalId);const today=TODAY();
   const overdue=!t.done&&t.due&&t.due<today;
-  return `<li class="item ${t.done?'done':''}">
+  return `<li class="item ${t.done?'done dim':''}">
     <input type="checkbox" data-action="toggle-task" data-id="${t.id}" ${t.done?'checked':''} aria-label="Complete">
     <div class="grow"><div class="title">${esc(t.title)}</div>
+      ${t.notes?`<div class="tnotes">${esc(t.notes)}</div>`:''}
       <div class="meta">
+        ${t.done&&t.doneAt?`<span>Done ${fmtWhen(t.doneAt)}</span>`:''}
         ${t.due?`<span class="${overdue?'overdue':''}">${overdue?'Overdue · ':''}${t.due===today?'Today':fmtDate(t.due)}</span>`:''}
         ${t.priority&&t.priority!=='low'?`<span class="p-${t.priority}">${t.priority==='high'?'High':'Medium'} priority</span>`:''}
         ${g?`<span class="tag">${esc(g.title)}</span>`:''}
       </div></div>
-    <button class="icon" data-action="edit-task" data-id="${t.id}" title="Edit">✎</button>
-    <button class="icon" data-action="del-task" data-id="${t.id}" title="Delete">✕</button></li>`;
+    <button class="icon" data-action="edit-task" data-id="${t.id}" title="Edit" aria-label="Edit">✎</button>
+    <button class="icon" data-action="archive-task" data-id="${t.id}" title="Archive" aria-label="Archive">${ARCHIVE_ICON}</button>
+    <button class="icon" data-action="del-task" data-id="${t.id}" title="Delete" aria-label="Delete">✕</button></li>`;
 }
 function dayButtons(h,n=7){
   const today=TODAY();let out='';
@@ -403,8 +426,8 @@ function consistencyCard(){
 /* ---------- Views ---------- */
 function viewDash(){
   const today=TODAY();
-  const open=S.tasks.filter(t=>!t.done);
-  const todays=S.tasks.filter(t=>t.due===today).sort((a,b)=>(a.done-b.done)||(({high:0,med:1,low:2}[a.priority]??2)-({high:0,med:1,low:2}[b.priority]??2)));
+  const open=S.tasks.filter(t=>!t.done&&!t.archived);
+  const todays=S.tasks.filter(t=>!t.archived&&t.due===today).sort((a,b)=>(a.done-b.done)||(({high:0,med:1,low:2}[a.priority]??2)-({high:0,med:1,low:2}[b.priority]??2)));
   const todaysDone=todays.filter(t=>t.done).length;
   const overdue=open.filter(t=>t.due&&t.due<today).length;
   const hd=S.habits.filter(h=>logged(h.id,today)).length;
@@ -429,19 +452,29 @@ function viewDash(){
   </div></div>`;
 }
 function viewTasks(){
-  const today=TODAY();const f=S.taskFilter;
-  let list=S.tasks.filter(t=>f==='done'?t.done:f==='all'?true:!t.done);
-  if(f==='today')list=list.filter(t=>t.due&&t.due<=today);
-  list.sort((a,b)=>(a.done-b.done)||((a.due||'9999').localeCompare(b.due||'9999'))||(({high:0,med:1,low:2}[a.priority]??2)-({high:0,med:1,low:2}[b.priority]??2)));
+  const today=TODAY();const f=['all','today','overdue','done'].includes(S.taskFilter)?S.taskFilter:'all';
+  const pr=t=>({high:0,med:1,low:2}[t.priority]??2);
+  const live=S.tasks.filter(t=>!t.archived);
+  let list=live;
+  if(f==='today')list=list.filter(t=>t.due===today);
+  if(f==='overdue')list=list.filter(t=>!t.done&&t.due&&t.due<today);
+  if(f==='done')list=list.filter(t=>t.done);
+  const open=list.filter(t=>!t.done).sort((a,b)=>((a.due||'9999').localeCompare(b.due||'9999'))||pr(a)-pr(b));
+  const done=list.filter(t=>t.done).sort((a,b)=>(b.doneAt||0)-(a.doneAt||0));
+  const nOver=live.filter(t=>!t.done&&t.due&&t.due<today).length;
+  const nArch=S.tasks.length-live.length;
   const chip=(k,l)=>`<button class="chip ${f===k?'on':''}" data-action="task-filter" data-v="${k}">${l}</button>`;
   return `<form class="add" data-form="task">
     <input type="text" name="title" placeholder="New task…" required>
     <input type="date" name="due" value="${today}">
     <select name="priority"><option value="low">Low</option><option value="med">Medium</option><option value="high">High</option></select>
     <select name="goalId">${goalOptions('')}</select>
+    <textarea name="notes" placeholder="Notes (optional)" style="min-height:40px"></textarea>
     <button class="btn">Add</button></form>
-  <div class="filters">${chip('open','Open')}${chip('today','Due today')}${chip('done','Done')}${chip('all','All')}</div>
-  ${list.length?`<ul class="list">${list.map(taskItem).join('')}</ul>`:`<div class="empty">No tasks here.</div>`}`;
+  <div class="filters">${chip('all','All')}${chip('today','Due today')}${chip('overdue','Overdue'+(nOver?' · '+nOver:''))}${chip('done','Done')}</div>
+  ${open.length?`<ul class="list">${open.map(taskItem).join('')}</ul>`:(done.length?'':`<div class="empty">No tasks here.</div>`)}
+  ${done.length?`${f==='done'?'':`<div class="divider">Completed · ${done.length}</div>`}<ul class="list">${done.map(taskItem).join('')}</ul>`:''}
+  ${nArch?`<button class="chip" style="margin-top:14px" data-action="open-archive">${nArch} archived task${nArch>1?'s':''} →</button>`:''}`;
 }
 function viewGoals(){
   const h=S.horizon;const cur=currentPeriod(h);const ph=PARENT[h];
@@ -487,6 +520,26 @@ function habitList(full){
   const list=shown.length?(full?`<div class="goals">${shown.map(h=>habitCard(h,true)).join('')}</div>`:`<ul class="list">${shown.map(habitToday).join('')}</ul>`):`<div class="allclear">All habits done for today 🎉</div>`;
   return bar+list;
 }
+function viewArchive(){
+  const list=S.tasks.filter(t=>t.archived).sort((a,b)=>(b.archivedAt||0)-(a.archivedAt||0));
+  const nDone=list.filter(t=>t.done).length;
+  return `<div class="arch-head"><button class="ghost" data-action="back-data">← Data</button><h2 style="margin:0">Archived tasks</h2></div>
+    <div class="bar-row"><span class="meta" style="margin:0">${list.length} archived · ${nDone} completed</span>
+      ${nDone?`<button class="ghost danger" data-action="purge-archived">Delete ${nDone} completed</button>`:''}</div>
+    ${list.length?`<div class="goals">${list.map(archCard).join('')}</div>`:`<div class="empty">Nothing archived yet. Use the archive button on a task to move it here.</div>`}`;
+}
+function archCard(t){
+  const g=t.goalId&&goalById(t.goalId);
+  const kv=(k,v)=>`<div class="kv"><span>${k}</span><span>${v}</span></div>`;
+  return `<div class="card arch ${t.done?'':'notdone'}">
+    <div style="display:flex;gap:8px;align-items:flex-start"><div class="grow"><div class="title">${esc(t.title)}</div>
+      <div class="meta">${t.done?`<span class="okc">✓ Completed${t.doneAt?' '+fmtWhen(t.doneAt):''}</span>`:'<span>Not completed</span>'}</div></div>
+      <button class="icon" data-action="unarchive" data-id="${t.id}" title="Restore to tasks" aria-label="Restore">↩</button>
+      <button class="icon" data-action="del-task" data-id="${t.id}" title="Delete" aria-label="Delete">✕</button></div>
+    ${t.notes?`<div class="notes">${esc(t.notes)}</div>`:''}
+    <div class="kvs">${kv('Due',fmtDay(t.due))}${kv('Priority',{high:'High',med:'Medium'}[t.priority]||'Low')}${kv('Goal',g?esc(g.title):'—')}
+      ${kv('Created',fmtWhen(t.created)||'—')}${kv('Completed',t.done?(fmtWhen(t.doneAt)||'Yes'):'—')}${kv('Archived',fmtWhen(t.archivedAt)||'—')}</div></div>`;
+}
 function viewData(){
   return `<div class="card settings">
     <div class="title">Your data</div>
@@ -501,6 +554,11 @@ function viewData(){
       <button class="ghost" data-action="wipe" style="color:var(--bad)">Erase everything</button>
     </div></div>
   <div class="card settings" style="margin-top:12px">
+    <div class="title">Archived tasks</div>
+    <div class="meta">${S.tasks.filter(t=>t.archived).length} archived · ${S.tasks.filter(t=>t.archived&&t.done).length} completed</div>
+    <div class="row"><button class="ghost" data-action="open-archive">View archived tasks →</button></div>
+  </div>
+  <div class="card settings" style="margin-top:12px">
     <div class="title">Sounds</div>
     <div class="meta">A short chime when you complete a task or check off a habit.</div>
     <div class="row"><button class="ghost" data-action="toggle-sound" aria-pressed="${Sound.on}">${Sound.on?'🔊 Sounds on':'🔇 Sounds off'}</button></div>
@@ -508,9 +566,10 @@ function viewData(){
 }
 
 function render(){
-  const v={dash:viewDash,tasks:viewTasks,goals:viewGoals,habits:viewHabits,data:viewData}[S.view];
+  const v={dash:viewDash,tasks:viewTasks,goals:viewGoals,habits:viewHabits,data:viewData,archive:viewArchive}[S.view]||viewDash;
   $('#app').innerHTML=(S.persistent?'':`<div class="banner">This browser blocked storage — data will be lost on reload. Use Export to save it.</div>`)+v();
-  document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('on',b.dataset.view===S.view));
+  const nv=S.view==='archive'?'data':S.view;
+  document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('on',b.dataset.view===nv));
 }
 
 /* ---------- Edit dialog ---------- */
@@ -532,6 +591,7 @@ function openEdit(kind,id){
       <div class="two"><div><label>Due date</label><input type="date" name="due" value="${t.due||''}"></div>
       <div><label>Priority</label><select name="priority">${[['low','Low'],['med','Medium'],['high','High']].map(([v,l])=>`<option value="${v}" ${t.priority===v?'selected':''}>${l}</option>`).join('')}</select></div></div>
       <label>Linked goal</label><select name="goalId">${goals}</select>
+      <label>Notes</label><textarea name="notes" placeholder="Details, links, anything…">${esc(t.notes)}</textarea>
       <label class="check"><input type="checkbox" name="done" ${t.done?'checked':''}> Completed</label>`;
   }
   if(kind==='goal'){const g=goalById(id);title='Edit goal';
@@ -560,7 +620,7 @@ dlg.addEventListener('submit',async e=>{
   if(e.submitter&&e.submitter.value==='cancel'){dlg.close();return}
   const v=Object.fromEntries(new FormData(f));const id=f.dataset.id;const kind=f.dataset.edit;
   if(kind==='task'){const t=S.tasks.find(x=>x.id===id);const done=!!v.done;
-    Object.assign(t,{title:v.title.trim(),due:v.due||null,priority:v.priority,goalId:v.goalId||null});
+    Object.assign(t,{title:v.title.trim(),due:v.due||null,priority:v.priority,goalId:v.goalId||null,notes:(v.notes||'').trim()});
     if(done!==t.done){t.done=done;t.doneAt=done?Date.now():null;Sound.play(done?'task':'undo')}
     await DB.put('tasks',t)}
   if(kind==='goal'){const g=goalById(id);const old=g.horizon;
@@ -602,7 +662,7 @@ function drawHabit(){
 document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('[role=button][data-action]')){e.preventDefault();e.target.click()}});
 
 /* ---------- Version ---------- */
-const APP_VERSION='0.8.0';
+const APP_VERSION='0.9.0';
 
 /* ---------- Completion sounds (synthesised, no audio files) ---------- */
 const Sound={
@@ -640,7 +700,16 @@ async function toggleLog(hid,date){
   else{S.logs.add(id);await DB.put('logs',{id,habitId:hid,date});Sound.play('habit')}
 }
 const actions={
-  'see-overdue'(){S.taskFilter='open';S.view='tasks';scrollTo(0,0)},
+  'see-overdue'(){S.taskFilter='overdue';S.view='tasks';scrollTo(0,0)},
+  async 'archive-task'(el){const t=S.tasks.find(x=>x.id===el.dataset.id);t.archived=true;t.archivedAt=Date.now();await DB.put('tasks',t)},
+  async 'unarchive'(el){const t=S.tasks.find(x=>x.id===el.dataset.id);t.archived=false;t.archivedAt=null;await DB.put('tasks',t)},
+  'open-archive'(){S.view='archive';scrollTo(0,0)},
+  'back-data'(){S.view='data';scrollTo(0,0)},
+  async 'purge-archived'(){
+    const gone=S.tasks.filter(t=>t.archived&&t.done);
+    if(!gone.length||!confirm(`Permanently delete ${gone.length} completed archived task${gone.length>1?'s':''}?\n\nThis can't be undone. Not-completed archived tasks are kept.`))return false;
+    for(const t of gone)await DB.del('tasks',t.id);S.tasks=S.tasks.filter(t=>!gone.includes(t));
+  },
   'open-habit'(el){openHabit(el.dataset.id);return false},
   async 'cal-toggle'(el){await toggleLog(cal.id,el.dataset.date);drawHabit()},
   'cal-month'(el){const d=new Date(cal.y,cal.m+(+el.dataset.d),1);cal.y=d.getFullYear();cal.m=d.getMonth();drawHabit();return false},
@@ -651,7 +720,11 @@ const actions={
   async 'toggle-task'(el){const t=S.tasks.find(x=>x.id===el.dataset.id);t.done=!t.done;t.doneAt=t.done?Date.now():null;Sound.play(t.done?'task':'undo');await DB.put('tasks',t)},
   'toggle-hide-done'(){S.hideDone=!S.hideDone;try{localStorage.setItem('gt-hide-done',S.hideDone?'1':'0')}catch(e){}},
   'toggle-sound'(){Sound.set(!Sound.on);if(Sound.on)Sound.play('task')},
-  async 'del-task'(el){S.tasks=S.tasks.filter(x=>x.id!==el.dataset.id);await DB.del('tasks',el.dataset.id)},
+  async 'del-task'(el){
+    const t=S.tasks.find(x=>x.id===el.dataset.id);if(!t)return false;
+    if(!confirm(`Delete "${t.title}"?\n\nThis can't be undone.${t.archived?'':' Tip: archive it instead to keep its history.'}`))return false;
+    S.tasks=S.tasks.filter(x=>x.id!==t.id);await DB.del('tasks',t.id);
+  },
   'task-filter'(el){S.taskFilter=el.dataset.v},
   horizon(el){S.horizon=el.dataset.v},
   'goal-scope'(el){S.goalScope=el.dataset.v},
@@ -696,7 +769,7 @@ document.addEventListener('change',async e=>{
 document.addEventListener('submit',async e=>{
   const f=e.target.closest('form[data-form]');if(!f)return;e.preventDefault();
   const v=Object.fromEntries(new FormData(f));const kind=f.dataset.form;
-  if(kind==='task'){const t={id:uid(),title:v.title.trim(),due:v.due||null,priority:v.priority,goalId:v.goalId||null,done:false,created:Date.now()};S.tasks.push(t);await DB.put('tasks',t)}
+  if(kind==='task'){const t={id:uid(),title:v.title.trim(),notes:(v.notes||'').trim(),due:v.due||null,priority:v.priority,goalId:v.goalId||null,done:false,created:Date.now()};S.tasks.push(t);await DB.put('tasks',t)}
   if(kind==='goal'){const g={id:uid(),title:v.title.trim(),horizon:S.horizon,period:(v.period||currentPeriod(S.horizon)).trim(),parentId:v.parentId||null,notes:(v.notes||'').trim(),progress:0,done:false,created:Date.now()};S.goals.push(g);await DB.put('goals',g)}
   if(kind==='habit'){const h={id:uid(),name:v.name.trim(),target:+v.target,created:Date.now()};S.habits.push(h);await DB.put('habits',h)}
   render();
