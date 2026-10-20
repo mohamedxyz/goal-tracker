@@ -5,6 +5,7 @@
     PATCH = bug fix · MINOR = new feature · MAJOR = breaks old backups or data
 
   Changelog
+  0.26.0 Task tag folders: give a task a tag and open tasks group into collapsible folders per tag with done counts; with "Hide done today" a habit folder disappears once everything in it is done
   0.25.0 Quality pass: timer clears itself if its goal was deleted; checked speed on 2 years of data with every new feature, old backups (no checklists/schedules/order) load and render in every view
   0.24.0 Reorder habits and folders: Habits tab → Reorder shows ▲▼ on every habit (within its folder) and every folder; order is remembered
   0.23.0 Weekly report (Dashboard → Weekly report): tasks done and missed, habit completion per habit, weekly goal progress and goals finished; browse earlier weeks
@@ -497,6 +498,7 @@ function taskItem(t){
         ${(t.items||[]).length?`<span title="Checklist">☑ ${t.items.filter(i=>i.done).length}/${t.items.length}</span>`:''}
         ${t.done&&t.doneAt?`<span>Done ${fmtWhen(t.doneAt)}</span>`:''}
         ${t.due?`<span class="${overdue?'overdue':''}">${overdue?'Overdue · ':''}${t.due===today?'Today':fmtDate(t.due)}</span>`:''}
+        ${t.tag?`<span class="tag">#${esc(t.tag)}</span>`:''}
         ${t.repeat?`<span title="Repeats">🔁 ${REPEAT_LABEL[t.repeat]||''}</span>`:''}
         ${t.priority&&t.priority!=='low'?`<span class="p-${t.priority}">${t.priority==='high'?'High':'Medium'} priority</span>`:''}
         ${g?`<span class="tag">${esc(g.title)}</span>`:''}
@@ -658,6 +660,22 @@ function viewDash(){
     <h2>Today's habits</h2>${habitList(false)}
   </div></div>`;
 }
+const tagOf=t=>(t.tag||'').trim();
+function tagList(id){return `<datalist id="${id}">${[...new Set(S.tasks.map(tagOf).filter(Boolean))].sort().map(n=>`<option value="${esc(n)}">`).join('')}</datalist>`}
+function taskGroups(open){
+  const groups=new Map(),loose=[];
+  for(const t of open){const g=tagOf(t);if(g){if(!groups.has(g))groups.set(g,[]);groups.get(g).push(t)}else loose.push(t)}
+  let out=loose.length?`<ul class="list">${loose.map(taskItem).join('')}</ul>`:'';
+  for(const name of [...groups.keys()].sort((a,b)=>a.localeCompare(b))){
+    const ts=groups.get(name),key='tag:'+name,collapsed=S.collapsed.has(key);
+    const all=S.tasks.filter(t=>tagOf(t)===name&&!t.archived);const dn=all.filter(t=>t.done).length;
+    out+=`<section class="hfolder ${collapsed?'collapsed':''}"><div class="hf-head"><button type="button" class="hf-toggle" data-action="toggle-folder" data-name="${esc(key)}" aria-expanded="${!collapsed}">
+      <span class="hf-chev">${collapsed?'▶':'▼'}</span><span class="hf-name">#${esc(name)}</span></button><span class="hf-count">${dn}/${all.length}</span></div>
+      <div class="hf-bar"><span style="width:${all.length?Math.round(dn/all.length*100):0}%"></span></div>
+      ${collapsed?'':`<ul class="list">${ts.map(taskItem).join('')}</ul>`}</section>`;
+  }
+  return out;
+}
 function viewTasks(){
   const today=TODAY();const f=['all','today','overdue','done'].includes(S.taskFilter)?S.taskFilter:'all';
   const pr=t=>({high:0,med:1,low:2}[t.priority]??2);
@@ -677,11 +695,12 @@ function viewTasks(){
     <select name="priority"><option value="low">Low</option><option value="med">Medium</option><option value="high">High</option></select>
     <select name="repeat" aria-label="Repeat">${REPEATS.map(([v,l])=>`<option value="${v}">${v?'🔁 ':''}${l}</option>`).join('')}</select>
     <select name="goalId">${goalOptions('')}</select>
+    <input type="text" name="tag" list="tagListAdd" placeholder="Tag folder (optional)" autocomplete="off">${tagList('tagListAdd')}
     <textarea name="notes" placeholder="Notes (optional)" style="min-height:40px"></textarea>
     <textarea name="items" placeholder="Checklist (optional, one item per line)" style="min-height:40px"></textarea>
     <button class="btn">Add</button></form>
   <div class="filters">${chip('all','All')}${chip('today','Due today')}${chip('overdue','Overdue'+(nOver?' · '+nOver:''))}${chip('done','Done')}</div>
-  ${open.length?`<ul class="list">${open.map(taskItem).join('')}</ul>`:(done.length?'':`<div class="empty">No tasks here.</div>`)}
+  ${open.length?taskGroups(open):(done.length?'':`<div class="empty">No tasks here.</div>`)}
   ${done.length?`${f==='done'?'':`<div class="divider">Completed · ${done.length}</div>`}<ul class="list">${done.map(taskItem).join('')}</ul>`:''}
   ${nArch?`<button class="chip" style="margin-top:14px" data-action="open-archive">${nArch} archived task${nArch>1?'s':''} →</button>`:''}`;
 }
@@ -742,6 +761,7 @@ function habitList(full){
   for(const name of gnames){const hs=groups.get(name);
     const due=hs.filter(dueToday),done=due.filter(h=>logged(h.id,today)).length,all=due.length>0&&done===due.length,collapsed=S.collapsed.has(name);
     const vis=S.hideDone?hs.filter(h=>!logged(h.id,today)):hs;
+    if(S.hideDone&&!vis.length)continue;
     out+=`<section class="hfolder ${all?'complete':''} ${collapsed||!vis.length?'collapsed':''}">
       <div class="hf-head"><button type="button" class="hf-toggle" data-action="toggle-folder" data-name="${esc(name)}" aria-expanded="${!collapsed}">
         <span class="hf-chev">${collapsed?'▶':'▼'}</span><span class="hf-name">${all?'✓ ':''}${esc(name)}</span></button>
@@ -779,7 +799,7 @@ function archCard(t){
       <button class="icon" data-action="del-task" data-id="${t.id}" title="Delete" aria-label="Delete">✕</button></div>
     ${t.notes?`<div class="notes">${esc(t.notes)}</div>`:''}
     ${(t.items||[]).length?`<div class="notes">${t.items.map(i=>(i.done?'☑ ':'☐ ')+esc(i.text)).join('<br>')}</div>`:''}
-    <div class="kvs">${kv('Due',fmtDay(t.due))}${kv('Priority',{high:'High',med:'Medium'}[t.priority]||'Low')}${kv('Goal',g?esc(g.title):'—')}${t.repeat?kv('Repeats',REPEAT_LABEL[t.repeat]):''}
+    <div class="kvs">${kv('Due',fmtDay(t.due))}${kv('Priority',{high:'High',med:'Medium'}[t.priority]||'Low')}${kv('Goal',g?esc(g.title):'—')}${t.repeat?kv('Repeats',REPEAT_LABEL[t.repeat]):''}${t.tag?kv('Tag','#'+esc(t.tag)):''}
       ${kv('Created',fmtWhen(t.created)||'—')}${kv('Completed',t.done?(fmtWhen(t.doneAt)||'Yes'):'—')}${kv('Archived',fmtWhen(t.archivedAt)||'—')}</div></div>`;
 }
 function viewData(){
@@ -840,6 +860,7 @@ function openEdit(kind,id){
       <div class="two"><div><label>Due date</label><input type="date" name="due" value="${t.due||''}"></div>
       <div><label>Priority</label><select name="priority">${[['low','Low'],['med','Medium'],['high','High']].map(([v,l])=>`<option value="${v}" ${t.priority===v?'selected':''}>${l}</option>`).join('')}</select></div></div>
       <label>Linked goal</label><select name="goalId">${goals}</select>
+      <label>Tag folder</label><input type="text" name="tag" list="tagListEdit" value="${esc(t.tag||'')}" placeholder="None" autocomplete="off">${tagList('tagListEdit')}
       <label>Repeat</label><select name="repeat">${REPEATS.map(([r,l])=>`<option value="${r}" ${(t.repeat||'')===r?'selected':''}>${l}</option>`).join('')}</select>
       <label>Notes</label><textarea name="notes" placeholder="Details, links, anything…">${esc(t.notes)}</textarea>
       <label>Checklist (one item per line)</label><textarea name="items" placeholder="Item one&#10;Item two">${esc((t.items||[]).map(i=>i.text).join('\n'))}</textarea>
@@ -880,7 +901,7 @@ dlg.addEventListener('submit',async e=>{
   if(e.submitter&&e.submitter.value==='cancel'){dlg.close();return}
   const v=Object.fromEntries(new FormData(f));const id=f.dataset.id;const kind=f.dataset.edit;
   if(kind==='task'){const t=S.tasks.find(x=>x.id===id);const done=!!v.done;
-    Object.assign(t,{title:v.title.trim(),due:v.due||null,priority:v.priority,goalId:v.goalId||null,notes:(v.notes||'').trim(),repeat:v.repeat||'',items:parseItems(v.items,t.items)});
+    Object.assign(t,{title:v.title.trim(),due:v.due||null,priority:v.priority,goalId:v.goalId||null,notes:(v.notes||'').trim(),repeat:v.repeat||'',tag:(v.tag||'').trim(),items:parseItems(v.items,t.items)});
     if(done!==t.done){t.done=done;t.doneAt=done?Date.now():null;Sound.play(done?'task':'undo');await onTaskDone(t)}
     await DB.put('tasks',t)}
   if(kind==='goal'){const g=goalById(id);const old=g.horizon;
@@ -928,7 +949,7 @@ function drawHabit(){
 document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('[role=button][data-action]')){e.preventDefault();e.target.click()}});
 
 /* ---------- Version ---------- */
-const APP_VERSION='0.25.0';
+const APP_VERSION='0.26.0';
 
 /* ---------- Completion sounds (synthesised, no audio files) ---------- */
 const Sound={
@@ -1061,7 +1082,7 @@ function nextDue(t){const today=TODAY();let d=stepDue(new Date((t.due||today)+'T
 async function onTaskDone(t){
   if(!t.repeat)return;
   if(t.done&&!t.nextId){
-    const n={id:uid(),title:t.title,notes:t.notes||'',repeat:t.repeat,due:nextDue(t),priority:t.priority,goalId:t.goalId||null,items:(t.items||[]).map(i=>({text:i.text,done:false})),done:false,created:Date.now(),prevId:t.id};
+    const n={id:uid(),title:t.title,notes:t.notes||'',repeat:t.repeat,due:nextDue(t),priority:t.priority,goalId:t.goalId||null,tag:t.tag||'',items:(t.items||[]).map(i=>({text:i.text,done:false})),done:false,created:Date.now(),prevId:t.id};
     t.nextId=n.id;S.tasks.push(n);await DB.put('tasks',n);await DB.put('tasks',t);
     toast(`🔁 Next "${t.title}" on ${fmtDate(n.due)}`);
   }else if(!t.done&&t.nextId){
@@ -1194,7 +1215,7 @@ document.addEventListener('change',async e=>{
 document.addEventListener('submit',async e=>{
   const f=e.target.closest('form[data-form]');if(!f)return;e.preventDefault();
   const v=Object.fromEntries(new FormData(f));const kind=f.dataset.form;
-  if(kind==='task'){const t={id:uid(),title:v.title.trim(),notes:(v.notes||'').trim(),repeat:v.repeat||'',items:parseItems(v.items),due:v.due||null,priority:v.priority,goalId:v.goalId||null,done:false,created:Date.now()};S.tasks.push(t);await DB.put('tasks',t)}
+  if(kind==='task'){const t={id:uid(),title:v.title.trim(),notes:(v.notes||'').trim(),repeat:v.repeat||'',tag:(v.tag||'').trim(),items:parseItems(v.items),due:v.due||null,priority:v.priority,goalId:v.goalId||null,done:false,created:Date.now()};S.tasks.push(t);await DB.put('tasks',t)}
   if(kind==='goal'){
     let gk=v.kind||'check';if(gk==='rollup'&&S.horizon==='weekly')gk='check';
     if(gk==='number'&&!(+v.target>0)){alert('Set a target number for this goal (for example 40).');return}
@@ -1243,7 +1264,7 @@ function searchResults(q){
   q=q.trim().toLowerCase();if(!q)return '<div class="empty">Type to search tasks, goals and habits.</div>';
   const has=(...a)=>a.some(x=>String(x||'').toLowerCase().includes(q));
   const row=(k,id,main,sub)=>`<button type="button" class="srow" data-sr="${k}:${id}"><b>${main}</b><span>${sub}</span></button>`;
-  const tasks=S.tasks.filter(t=>has(t.title,t.notes,(t.items||[]).map(i=>i.text).join(' '))).slice(0,30)
+  const tasks=S.tasks.filter(t=>has(t.title,t.notes,t.tag,(t.items||[]).map(i=>i.text).join(' '))).slice(0,30)
     .map(t=>row('task',t.id,esc(t.title),(t.archived?'Archived task':t.done?'Done task':'Task')+(t.due?' · '+fmtDate(t.due):'')));
   const goals=S.goals.filter(g=>has(g.title,g.notes,g.lesson)).slice(0,30)
     .map(g=>row('goal',g.id,esc(g.title),HORIZONS[g.horizon]+' goal · '+esc(g.period)+(g.done?' · done':'')));
