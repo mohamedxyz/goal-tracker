@@ -5,6 +5,8 @@
     PATCH = bug fix · MINOR = new feature · MAJOR = breaks old backups or data
 
   Changelog
+  0.15.0 Weekly planning: "Plan this week" lists monthly goals with open slots and adds weekly steps under them (checkbox or number);
+         dashboard prompt when the week has no goals or on Sunday/Monday with open slots
   0.14.0 Native-app feel on phones: bottom tab bar with icons, slimmer header, safe-area padding, theme-colour status bar,
          no tap flash / pull-to-refresh bounce, 32px+ tap targets; toast sits above the tab bar; fix: main content had no top/bottom padding (cards touched the header)
   0.13.0 Backup reminders: last-backup time on the Data tab, dashboard nudge (one-tap copy) when there is no backup or it is >7 days old,
@@ -272,6 +274,18 @@ form[data-kind=number] .f-num,form[data-kind=rollup] .f-roll{display:flex;flex-w
   .chip{min-height:32px}
   .item input[type=checkbox]{width:22px;height:22px}
 }
+/* ---------- Weekly planning ---------- */
+.plan-cta{display:flex;align-items:center;gap:12px;margin-bottom:12px;border-color:color-mix(in oklab,var(--accent) 40%,var(--line));background:color-mix(in oklab,var(--accent) 7%,var(--card))}
+.h2row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:22px 0 10px}
+.h2row h2{margin:0}
+.plan-row .plan-list{list-style:none;margin:8px 0 0;padding:0;display:flex;flex-direction:column;gap:4px;font-size:13.5px}
+.plan-row .plan-list li{color:var(--ok);font-weight:550}
+.plan-add{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.dlg .plan-add input[type=text]{flex:1 1 160px;width:auto}
+.dlg .plan-add select{flex:0 1 auto;width:auto}
+.dlg .plan-add .btn{flex:none}
+.dlg .plan-add[data-kind=number] .f-num{display:flex;gap:6px;flex:1 1 100%}
+.dlg .plan-add .f-num input{flex:1 1 90px;width:auto}
 #tip{position:fixed;z-index:50;pointer-events:none;background:var(--text);color:var(--bg);font-size:12px;line-height:1.35;padding:6px 9px;border-radius:8px;white-space:nowrap;opacity:0;transition:opacity .1s;transform:translate(-50%,calc(-100% - 10px))}
 #tip.show{opacity:1}
 </style>
@@ -580,7 +594,9 @@ function viewDash(){
   const best=S.habits.length?Math.max(...S.habits.map(streak)):0;
   const wk=S.goals.filter(g=>g.horizon==='weekly'&&g.period===currentPeriod('weekly'));
   const lb=daysSince(lastBackup());
-  return `${backupNudge()?`<div class="card backup-cta"><div class="grow"><div class="title">${lb===null?'No backup yet':'Last backup '+agoText(lb)}</div><div class="meta">Your data lives only in this browser. Copy a backup and keep it somewhere safe.</div></div><button class="btn" data-action="backup-copy">Copy backup</button><button class="icon" data-action="backup-snooze" title="Remind me later" aria-label="Dismiss backup reminder">✕</button></div>`:''}${nRv?`<div class="card review-cta"><div class="grow"><div class="title">${nRv} goal${nRv>1?'s':''} from past periods need${nRv>1?'':'s'} a review</div><div class="meta">Hit it, missed, or carry over. About a minute.</div></div><button class="btn" data-action="open-review">Review</button></div>`:''}<div class="stats">
+  const openSlots=planTargets().reduce((a,g)=>a+planLeft(g),0),dow=new Date().getDay();
+  const planCta=!wk.length||((dow===0||dow===1)&&openSlots>0);
+  return `${backupNudge()?`<div class="card backup-cta"><div class="grow"><div class="title">${lb===null?'No backup yet':'Last backup '+agoText(lb)}</div><div class="meta">Your data lives only in this browser. Copy a backup and keep it somewhere safe.</div></div><button class="btn" data-action="backup-copy">Copy backup</button><button class="icon" data-action="backup-snooze" title="Remind me later" aria-label="Dismiss backup reminder">✕</button></div>`:''}${nRv?`<div class="card review-cta"><div class="grow"><div class="title">${nRv} goal${nRv>1?'s':''} from past periods need${nRv>1?'':'s'} a review</div><div class="meta">Hit it, missed, or carry over. About a minute.</div></div><button class="btn" data-action="open-review">Review</button></div>`:''}${planCta?`<div class="card plan-cta"><div class="grow"><div class="title">${wk.length?`${openSlots} weekly slot${openSlots>1?'s':''} still to plan`:`Plan ${currentPeriod('weekly')}`}</div><div class="meta">${wk.length?'Fill in this week\'s steps toward your monthly goals.':'No weekly goals yet. Pick this week\'s steps.'}</div></div><button class="btn" data-action="open-plan">Plan week</button></div>`:''}<div class="stats">
     <div class="card stat"><div class="n">${todaysDone}/${todays.length}</div><div class="l">Today's tasks done</div></div>
     <div class="card stat"><div class="n">${hd}/${S.habits.length}</div><div class="l">Habits done today</div></div>
     <div class="card stat"><div class="n">${active}</div><div class="l">Active goals</div></div>
@@ -592,7 +608,7 @@ function viewDash(){
   <div class="grid2" style="margin-top:6px"><div>
     <h2>Today's tasks</h2>${todays.length?`<ul class="list">${todays.map(taskItem).join('')}</ul>`:`<div class="empty">Nothing due today.</div>`}
     ${overdue?`<button class="chip" style="margin-top:10px" data-action="see-overdue">${overdue} overdue from earlier days →</button>`:''}
-    <h2>This week's goals</h2>${wk.length?`<div class="goals">${wk.map(goalCard).join('')}</div>`:`<div class="empty">No weekly goals for ${currentPeriod('weekly')}.</div>`}
+    <div class="h2row"><h2>This week's goals</h2><button class="chip" data-action="open-plan">Plan this week</button></div>${wk.length?`<div class="goals">${wk.map(goalCard).join('')}</div>`:`<div class="empty">No weekly goals for ${currentPeriod('weekly')}.</div>`}
   </div><div>
     <h2>Today's habits</h2>${habitList(false)}
   </div></div>`;
@@ -641,7 +657,7 @@ function viewGoals(){
     <button class="btn">Add goal</button></form>
   <div class="filters">
     <button class="chip ${S.goalScope==='current'?'on':''}" data-action="goal-scope" data-v="current">Current (${cur})</button>
-    <button class="chip ${S.goalScope==='all'?'on':''}" data-action="goal-scope" data-v="all">All periods</button></div>
+    <button class="chip ${S.goalScope==='all'?'on':''}" data-action="goal-scope" data-v="all">All periods</button>${h==='weekly'?'<button class="chip" data-action="open-plan">Plan this week</button>':''}</div>
   ${list.length?`<div class="goals">${list.map(goalCard).join('')}</div>`:`<div class="empty">No ${HORIZONS[h].toLowerCase()} goals yet.</div>`}`;
 }
 function viewHabits(){
@@ -854,7 +870,7 @@ function drawHabit(){
 document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('[role=button][data-action]')){e.preventDefault();e.target.click()}});
 
 /* ---------- Version ---------- */
-const APP_VERSION='0.14.0';
+const APP_VERSION='0.15.0';
 
 /* ---------- Completion sounds (synthesised, no audio files) ---------- */
 const Sound={
@@ -906,6 +922,38 @@ async function checkStorage(ask){
     let p=await st.persisted();if(!p&&ask&&st.persist)p=await st.persist();S.storage=p?'protected':'unprotected'}
   catch(e){S.storage='unsupported'}
 }
+
+/* ---------- Weekly planning ---------- */
+function planTargets(){const mp=currentPeriod('monthly');return S.goals.filter(g=>g.horizon==='monthly'&&g.period===mp&&!g.done&&g.status!=='missed'&&goalKind(g)==='rollup')}
+const planLeft=g=>Math.max(0,expectedOf(g)-S.goals.filter(c=>c.parentId===g.id).length);
+function openPlan(){drawPlan();if(!dlg.open)dlg.showModal();const i=dlg.querySelector('.plan-add input[name=title]');i&&i.focus()}
+function drawPlan(){
+  const wk=currentPeriod('weekly'),targets=planTargets();
+  const row=parent=>{
+    const mine=parent?S.goals.filter(c=>c.parentId===parent.id&&c.period===wk):S.goals.filter(g=>g.horizon==='weekly'&&g.period===wk&&!g.parentId);
+    const left=parent?planLeft(parent):0;
+    return `<div class="card plan-row"><div class="title">${parent?esc(parent.title):'Standalone weekly goals'}</div>
+      ${parent?`<div class="meta"><span>${goalDetail(parent)}</span>${left?'':'<span class="tag t-ok">Fully planned</span>'}</div>`:''}
+      ${mine.length?`<ul class="plan-list">${mine.map(c=>`<li>• ${esc(c.title)}${goalKind(c)==='number'?` · ${fmtNum(c.target)} ${esc(c.unit||'')}`:''}</li>`).join('')}</ul>`:''}
+      <form class="plan-add" data-plan="${parent?parent.id:''}" data-kind="check">
+        <input type="text" name="title" placeholder="${parent?'This week\'s step toward it…':'A weekly goal of its own…'}" required autocomplete="off">
+        <select name="kind" aria-label="How it's measured"><option value="check">☐ Checkbox</option><option value="number">🔢 Number</option></select>
+        <span class="f-num"><input type="number" name="target" min="0" step="any" placeholder="Target, e.g. 10"><input type="text" name="unit" placeholder="Unit, e.g. hours"></span>
+        <button class="btn">Add</button></form></div>`;
+  };
+  dlg.innerHTML=`<div class="hist"><div class="hist-top"><h3>Plan ${esc(wk)}</h3><button type="button" class="icon" data-action="dlg-close" aria-label="Close">✕</button></div>
+    <p class="meta">${targets.length?`Add this week's steps under your ${esc(currentPeriod('monthly'))} goals. Each one moves its monthly goal forward.`:`No monthly goals built from weekly goals for ${esc(currentPeriod('monthly'))} yet. Add standalone goals below, or create a monthly goal on the Goals tab first.`}</p>
+    <div class="goals" style="margin-top:10px">${targets.map(row).join('')}${row(null)}</div>
+    <div class="dlg-actions"><button type="button" class="btn" data-action="dlg-close">Done</button></div></div>`;
+}
+dlg.addEventListener('submit',async e=>{
+  const f=e.target.closest('form[data-plan]');if(!f)return;e.preventDefault();
+  const v=Object.fromEntries(new FormData(f)),k=v.kind==='number'?'number':'check',pid=f.dataset.plan;
+  if(k==='number'&&!(+v.target>0)){alert('Set a target number for this goal (for example 10).');return}
+  const g={id:uid(),title:v.title.trim(),horizon:'weekly',period:currentPeriod('weekly'),parentId:pid||null,notes:'',kind:k,target:+v.target||0,unit:(v.unit||'').trim(),value:0,expected:null,done:false,created:Date.now()};
+  S.goals.push(g);await DB.put('goals',g);drawPlan();render();
+  const i=dlg.querySelector(`form[data-plan="${pid}"] input[name=title]`);i&&i.focus();
+});
 
 /* ---------- Period-end review ---------- */
 function rvNote(g){const i=dlg.querySelector(`.rv-note[data-id="${g.id}"]`);const t=i&&i.value.trim();if(t)g.lesson=g.lesson?g.lesson+'\n'+t:t}
@@ -983,6 +1031,7 @@ const actions={
   async 'goal-set'(el){const g=goalById(el.dataset.id);const r=prompt(`${g.title}\nCurrent value${g.unit?' ('+g.unit+')':''}:`,fmtNum(g.value));
     if(r===null||r.trim()===''||isNaN(+r))return false;g.value=Math.max(0,+r);await DB.put('goals',g)},
   'open-review'(){openReview();return false},
+  'open-plan'(){openPlan();return false},
   async 'rv-hit'(el){const g=goalById(el.dataset.id);Object.assign(g,{done:true,autoDone:false,doneAt:Date.now(),status:null,reviewedAt:Date.now()});rvNote(g);Sound.play('task');await DB.put('goals',g);drawReview()},
   async 'rv-miss'(el){const g=goalById(el.dataset.id);Object.assign(g,{status:'missed',reviewedAt:Date.now()});rvNote(g);Sound.play('undo');await DB.put('goals',g);drawReview()},
   async 'rv-carry'(el){const g=goalById(el.dataset.id);g.carried=(g.carried||[]).concat(g.period);g.period=currentPeriod(g.horizon);g.reviewedAt=Date.now();rvNote(g);await DB.put('goals',g);drawReview()},
