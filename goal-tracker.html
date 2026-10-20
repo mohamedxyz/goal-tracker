@@ -5,6 +5,7 @@
     PATCH = bug fix · MINOR = new feature · MAJOR = breaks old backups or data
 
   Changelog
+  0.12.0 Habit folders: group habits into sections that turn green when every habit in them is done today; fanfare on finishing a folder
   0.11.0 Compact view toggle for the Habits tab (one tight row per habit, remembered)
   0.10.0 Goals rework: checkbox / number-target / built-from-sub-goals kinds; parents auto-complete only when all expected
          sub-goals are done (cascades up, un-ticking reopens); period-end review (hit / missed / carry over); manual slider removed
@@ -220,6 +221,21 @@ form[data-kind=number] .f-num,form[data-kind=rollup] .f-roll{display:flex;flex-w
 .hcompact .day b{font-size:11px}
 .hcompact .icon{padding:2px 4px;font-size:13px}
 @media (max-width:520px){.hcompact .habit .days{width:auto;justify-content:flex-end}.hcompact .habit .day{flex:none}}
+/* ---------- Habit folders ---------- */
+.hfolder{border:1px solid var(--line);border-radius:16px;padding:8px 10px 10px;margin-bottom:12px;background:color-mix(in oklab,var(--card) 55%,var(--bg));transition:background .3s,border-color .3s}
+.hfolder.complete{background:color-mix(in oklab,var(--ok) 17%,var(--card));border-color:var(--ok)}
+.hfolder.collapsed{padding-bottom:8px}
+.hf-head{display:flex;align-items:center;gap:6px}
+.hfolder:not(.collapsed) .hf-head{margin-bottom:8px}
+.hf-toggle{flex:1;display:flex;align-items:center;gap:8px;min-width:0;border:0;background:transparent;color:var(--text);font:650 15px system-ui,sans-serif;cursor:pointer;padding:4px 2px;text-align:left}
+.hf-chev{color:var(--muted);width:12px;flex:none;font-size:12px}
+.hf-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hf-count{font-size:12.5px;font-weight:650;color:var(--muted);white-space:nowrap}
+.hfolder.complete .hf-count{color:var(--ok)}
+.hfolder.complete .hf-toggle{color:var(--ok)}
+.hf-bar{height:4px;border-radius:99px;background:var(--line);overflow:hidden;margin:0 2px 8px}
+.hfolder.collapsed .hf-bar{margin:6px 2px 0}
+.hf-bar span{display:block;height:100%;background:var(--ok);border-radius:99px;transition:width .25s}
 #tip{position:fixed;z-index:50;pointer-events:none;background:var(--text);color:var(--bg);font-size:12px;line-height:1.35;padding:6px 9px;border-radius:8px;white-space:nowrap;opacity:0;transition:opacity .1s;transform:translate(-50%,calc(-100% - 10px))}
 #tip.show{opacity:1}
 </style>
@@ -588,6 +604,7 @@ function viewHabits(){
   return `<form class="add" data-form="habit">
     <input type="text" name="name" placeholder="New habit (e.g. Code 1 hour)…" required>
     <select name="target" title="Target days per week">${[7,6,5,4,3,2,1].map(n=>`<option value="${n}">${n}×/week</option>`).join('')}</select>
+    <input type="text" name="group" list="folderListAdd" placeholder="Folder (optional), e.g. Morning routine" style="flex:1 1 200px" autocomplete="off">${folderList('folderListAdd')}
     <button class="btn">Add habit</button></form>
   ${habitList(true)}`;
 }
@@ -608,9 +625,29 @@ function habitList(full){
   const bar=`<div class="filters"><button class="chip ${S.hideDone?'on':''}" data-action="toggle-hide-done" aria-pressed="${S.hideDone}">${S.hideDone?'✓ Hiding done today':'Hide done today'}</button>
     ${full?`<button class="chip ${S.compact?'on':''}" data-action="toggle-compact" aria-pressed="${S.compact}">${S.compact?'✓ Compact':'Compact'}</button>`:''}
     <span class="meta" style="align-self:center">${doneToday}/${S.habits.length} done${S.hideDone&&doneToday?` · ${doneToday} hidden`:''}</span></div>`;
-  const list=shown.length?(full?`<div class="goals">${shown.map(h=>habitCard(h,true)).join('')}</div>`:`<ul class="list">${shown.map(habitToday).join('')}</ul>`):`<div class="allclear">All habits done for today 🎉</div>`;
-  return bar+list;
+  const wrap=hs=>full?`<div class="goals">${hs.map(h=>habitCard(h,true)).join('')}</div>`:`<ul class="list">${hs.map(habitToday).join('')}</ul>`;
+  const groups=new Map(),loose=[];
+  for(const h of S.habits){const g=folderOf(h);if(g){if(!groups.has(g))groups.set(g,[]);groups.get(g).push(h)}else loose.push(h)}
+  let out='';
+  for(const[name,hs]of groups){
+    const done=hs.filter(h=>logged(h.id,today)).length,all=done===hs.length,collapsed=S.collapsed.has(name);
+    const vis=S.hideDone?hs.filter(h=>!logged(h.id,today)):hs;
+    out+=`<section class="hfolder ${all?'complete':''} ${collapsed||!vis.length?'collapsed':''}">
+      <div class="hf-head"><button type="button" class="hf-toggle" data-action="toggle-folder" data-name="${esc(name)}" aria-expanded="${!collapsed}">
+        <span class="hf-chev">${collapsed?'▶':'▼'}</span><span class="hf-name">${all?'✓ ':''}${esc(name)}</span></button>
+        <span class="hf-count">${all?'All done':done+'/'+hs.length}</span>
+        <button type="button" class="icon" data-action="rename-folder" data-name="${esc(name)}" title="Rename folder" aria-label="Rename folder">✎</button></div>
+      <div class="hf-bar"><span style="width:${Math.round(done/hs.length*100)}%"></span></div>
+      ${collapsed||!vis.length?'':wrap(vis)}</section>`;
+  }
+  const looseVis=S.hideDone?loose.filter(h=>!logged(h.id,today)):loose;
+  if(looseVis.length)out+=wrap(looseVis);
+  if(S.hideDone&&doneToday===S.habits.length)out+=`<div class="allclear">All habits done for today 🎉</div>`;
+  return bar+out;
 }
+const folderOf=h=>(h.group||'').trim();
+const folderNames=()=>[...new Set(S.habits.map(folderOf).filter(Boolean))];
+const folderList=id=>`<datalist id="${id}">${folderNames().map(f=>`<option value="${esc(f)}"></option>`).join('')}</datalist>`;
 function viewArchive(){
   const list=S.tasks.filter(t=>t.archived).sort((a,b)=>(b.archivedAt||0)-(a.archivedAt||0));
   const nDone=list.filter(t=>t.done).length;
@@ -704,7 +741,8 @@ function openEdit(kind,id){
   }
   if(kind==='habit'){const h=S.habits.find(x=>x.id===id);title='Edit habit';
     body=`<label>Name</label><input type="text" name="name" value="${esc(h.name)}" required>
-      <label>Target</label><select name="target">${[7,6,5,4,3,2,1].map(n=>`<option value="${n}" ${(h.target||7)===n?'selected':''}>${n}× per week</option>`).join('')}</select>`;
+      <label>Target</label><select name="target">${[7,6,5,4,3,2,1].map(n=>`<option value="${n}" ${(h.target||7)===n?'selected':''}>${n}× per week</option>`).join('')}</select>
+      <label>Folder</label><input type="text" name="group" list="folderListEdit" value="${esc(h.group||'')}" placeholder="None. Type a name to create one" autocomplete="off">${folderList('folderListEdit')}`;
   }
   dlg.innerHTML=`<form method="dialog" data-edit="${kind}" data-id="${id}"><h3>${title}</h3>${body}
     <div class="dlg-actions"><button class="ghost" value="cancel" formnovalidate>Cancel</button><button class="btn" value="save">Save</button></div></form>`;
@@ -735,7 +773,7 @@ dlg.addEventListener('submit',async e=>{
       for(const c of S.goals.filter(c=>c.parentId===g.id&&PARENT[c.horizon]!==g.horizon)){c.parentId=null;await DB.put('goals',c)}
     }
     await DB.put('goals',g)}
-  if(kind==='habit'){const h=S.habits.find(x=>x.id===id);Object.assign(h,{name:v.name.trim(),target:+v.target});await DB.put('habits',h)}
+  if(kind==='habit'){const h=S.habits.find(x=>x.id===id);Object.assign(h,{name:v.name.trim(),target:+v.target,group:(v.group||'').trim()});await DB.put('habits',h)}
   dlg.close();render();
 });
 
@@ -768,7 +806,7 @@ function drawHabit(){
 document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('[role=button][data-action]')){e.preventDefault();e.target.click()}});
 
 /* ---------- Version ---------- */
-const APP_VERSION='0.11.0';
+const APP_VERSION='0.12.0';
 
 /* ---------- Completion sounds (synthesised, no audio files) ---------- */
 const Sound={
@@ -800,6 +838,8 @@ const Sound={
 Sound.load();
 try{S.hideDone=localStorage.getItem('gt-hide-done')==='1'}catch(e){S.hideDone=false}
 try{S.compact=localStorage.getItem('gt-compact')==='1'}catch(e){S.compact=false}
+try{S.collapsed=new Set(JSON.parse(localStorage.getItem('gt-collapsed')||'[]'))}catch(e){S.collapsed=new Set()}
+const saveCollapsed=()=>{try{localStorage.setItem('gt-collapsed',JSON.stringify([...S.collapsed]))}catch(e){}};
 
 /* ---------- Period-end review ---------- */
 function rvNote(g){const i=dlg.querySelector(`.rv-note[data-id="${g.id}"]`);const t=i&&i.value.trim();if(t)g.lesson=g.lesson?g.lesson+'\n'+t:t}
@@ -827,7 +867,10 @@ function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show'
 async function toggleLog(hid,date){
   const id=hid+'|'+date;
   if(S.logs.has(id)){S.logs.delete(id);await DB.del('logs',id);Sound.play('undo')}
-  else{S.logs.add(id);await DB.put('logs',{id,habitId:hid,date});Sound.play('habit')}
+  else{S.logs.add(id);await DB.put('logs',{id,habitId:hid,date});
+    const h=S.habits.find(x=>x.id===hid),g=h&&folderOf(h);
+    if(g&&date===TODAY()&&S.habits.filter(x=>folderOf(x)===g).every(x=>logged(x.id,date))){Sound.play('goal');toast(`✅ ${g}: all done for today`)}
+    else Sound.play('habit')}
 }
 const actions={
   'see-overdue'(){S.taskFilter='overdue';S.view='tasks';scrollTo(0,0)},
@@ -849,6 +892,12 @@ const actions={
   'edit-habit'(el){openEdit('habit',el.dataset.id);return false},
   async 'toggle-task'(el){const t=S.tasks.find(x=>x.id===el.dataset.id);t.done=!t.done;t.doneAt=t.done?Date.now():null;Sound.play(t.done?'task':'undo');await DB.put('tasks',t)},
   'toggle-hide-done'(){S.hideDone=!S.hideDone;try{localStorage.setItem('gt-hide-done',S.hideDone?'1':'0')}catch(e){}},
+  'toggle-folder'(el){const n=el.dataset.name;S.collapsed.has(n)?S.collapsed.delete(n):S.collapsed.add(n);saveCollapsed()},
+  async 'rename-folder'(el){const old=el.dataset.name;
+    const r=prompt(`Rename folder "${old}"\n(Leave empty to remove the folder. Its habits are kept.)`,old);if(r===null)return false;
+    const nn=r.trim();if(nn===old)return false;
+    for(const h of S.habits.filter(x=>folderOf(x)===old)){h.group=nn;await DB.put('habits',h)}
+    if(S.collapsed.delete(old)&&nn)S.collapsed.add(nn);saveCollapsed()},
   'toggle-compact'(){S.compact=!S.compact;try{localStorage.setItem('gt-compact',S.compact?'1':'0')}catch(e){}},
   'toggle-sound'(){Sound.set(!Sound.on);if(Sound.on)Sound.play('task')},
   async 'del-task'(el){
@@ -918,7 +967,7 @@ document.addEventListener('submit',async e=>{
     const g={id:uid(),title:v.title.trim(),horizon:S.horizon,period:(v.period||currentPeriod(S.horizon)).trim(),parentId:v.parentId||null,notes:(v.notes||'').trim(),
       kind:gk,target:+v.target||0,unit:(v.unit||'').trim(),value:0,expected:v.expected?Math.max(1,Math.round(+v.expected)):null,done:false,created:Date.now()};
     S.goals.push(g);await DB.put('goals',g)}
-  if(kind==='habit'){const h={id:uid(),name:v.name.trim(),target:+v.target,created:Date.now()};S.habits.push(h);await DB.put('habits',h)}
+  if(kind==='habit'){const h={id:uid(),name:v.name.trim(),target:+v.target,group:(v.group||'').trim(),created:Date.now()};S.habits.push(h);await DB.put('habits',h)}
   render();
   const first=$('#app form input[type=text]');if(first)first.focus();
 });
