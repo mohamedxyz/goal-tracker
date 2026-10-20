@@ -5,6 +5,7 @@
     PATCH = bug fix · MINOR = new feature · MAJOR = breaks old backups or data
 
   Changelog
+  0.23.0 Weekly report (Dashboard → Weekly report): tasks done and missed, habit completion per habit, weekly goal progress and goals finished; browse earlier weeks
   0.22.0 Undo after deleting a task, goal, habit or the completed-archive clean-up: a 6-second Undo button restores it with its links and history
   0.21.0 Focus timer (⏱ in the header): pick a number goal measured in hours or minutes, start, stop: the time is added to the goal; survives reload
   0.20.0 Search (🔍 in the header): finds tasks (including archived and checklist items), goals and habits as you type; tap a result to open it
@@ -649,7 +650,7 @@ function viewDash(){
   <div class="grid2" style="margin-top:6px"><div>
     <h2>Today's tasks</h2>${todays.length?`<ul class="list">${todays.map(taskItem).join('')}</ul>`:`<div class="empty">Nothing due today.</div>`}
     ${overdue?`<button class="chip" style="margin-top:10px" data-action="see-overdue">${overdue} overdue from earlier days →</button>`:''}
-    <div class="h2row"><h2>This week's goals</h2><button class="chip" data-action="open-plan">Plan this week</button></div>${wk.length?`<div class="goals">${wk.map(goalCard).join('')}</div>`:`<div class="empty">No weekly goals for ${currentPeriod('weekly')}.</div>`}
+    <div class="h2row"><h2>This week's goals</h2><span><button class="chip" data-action="open-report">Weekly report</button> <button class="chip" data-action="open-plan">Plan this week</button></span></div>${wk.length?`<div class="goals">${wk.map(goalCard).join('')}</div>`:`<div class="empty">No weekly goals for ${currentPeriod('weekly')}.</div>`}
   </div><div>
     <h2>Today's habits</h2>${habitList(false)}
   </div></div>`;
@@ -922,7 +923,7 @@ function drawHabit(){
 document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('[role=button][data-action]')){e.preventDefault();e.target.click()}});
 
 /* ---------- Version ---------- */
-const APP_VERSION='0.22.0';
+const APP_VERSION='0.23.0';
 
 /* ---------- Completion sounds (synthesised, no audio files) ---------- */
 const Sound={
@@ -1119,6 +1120,8 @@ const actions={
     if(r===null||r.trim()===''||isNaN(+r))return false;g.value=Math.max(0,+r);await DB.put('goals',g)},
   'open-review'(){openReview();return false},
   'open-plan'(){openPlan();return false},
+  'open-report'(){rep_.off=0;drawReport();dlg.showModal();return false},
+  'rep-nav'(el){rep_.off=Math.min(0,rep_.off+(+el.dataset.d));drawReport();return false},
   async 'rv-hit'(el){const g=goalById(el.dataset.id);Object.assign(g,{done:true,autoDone:false,doneAt:Date.now(),status:null,reviewedAt:Date.now()});rvNote(g);Sound.play('task');await DB.put('goals',g);drawReview()},
   async 'rv-miss'(el){const g=goalById(el.dataset.id);Object.assign(g,{status:'missed',reviewedAt:Date.now()});rvNote(g);Sound.play('undo');await DB.put('goals',g);drawReview()},
   async 'rv-carry'(el){const g=goalById(el.dataset.id);g.carried=(g.carried||[]).concat(g.period);g.period=currentPeriod(g.horizon);g.reviewedAt=Date.now();rvNote(g);await DB.put('goals',g);drawReview()},
@@ -1182,6 +1185,39 @@ document.addEventListener('submit',async e=>{
   render();
   const first=$('#app form input[type=text]');if(first)first.focus();
 });
+/* ---------- Weekly report ---------- */
+const rep_={off:0};
+function weekData(off){
+  const now=new Date();const mon=addDays(now,-((now.getDay()+6)%7)+off*7);mon.setHours(0,0,0,0);
+  const days=[...Array(7)].map((_,i)=>addDays(mon,i));const a=ds(days[0]),z=ds(days[6]),today=TODAY();
+  const t0=days[0].getTime(),t1=addDays(days[6],1).getTime();
+  const done=S.tasks.filter(t=>t.done&&t.doneAt>=t0&&t.doneAt<t1);
+  const missed=S.tasks.filter(t=>!t.done&&t.due&&t.due>=a&&t.due<=z&&t.due<today&&!t.archived);
+  const habits=S.habits.map(h=>{const born=ds(new Date(h.created||0));let due=0,n=0;
+    for(const d of days){const k=ds(d);if(k>today||k<born)continue;if(isDue(h,d)){due++;if(logged(h.id,k))n++}else if(logged(h.id,k)){due++;n++}}
+    return{h,due,n}}).filter(x=>x.due);
+  const wk=isoWeek(days[0]);
+  const goals=S.goals.filter(g=>g.horizon==='weekly'&&g.period===wk);
+  const finished=S.goals.filter(g=>g.done&&g.doneAt>=t0&&g.doneAt<t1);
+  return{days,a,z,done,missed,habits,goals,finished};
+}
+function drawReport(){
+  const w=weekData(rep_.off);const hd=w.habits.reduce((x,y)=>x+y.due,0),hn=w.habits.reduce((x,y)=>x+y.n,0);
+  const rate=hd?Math.round(hn/hd*100):0;
+  const stat=(n,l)=>`<div class="card" style="text-align:center;padding:10px"><div style="font-size:24px;font-weight:700">${n}</div><div class="meta" style="justify-content:center">${l}</div></div>`;
+  const label=rep_.off===0?'This week':rep_.off===-1?'Last week':fmt(w.days[0],{month:'short',day:'numeric'})+' – '+fmt(w.days[6],{month:'short',day:'numeric'});
+  dlg.innerHTML=`<form method="dialog" data-report><h3>Weekly report</h3>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <button type="button" class="icon" data-action="rep-nav" data-d="-1" aria-label="Previous week">‹</button><b>${label}</b>
+      <button type="button" class="icon" data-action="rep-nav" data-d="1" aria-label="Next week" ${rep_.off>=0?'disabled':''}>›</button></div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">${stat(w.done.length,'tasks done')}${stat(w.missed.length,'tasks missed')}${stat(hd?rate+'%':'—','habits')}</div>
+    ${w.habits.length?`<h2 style="margin-top:14px">Habits</h2>${w.habits.map(x=>`<div class="kv"><span>${esc(x.h.name)}</span><span>${x.n}/${x.due}</span></div>`).join('')}`:''}
+    ${w.goals.length?`<h2 style="margin-top:14px">Weekly goals</h2>${w.goals.map(g=>`<div class="kv"><span>${esc(g.title)}</span><span>${g.done?'✓ done':Math.round(progress(g))+'%'}</span></div>`).join('')}`:''}
+    ${w.finished.length?`<h2 style="margin-top:14px">Goals finished</h2>${w.finished.map(g=>`<div class="kv"><span>${esc(g.title)}</span><span>${HORIZONS[g.horizon]}</span></div>`).join('')}`:''}
+    ${w.missed.length?`<h2 style="margin-top:14px">Missed tasks</h2>${w.missed.slice(0,8).map(t=>`<div class="kv"><span>${esc(t.title)}</span><span>${fmtDate(t.due)}</span></div>`).join('')}`:''}
+    ${!w.done.length&&!w.habits.length&&!w.goals.length&&!w.missed.length?'<div class="empty">Nothing recorded this week.</div>':''}
+    <div class="dlg-actions"><button class="ghost" value="cancel" formnovalidate>Close</button></div></form>`;
+}
 /* ---------- Search ---------- */
 function searchResults(q){
   q=q.trim().toLowerCase();if(!q)return '<div class="empty">Type to search tasks, goals and habits.</div>';
