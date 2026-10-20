@@ -5,6 +5,7 @@
     PATCH = bug fix · MINOR = new feature · MAJOR = breaks old backups or data
 
   Changelog
+  0.8.0  "Defeat" sound when unchecking; dashboard shows only today's tasks and habits (one-tap check for today)
   0.7.0  Hide habits already done today; completion sounds with on/off switch; version shown in Data tab
   0.6.0  Habit history calendar: toggle any past day, ★ marks the creation day, best streak
   0.5.1  Fix: empty (0 KB) exports on Android; copy/paste backup as text; clearer import errors
@@ -165,6 +166,9 @@ dialog#editDlg::backdrop{background:rgba(30,18,10,.45)}
 .habits-bar{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 0 12px}
 .habits-bar h2{margin:0}
 .habits-bar .meta{margin:0}
+.tcheck{flex:none;width:34px;height:34px;border-radius:50%;border:2px solid var(--line);background:var(--card);color:transparent;font:700 16px/1 system-ui,sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s,border-color .15s;touch-action:manipulation}
+.tcheck:hover{border-color:var(--ok)}
+.tcheck.on{background:var(--ok);border-color:var(--ok);color:var(--on-ok)}
 .allclear{color:var(--ok);font-weight:600;text-align:center;padding:18px;border:1px dashed var(--line);border-radius:12px}
 #tip{position:fixed;z-index:50;pointer-events:none;background:var(--text);color:var(--bg);font-size:12px;line-height:1.35;padding:6px 9px;border-radius:8px;white-space:nowrap;opacity:0;transition:opacity .1s;transform:translate(-50%,calc(-100% - 10px))}
 #tip.show{opacity:1}
@@ -400,13 +404,15 @@ function consistencyCard(){
 function viewDash(){
   const today=TODAY();
   const open=S.tasks.filter(t=>!t.done);
-  const due=open.filter(t=>t.due&&t.due<=today).sort((a,b)=>a.due.localeCompare(b.due));
+  const todays=S.tasks.filter(t=>t.due===today).sort((a,b)=>(a.done-b.done)||(({high:0,med:1,low:2}[a.priority]??2)-({high:0,med:1,low:2}[b.priority]??2)));
+  const todaysDone=todays.filter(t=>t.done).length;
+  const overdue=open.filter(t=>t.due&&t.due<today).length;
   const hd=S.habits.filter(h=>logged(h.id,today)).length;
   const active=S.goals.filter(g=>!g.done).length;
   const best=S.habits.length?Math.max(...S.habits.map(streak)):0;
   const wk=S.goals.filter(g=>g.horizon==='weekly'&&g.period===currentPeriod('weekly'));
   return `<div class="stats">
-    <div class="card stat"><div class="n">${due.length}</div><div class="l">Tasks due / overdue</div></div>
+    <div class="card stat"><div class="n">${todaysDone}/${todays.length}</div><div class="l">Today's tasks done</div></div>
     <div class="card stat"><div class="n">${hd}/${S.habits.length}</div><div class="l">Habits done today</div></div>
     <div class="card stat"><div class="n">${active}</div><div class="l">Active goals</div></div>
     <div class="card stat"><div class="n">🔥 ${best}</div><div class="l">Best current streak</div></div>
@@ -415,10 +421,11 @@ function viewDash(){
   <div class="split"><div>${tasksChartCard()}</div><div>${ringsCard()}</div></div>
   ${consistencyCard()}
   <div class="grid2" style="margin-top:6px"><div>
-    <h2>Due today</h2>${due.length?`<ul class="list">${due.map(taskItem).join('')}</ul>`:`<div class="empty">Nothing due. Add tasks in the Tasks tab.</div>`}
+    <h2>Today's tasks</h2>${todays.length?`<ul class="list">${todays.map(taskItem).join('')}</ul>`:`<div class="empty">Nothing due today.</div>`}
+    ${overdue?`<button class="chip" style="margin-top:10px" data-action="see-overdue">${overdue} overdue from earlier days →</button>`:''}
     <h2>This week's goals</h2>${wk.length?`<div class="goals">${wk.map(goalCard).join('')}</div>`:`<div class="empty">No weekly goals for ${currentPeriod('weekly')}.</div>`}
   </div><div>
-    <h2>Habits</h2>${habitList(false)}
+    <h2>Today's habits</h2>${habitList(false)}
   </div></div>`;
 }
 function viewTasks(){
@@ -462,13 +469,22 @@ function viewHabits(){
   ${habitList(true)}`;
 }
 // Shared by the dashboard and Habits tab; honours the "hide done today" switch.
+// Dashboard row: just today — one big check button, streak and weekly progress.
+function habitToday(h){
+  const k=TODAY(),on=logged(h.id,k),s=streak(h);
+  return `<li class="item ${on?'done':''}">
+    <button class="tcheck ${on?'on':''}" data-action="toggle-log" data-id="${h.id}" data-date="${k}" aria-pressed="${on}" aria-label="${on?'Undo':'Check off'} ${esc(h.name)} for today">✓</button>
+    <div class="grow habit-open" data-action="open-habit" data-id="${h.id}" role="button" tabindex="0" title="Open history">
+      <div class="title">${esc(h.name)} <span class="chev">›</span></div>
+      <div class="meta"><span>🔥 ${s} day${s===1?'':'s'}</span><span>This week ${weekCount(h)}/${h.target||7}</span></div></div></li>`;
+}
 function habitList(full){
   if(!S.habits.length)return `<div class="empty">No habits yet.${full?' Tap a day to check it off.':''}</div>`;
   const today=TODAY();const doneToday=S.habits.filter(h=>logged(h.id,today)).length;
   const shown=S.hideDone?S.habits.filter(h=>!logged(h.id,today)):S.habits;
   const bar=`<div class="filters"><button class="chip ${S.hideDone?'on':''}" data-action="toggle-hide-done" aria-pressed="${S.hideDone}">${S.hideDone?'✓ Hiding done today':'Hide done today'}</button>
     <span class="meta" style="align-self:center">${doneToday}/${S.habits.length} done${S.hideDone&&doneToday?` · ${doneToday} hidden`:''}</span></div>`;
-  const list=shown.length?`<div class="goals">${shown.map(h=>habitCard(h,full)).join('')}</div>`:`<div class="allclear">All habits done for today 🎉</div>`;
+  const list=shown.length?(full?`<div class="goals">${shown.map(h=>habitCard(h,true)).join('')}</div>`:`<ul class="list">${shown.map(habitToday).join('')}</ul>`):`<div class="allclear">All habits done for today 🎉</div>`;
   return bar+list;
 }
 function viewData(){
@@ -545,7 +561,7 @@ dlg.addEventListener('submit',async e=>{
   const v=Object.fromEntries(new FormData(f));const id=f.dataset.id;const kind=f.dataset.edit;
   if(kind==='task'){const t=S.tasks.find(x=>x.id===id);const done=!!v.done;
     Object.assign(t,{title:v.title.trim(),due:v.due||null,priority:v.priority,goalId:v.goalId||null});
-    if(done!==t.done){t.done=done;t.doneAt=done?Date.now():null;if(done)Sound.play('task')}
+    if(done!==t.done){t.done=done;t.doneAt=done?Date.now():null;Sound.play(done?'task':'undo')}
     await DB.put('tasks',t)}
   if(kind==='goal'){const g=goalById(id);const old=g.horizon;
     Object.assign(g,{title:v.title.trim(),horizon:v.horizon,period:v.period.trim(),parentId:v.parentId||null,notes:(v.notes||'').trim(),done:!!v.done});
@@ -586,7 +602,7 @@ function drawHabit(){
 document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('[role=button][data-action]')){e.preventDefault();e.target.click()}});
 
 /* ---------- Version ---------- */
-const APP_VERSION='0.7.0';
+const APP_VERSION='0.8.0';
 
 /* ---------- Completion sounds (synthesised, no audio files) ---------- */
 const Sound={
@@ -598,14 +614,19 @@ const Sound={
     try{
       const C=this.ctx||(this.ctx=new (window.AudioContext||window.webkitAudioContext)());
       if(C.state==='suspended')C.resume();
-      // task: bright rising C–E–G arpeggio · habit: softer two-note "pop"
-      const notes=kind==='task'?[[1046.5,0],[1318.5,.07],[1568,.14]]:[[784,0],[1174.7,.08]];
+      // task: bright rising C–E–G · habit: softer two-note "pop" · undo: falling G–E♭–C "womp", last note sags
+      const S_={task:{n:[[1046.5,0],[1318.5,.07],[1568,.14]],len:.38,vol:.16},
+                habit:{n:[[784,0],[1174.7,.08]],len:.38,vol:.16},
+                undo:{n:[[392,0],[311.1,.16],[261.6,.32]],len:.5,vol:.13,sag:true}}[kind]||null;
+      if(!S_)return;
       const t0=C.currentTime+.01;
-      for(const[f,dt]of notes){
-        const o=C.createOscillator(),g=C.createGain();o.type='triangle';o.frequency.value=f;
-        g.gain.setValueAtTime(.0001,t0+dt);g.gain.exponentialRampToValueAtTime(.16,t0+dt+.012);g.gain.exponentialRampToValueAtTime(.0001,t0+dt+.38);
-        o.connect(g).connect(C.destination);o.start(t0+dt);o.stop(t0+dt+.42);
-      }
+      S_.n.forEach(([f,dt],i)=>{
+        const o=C.createOscillator(),g=C.createGain();o.type='triangle';o.frequency.setValueAtTime(f,t0+dt);
+        const last=i===S_.n.length-1,len=last&&S_.sag?S_.len*1.6:S_.len;
+        if(last&&S_.sag)o.frequency.exponentialRampToValueAtTime(f*.82,t0+dt+len);
+        g.gain.setValueAtTime(.0001,t0+dt);g.gain.exponentialRampToValueAtTime(S_.vol,t0+dt+.015);g.gain.exponentialRampToValueAtTime(.0001,t0+dt+len);
+        o.connect(g).connect(C.destination);o.start(t0+dt);o.stop(t0+dt+len+.05);
+      });
     }catch(e){}
   }
 };
@@ -615,10 +636,11 @@ try{S.hideDone=localStorage.getItem('gt-hide-done')==='1'}catch(e){S.hideDone=fa
 /* ---------- Actions ---------- */
 async function toggleLog(hid,date){
   const id=hid+'|'+date;
-  if(S.logs.has(id)){S.logs.delete(id);await DB.del('logs',id)}
+  if(S.logs.has(id)){S.logs.delete(id);await DB.del('logs',id);Sound.play('undo')}
   else{S.logs.add(id);await DB.put('logs',{id,habitId:hid,date});Sound.play('habit')}
 }
 const actions={
+  'see-overdue'(){S.taskFilter='open';S.view='tasks';scrollTo(0,0)},
   'open-habit'(el){openHabit(el.dataset.id);return false},
   async 'cal-toggle'(el){await toggleLog(cal.id,el.dataset.date);drawHabit()},
   'cal-month'(el){const d=new Date(cal.y,cal.m+(+el.dataset.d),1);cal.y=d.getFullYear();cal.m=d.getMonth();drawHabit();return false},
@@ -626,7 +648,7 @@ const actions={
   'edit-task'(el){openEdit('task',el.dataset.id);return false},
   'edit-goal'(el){openEdit('goal',el.dataset.id);return false},
   'edit-habit'(el){openEdit('habit',el.dataset.id);return false},
-  async 'toggle-task'(el){const t=S.tasks.find(x=>x.id===el.dataset.id);t.done=!t.done;t.doneAt=t.done?Date.now():null;if(t.done)Sound.play('task');await DB.put('tasks',t)},
+  async 'toggle-task'(el){const t=S.tasks.find(x=>x.id===el.dataset.id);t.done=!t.done;t.doneAt=t.done?Date.now():null;Sound.play(t.done?'task':'undo');await DB.put('tasks',t)},
   'toggle-hide-done'(){S.hideDone=!S.hideDone;try{localStorage.setItem('gt-hide-done',S.hideDone?'1':'0')}catch(e){}},
   'toggle-sound'(){Sound.set(!Sound.on);if(Sound.on)Sound.play('task')},
   async 'del-task'(el){S.tasks=S.tasks.filter(x=>x.id!==el.dataset.id);await DB.del('tasks',el.dataset.id)},
