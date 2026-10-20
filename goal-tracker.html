@@ -125,6 +125,28 @@ dialog#editDlg::backdrop{background:rgba(30,18,10,.45)}
 .dlg .check{display:flex;align-items:center;gap:8px;color:var(--text);font-size:14px;margin-top:12px}
 .dlg .check input{width:auto;accent-color:var(--accent)}
 .dlg-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
+/* ---------- Habit history ---------- */
+.habit-open{cursor:pointer}
+.habit-open .chev{color:var(--muted);font-weight:400}
+.hist-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.hist-top h3{margin:0;overflow-wrap:anywhere}
+.hist-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:12px 0 14px;text-align:center}
+.hist-stats div{background:var(--bg);border-radius:10px;padding:8px 4px}
+.hist-stats b{display:block;font-size:16px}
+.hist-stats span{font-size:11px;color:var(--muted)}
+.cal-nav{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.cal-nav .icon{font-size:24px;line-height:1;padding:2px 12px}
+.cal-nav .icon:disabled{opacity:.3;cursor:default}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
+.cal-wk{margin-bottom:4px;text-align:center;font-size:11px;color:var(--muted);font-weight:600}
+.cd{position:relative;aspect-ratio:1;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--text);font:600 13px system-ui,sans-serif;cursor:pointer;padding:0;touch-action:manipulation}
+.cd.on{background:var(--ok);border-color:var(--ok);color:var(--on-ok)}
+.cd.tod{outline:2px solid var(--accent);outline-offset:1px}
+.cd:disabled{opacity:.35;cursor:default}
+.cd .star{position:absolute;top:2px;right:3px;font-size:9px;font-style:normal;line-height:1;color:var(--warn)}
+.cd.on .star{color:var(--on-ok)}
+.star-inline{font-style:normal;color:var(--warn)}
+.cal-foot{margin-top:10px;justify-content:space-between}
 #tip{position:fixed;z-index:50;pointer-events:none;background:var(--text);color:var(--bg);font-size:12px;line-height:1.35;padding:6px 9px;border-radius:8px;white-space:nowrap;opacity:0;transition:opacity .1s;transform:translate(-50%,calc(-100% - 10px))}
 #tip.show{opacity:1}
 </style>
@@ -261,7 +283,7 @@ function habitCard(h,full){
   const s=streak(h);
   let heat='';if(full){for(let i=27;i>=0;i--){const k=ds(addDays(new Date(),-i));heat+=`<i class="${logged(h.id,k)?'on':''}" title="${k}"></i>`}}
   return `<div class="card"><div class="habit">
-    <div class="grow"><div class="title">${esc(h.name)}</div>
+    <div class="grow habit-open" data-action="open-habit" data-id="${h.id}" role="button" tabindex="0" title="Open history"><div class="title">${esc(h.name)} <span class="chev">›</span></div>
       <div class="meta"><span class="streak">🔥 ${s} day${s===1?'':'s'}</span>
         <span>This week ${weekCount(h)}/${h.target||7}</span>${full?`<span>30-day ${rate30(h)}%</span>`:''}</div></div>
     ${dayButtons(h)}
@@ -500,6 +522,34 @@ dlg.addEventListener('submit',async e=>{
   dlg.close();render();
 });
 
+/* ---------- Habit history dialog ---------- */
+let cal={id:null,y:0,m:0};
+function habitDates(h){return[...S.logs].filter(k=>k.startsWith(h.id+'|')).map(k=>k.slice(k.lastIndexOf('|')+1)).sort()}
+function bestStreak(h){let best=0,run=0,prev=null;
+  for(const d of habitDates(h)){const t=new Date(d+'T00:00');run=prev&&Math.round((t-prev)/864e5)===1?run+1:1;best=Math.max(best,run);prev=t}return best}
+function openHabit(id){const d=new Date();cal={id,y:d.getFullYear(),m:d.getMonth()};drawHabit();dlg.showModal();}
+function drawHabit(){
+  const h=S.habits.find(x=>x.id===cal.id);if(!h){dlg.close();return}
+  const now=new Date(),today=TODAY(),createdK=h.created?ds(new Date(h.created)):null;
+  const first=new Date(cal.y,cal.m,1),lead=(first.getDay()+6)%7,days=new Date(cal.y,cal.m+1,0).getDate();
+  let cells='<span></span>'.repeat(lead),monthCount=0;
+  for(let d=1;d<=days;d++){
+    const k=ds(new Date(cal.y,cal.m,d)),on=logged(h.id,k),star=k===createdK;if(on)monthCount++;
+    cells+=`<button type="button" class="cd ${on?'on':''} ${k===today?'tod':''}" ${k>today?'disabled':`data-action="cal-toggle" data-date="${k}"`} aria-pressed="${on}" aria-label="${k}${star?', habit created':''}">${d}${star?'<i class="star" aria-hidden="true">★</i>':''}</button>`;
+  }
+  const wk=[...Array(7)].map((_,i)=>`<span>${new Date(2024,0,1+i).toLocaleDateString(undefined,{weekday:'narrow'})}</span>`).join(''); // 1 Jan 2024 was a Monday
+  const atNow=cal.y===now.getFullYear()&&cal.m===now.getMonth();
+  const created=createdK?`<span><i class="star-inline">★</i> Created ${fmtDate(createdK)}${createdK.slice(0,4)!==today.slice(0,4)?', '+createdK.slice(0,4):''}</span>`:'';
+  dlg.innerHTML=`<div class="hist">
+    <div class="hist-top"><h3>${esc(h.name)}</h3><button type="button" class="icon" data-action="dlg-close" aria-label="Close">✕</button></div>
+    <div class="hist-stats"><div><b>🔥 ${streak(h)}</b><span>Current</span></div><div><b>${bestStreak(h)}</b><span>Best streak</span></div><div><b>${habitDates(h).length}</b><span>Total days</span></div><div><b>${rate30(h)}%</b><span>Last 30</span></div></div>
+    <div class="cal-nav"><button type="button" class="icon" data-action="cal-month" data-d="-1" aria-label="Previous month">‹</button><b>${first.toLocaleDateString(undefined,{month:'long',year:'numeric'})}</b><button type="button" class="icon" data-action="cal-month" data-d="1" ${atNow?'disabled':''} aria-label="Next month">›</button></div>
+    <div class="cal cal-wk">${wk}</div><div class="cal">${cells}</div>
+    <div class="meta cal-foot"><span>${monthCount} day${monthCount===1?'':'s'} this month</span>${created}</div>
+    <p class="meta">Tap any past day to check it off or undo it.</p></div>`;
+}
+document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('[role=button][data-action]')){e.preventDefault();e.target.click()}});
+
 /* ---------- Actions ---------- */
 async function toggleLog(hid,date){
   const id=hid+'|'+date;
@@ -507,6 +557,10 @@ async function toggleLog(hid,date){
   else{S.logs.add(id);await DB.put('logs',{id,habitId:hid,date})}
 }
 const actions={
+  'open-habit'(el){openHabit(el.dataset.id);return false},
+  async 'cal-toggle'(el){await toggleLog(cal.id,el.dataset.date);drawHabit()},
+  'cal-month'(el){const d=new Date(cal.y,cal.m+(+el.dataset.d),1);cal.y=d.getFullYear();cal.m=d.getMonth();drawHabit();return false},
+  'dlg-close'(){dlg.close();return false},
   'edit-task'(el){openEdit('task',el.dataset.id);return false},
   'edit-goal'(el){openEdit('goal',el.dataset.id);return false},
   'edit-habit'(el){openEdit('habit',el.dataset.id);return false},
