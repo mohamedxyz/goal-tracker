@@ -5,6 +5,8 @@
     PATCH = bug fix · MINOR = new feature · MAJOR = breaks old backups or data
 
   Changelog
+  0.13.0 Backup reminders: last-backup time on the Data tab, dashboard nudge (one-tap copy) when there is no backup or it is >7 days old,
+         ask the browser to protect storage from eviction and show whether it is; habit edit/delete buttons get aria-labels
   0.12.0 Habit folders: group habits into sections that turn green when every habit in them is done today; fanfare on finishing a folder
   0.11.0 Compact view toggle for the Habits tab (one tight row per habit, remembered)
   0.10.0 Goals rework: checkbox / number-target / built-from-sub-goals kinds; parents auto-complete only when all expected
@@ -236,6 +238,15 @@ form[data-kind=number] .f-num,form[data-kind=rollup] .f-roll{display:flex;flex-w
 .hf-bar{height:4px;border-radius:99px;background:var(--line);overflow:hidden;margin:0 2px 8px}
 .hfolder.collapsed .hf-bar{margin:6px 2px 0}
 .hf-bar span{display:block;height:100%;background:var(--ok);border-radius:99px;transition:width .25s}
+/* ---------- Backup reminders ---------- */
+.backup-cta{position:relative;display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:12px;padding-right:46px;border-color:color-mix(in oklab,var(--accent) 40%,var(--line));background:color-mix(in oklab,var(--accent) 8%,var(--card))}
+.backup-cta .grow{flex:1 1 220px}
+.backup-cta .btn{flex:none}
+.backup-cta .icon{position:absolute;top:8px;right:8px;min-width:32px;min-height:32px}
+.kstat{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:8px;font-size:13px}
+.kstat span{display:inline-flex;align-items:center;gap:6px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--muted);flex:none}
+.dot.ok{background:var(--ok)} .dot.warn{background:var(--warn)} .dot.bad{background:var(--bad)}
 #tip{position:fixed;z-index:50;pointer-events:none;background:var(--text);color:var(--bg);font-size:12px;line-height:1.35;padding:6px 9px;border-radius:8px;white-space:nowrap;opacity:0;transition:opacity .1s;transform:translate(-50%,calc(-100% - 10px))}
 #tip.show{opacity:1}
 </style>
@@ -423,7 +434,7 @@ function habitCard(h,full){
       <div class="meta"><span class="streak">🔥 ${s} day${s===1?'':'s'}</span>
         <span>This week ${weekCount(h)}/${h.target||7}</span>${full?`<span>30-day ${rate30(h)}%</span>`:''}</div></div>
     ${dayButtons(h)}
-    ${full?`<button class="icon" data-action="edit-habit" data-id="${h.id}" title="Edit">✎</button><button class="icon" data-action="del-habit" data-id="${h.id}" title="Delete">✕</button>`:''}
+    ${full?`<button class="icon" data-action="edit-habit" data-id="${h.id}" title="Edit" aria-label="Edit ${esc(h.name)}">✎</button><button class="icon" data-action="del-habit" data-id="${h.id}" title="Delete" aria-label="Delete ${esc(h.name)}">✕</button>`:''}
   </div>${full?`<div class="heat">${heat}</div>`:''}</div>`;
 }
 function goalCard(g){
@@ -536,7 +547,8 @@ function viewDash(){
   const nRv=S.goals.filter(needsReview).length;
   const best=S.habits.length?Math.max(...S.habits.map(streak)):0;
   const wk=S.goals.filter(g=>g.horizon==='weekly'&&g.period===currentPeriod('weekly'));
-  return `${nRv?`<div class="card review-cta"><div class="grow"><div class="title">${nRv} goal${nRv>1?'s':''} from past periods need${nRv>1?'':'s'} a review</div><div class="meta">Hit it, missed, or carry over. About a minute.</div></div><button class="btn" data-action="open-review">Review</button></div>`:''}<div class="stats">
+  const lb=daysSince(lastBackup());
+  return `${backupNudge()?`<div class="card backup-cta"><div class="grow"><div class="title">${lb===null?'No backup yet':'Last backup '+agoText(lb)}</div><div class="meta">Your data lives only in this browser. Copy a backup and keep it somewhere safe.</div></div><button class="btn" data-action="backup-copy">Copy backup</button><button class="icon" data-action="backup-snooze" title="Remind me later" aria-label="Dismiss backup reminder">✕</button></div>`:''}${nRv?`<div class="card review-cta"><div class="grow"><div class="title">${nRv} goal${nRv>1?'s':''} from past periods need${nRv>1?'':'s'} a review</div><div class="meta">Hit it, missed, or carry over. About a minute.</div></div><button class="btn" data-action="open-review">Review</button></div>`:''}<div class="stats">
     <div class="card stat"><div class="n">${todaysDone}/${todays.length}</div><div class="l">Today's tasks done</div></div>
     <div class="card stat"><div class="n">${hd}/${S.habits.length}</div><div class="l">Habits done today</div></div>
     <div class="card stat"><div class="n">${active}</div><div class="l">Active goals</div></div>
@@ -669,10 +681,14 @@ function archCard(t){
       ${kv('Created',fmtWhen(t.created)||'—')}${kv('Completed',t.done?(fmtWhen(t.doneAt)||'Yes'):'—')}${kv('Archived',fmtWhen(t.archivedAt)||'—')}</div></div>`;
 }
 function viewData(){
+  const lb=daysSince(lastBackup()),st=S.storage;
   return `<div class="card settings">
     <div class="title">Your data</div>
     <div class="meta">${S.tasks.length} tasks · ${S.goals.length} goals · ${S.habits.length} habits · ${S.logs.size} check-ins</div>
     <p class="meta">Stored in this browser's IndexedDB. Export regularly to back up or move to another device.</p>
+    <div class="kstat"><span><i class="dot ${lb===null?'bad':lb>BACKUP_STALE?'warn':'ok'}"></i>Last backup: <b>${agoText(lb)}</b></span>
+      <span><i class="dot ${st==='protected'?'ok':st==='unprotected'?'warn':''}"></i>Storage: <b>${st==='protected'?'protected':st==='unprotected'?'not protected':st==='unsupported'?'unknown':'checking…'}</b></span></div>
+    ${st==='unprotected'?`<p class="meta">The browser may clear this data if the phone runs low on space. Bookmarking the page or adding it to the home screen often lets it be protected. <button class="chip" data-action="storage-persist">Ask again</button></p>`:''}
     <p class="meta"><span>Version <b>${APP_VERSION}</b></span></p>
     <div class="row">
       <button class="ghost" data-action="export">Export JSON</button>
@@ -806,7 +822,7 @@ function drawHabit(){
 document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('[role=button][data-action]')){e.preventDefault();e.target.click()}});
 
 /* ---------- Version ---------- */
-const APP_VERSION='0.12.0';
+const APP_VERSION='0.13.0';
 
 /* ---------- Completion sounds (synthesised, no audio files) ---------- */
 const Sound={
@@ -840,6 +856,24 @@ try{S.hideDone=localStorage.getItem('gt-hide-done')==='1'}catch(e){S.hideDone=fa
 try{S.compact=localStorage.getItem('gt-compact')==='1'}catch(e){S.compact=false}
 try{S.collapsed=new Set(JSON.parse(localStorage.getItem('gt-collapsed')||'[]'))}catch(e){S.collapsed=new Set()}
 const saveCollapsed=()=>{try{localStorage.setItem('gt-collapsed',JSON.stringify([...S.collapsed]))}catch(e){}};
+/* ---------- Backup reminders & storage protection ---------- */
+const BACKUP_STALE=7;
+function lastBackup(){try{return+localStorage.getItem('gt-last-backup')||0}catch(e){return 0}}
+function markBackup(){try{localStorage.setItem('gt-last-backup',String(Date.now()))}catch(e){}}
+const daysSince=ts=>ts?Math.round((new Date(TODAY()+'T00:00')-new Date(ds(new Date(ts))+'T00:00'))/864e5):null;
+const agoText=n=>n===null?'never':n<=0?'today':n===1?'yesterday':n+' days ago';
+function backupDue(){const n=daysSince(lastBackup());return n===null||n>BACKUP_STALE}
+function backupNudge(){
+  if(!backupDue()||!(S.tasks.length+S.goals.length+S.habits.length))return false;
+  let snooze=0;try{snooze=+localStorage.getItem('gt-backup-snooze')||0}catch(e){}
+  return!(snooze&&Date.now()-snooze<3*864e5);
+}
+S.storage=null; // 'protected' | 'unprotected' | 'unsupported'
+async function checkStorage(ask){
+  try{const st=navigator.storage;if(!st||!st.persisted){S.storage='unsupported';return}
+    let p=await st.persisted();if(!p&&ask&&st.persist)p=await st.persist();S.storage=p?'protected':'unprotected'}
+  catch(e){S.storage='unsupported'}
+}
 
 /* ---------- Period-end review ---------- */
 function rvNote(g){const i=dlg.querySelector(`.rv-note[data-id="${g.id}"]`);const t=i&&i.value.trim();if(t)g.lesson=g.lesson?g.lesson+'\n'+t:t}
@@ -939,9 +973,12 @@ const actions={
     const a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();
     // Android saves downloads asynchronously; revoking the link too early leaves an empty file.
     setTimeout(()=>URL.revokeObjectURL(url),120000);
-    notify(`Saved ${name} (${(json.length/1024).toFixed(1)} KB) to Downloads.`);return false;
+    if(json.length>2)markBackup();
+    notify(`Saved ${name} (${(json.length/1024).toFixed(1)} KB) to Downloads.`);if(S.view==='data')render();return false;
   },
   'backup-copy'(){openBackup('copy');return false},
+  'backup-snooze'(){try{localStorage.setItem('gt-backup-snooze',String(Date.now()))}catch(e){}},
+  async 'storage-persist'(){await checkStorage(true);notify(S.storage==='protected'?'Storage is now protected ✓':'The browser declined for now. Keep regular backups.')},
   'backup-paste'(){openBackup('paste');return false},
   import(){$('#importFile').click();return false},
   async wipe(){if(!confirm('Erase all tasks, goals, habits and history? This cannot be undone.'))return false;
@@ -1002,8 +1039,10 @@ dlg.addEventListener('submit',async e=>{
   if(e.submitter&&e.submitter.value==='cancel'){dlg.close();return}
   const ta=f.elements.text;
   if(f.dataset.backup==='copy'){
-    try{await navigator.clipboard.writeText(ta.value)}catch(_){ta.select();document.execCommand('copy')}
-    if(e.submitter)e.submitter.textContent='Copied ✓';return;
+    let ok=false;
+    try{await navigator.clipboard.writeText(ta.value);ok=true}catch(_){try{ta.select();ok=document.execCommand('copy')}catch(__){}}
+    if(ok&&ta.value.length>2){markBackup();render()}
+    if(e.submitter)e.submitter.textContent=ok?'Copied ✓':'Select all and copy manually';return;
   }
   try{const n=await restore(ta.value,'pasted text');if(n){dlg.close();notify('Restored '+n+'.')}}
   catch(err){alert('Restore failed: '+err.message)}
@@ -1039,6 +1078,7 @@ setTheme(getTheme());
 (async()=>{
   $('#today').textContent=new Date().toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'});
   await load();render();
+  await checkStorage(true);if(S.view==='data')render();
 })();
 </script>
 </body>
