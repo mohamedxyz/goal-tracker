@@ -428,6 +428,8 @@ function viewData(){
     <div class="row">
       <button class="ghost" data-action="export">Export JSON</button>
       <button class="ghost" data-action="import">Import JSON</button>
+      <button class="ghost" data-action="backup-copy">Copy backup text</button>
+      <button class="ghost" data-action="backup-paste">Paste backup text</button>
       <button class="ghost" data-action="wipe" style="color:var(--bad)">Erase everything</button>
     </div></div>`;
 }
@@ -528,11 +530,15 @@ const actions={
     for(const k of [...S.logs].filter(k=>k.startsWith(id+'|'))){S.logs.delete(k);await DB.del('logs',k)}
   },
   export(){
-    const data={app:'goal-tracker',version:1,exported:new Date().toISOString(),tasks:S.tasks,goals:S.goals,habits:S.habits,
-      logs:[...S.logs].map(id=>{const i=id.lastIndexOf('|');return{id,habitId:id.slice(0,i),date:id.slice(i+1)}})};
-    const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));
-    a.download=`goal-tracker-${TODAY()}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);return false;
+    const json=JSON.stringify(backupData());const name=`goal-tracker-${TODAY()}.json`;
+    const url=URL.createObjectURL(new Blob([json],{type:'application/json'}));
+    const a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();
+    // Android saves downloads asynchronously; revoking the link too early leaves an empty file.
+    setTimeout(()=>URL.revokeObjectURL(url),120000);
+    notify(`Saved ${name} (${(json.length/1024).toFixed(1)} KB) to Downloads.`);return false;
   },
+  'backup-copy'(){openBackup('copy');return false},
+  'backup-paste'(){openBackup('paste');return false},
   import(){$('#importFile').click();return false},
   async wipe(){if(!confirm('Erase all tasks, goals, habits and history? This cannot be undone.'))return false;
     for(const s of STORES)await DB.clear(s);S.tasks=[];S.goals=[];S.habits=[];S.logs=new Set();}
@@ -556,15 +562,47 @@ document.addEventListener('submit',async e=>{
   render();
   const first=$('#app form input[type=text]');if(first)first.focus();
 });
+/* ---------- Backup & restore ---------- */
+function notify(m){typeof toast==='function'?toast(m):alert(m)}
+function backupData(){
+  return{app:'goal-tracker',version:1,exported:new Date().toISOString(),tasks:S.tasks,goals:S.goals,habits:S.habits,
+    logs:[...S.logs].map(id=>{const i=id.lastIndexOf('|');return{id,habitId:id.slice(0,i),date:id.slice(i+1)}})};
+}
+async function restore(text,source){
+  text=(text||'').replace(/^\uFEFF/,'').trim();
+  if(!text)throw new Error(source==='file'?'the file is empty (0 bytes), so the export never finished saving. Export again, or use "Copy backup text" instead.':'nothing was pasted.');
+  let d;
+  try{d=JSON.parse(text)}catch(e){throw new Error(`the ${source} is cut off or isn't valid JSON (${(text.length/1024).toFixed(1)} KB). Export it again, or use "Copy backup text" instead.`)}
+  if(!d||!Array.isArray(d.tasks)||!Array.isArray(d.goals))throw new Error("that isn't a Goal Tracker backup.");
+  const n=`${d.tasks.length} tasks, ${d.goals.length} goals, ${(d.habits||[]).length} habits, ${(d.logs||[]).length} check-ins`;
+  if(!confirm(`Replace all current data with this backup?\n\n${n}`))return false;
+  for(const s of STORES){await DB.clear(s);for(const row of (d[s]||[]))await DB.put(s,row)}
+  await load();render();return n;
+}
+function openBackup(mode){
+  const copy=mode==='copy';
+  dlg.innerHTML=`<form method="dialog" data-backup="${mode}"><h3>${copy?'Backup as text':'Restore from text'}</h3>
+    <p class="meta">${copy?'Copy this and paste it somewhere safe, like a note or a message to yourself.':'Paste a backup you copied earlier. This replaces all current data.'}</p>
+    <textarea name="text" spellcheck="false" style="min-height:180px;font:12px/1.4 ui-monospace,monospace" ${copy?'readonly':'placeholder="Paste backup here…"'}>${copy?esc(JSON.stringify(backupData())):''}</textarea>
+    <div class="dlg-actions"><button class="ghost" value="cancel" formnovalidate>Close</button><button class="btn" value="go">${copy?'Copy':'Restore'}</button></div></form>`;
+  dlg.showModal();
+  const ta=dlg.querySelector('textarea');copy?ta.select():ta.focus();
+}
+dlg.addEventListener('submit',async e=>{
+  const f=e.target.closest('form[data-backup]');if(!f)return;e.preventDefault();
+  if(e.submitter&&e.submitter.value==='cancel'){dlg.close();return}
+  const ta=f.elements.text;
+  if(f.dataset.backup==='copy'){
+    try{await navigator.clipboard.writeText(ta.value)}catch(_){ta.select();document.execCommand('copy')}
+    if(e.submitter)e.submitter.textContent='Copied ✓';return;
+  }
+  try{const n=await restore(ta.value,'pasted text');if(n){dlg.close();notify('Restored '+n+'.')}}
+  catch(err){alert('Restore failed: '+err.message)}
+});
 $('#importFile').addEventListener('change',async e=>{
   const file=e.target.files[0];if(!file)return;
-  try{
-    const d=JSON.parse(await file.text());
-    if(!Array.isArray(d.tasks)||!Array.isArray(d.goals))throw new Error('Not a Goal Tracker export');
-    if(!confirm('Replace all current data with this file?'))return;
-    for(const s of STORES){await DB.clear(s);for(const row of (d[s]||[]))await DB.put(s,row)}
-    await load();render();alert('Import complete.');
-  }catch(err){alert('Import failed: '+err.message)}
+  try{const n=await restore(await file.text(),'file');if(n)notify('Imported '+n+'.')}
+  catch(err){alert('Import failed: '+err.message)}
   finally{e.target.value=''}
 });
 
