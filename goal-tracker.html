@@ -5,6 +5,7 @@
     PATCH = bug fix · MINOR = new feature · MAJOR = breaks old backups or data
 
   Changelog
+  0.27.0 Removed the focus timer
   0.26.0 Task tag folders: give a task a tag and open tasks group into collapsible folders per tag with done counts; with "Hide done today" a habit folder disappears once everything in it is done
   0.25.0 Quality pass: timer clears itself if its goal was deleted; checked speed on 2 years of data with every new feature, old backups (no checklists/schedules/order) load and render in every view
   0.24.0 Reorder habits and folders: Habits tab → Reorder shows ▲▼ on every habit (within its folder) and every folder; order is remembered
@@ -92,7 +93,6 @@ ul.list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;ga
 .item.dim:hover,.item.dim:focus-within{opacity:.85}
 .subs{list-style:none;margin:6px 0 0;padding:0;display:grid;gap:2px}.subs label{display:flex;gap:8px;align-items:center;font-size:14px;min-height:28px}.subs .sdone span{text-decoration:line-through;color:var(--muted)}
 .srlist{display:grid;gap:6px;margin:10px 0;max-height:50vh;overflow:auto}.srow{display:flex;flex-direction:column;align-items:flex-start;text-align:left;gap:2px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 12px;color:inherit;font:inherit;cursor:pointer}.srow span{color:var(--muted);font-size:12px}
-#timerBtn{white-space:nowrap;background:none;border:0;font-size:16px;min-height:36px;padding:0 4px;cursor:pointer;color:inherit}
 #searchBtn{background:none;border:0;font-size:18px;min-width:36px;min-height:36px;cursor:pointer}
 .mv{display:inline-flex}.mv .icon{padding:0 6px}
 .tnotes{color:var(--muted);font-size:13px;margin-top:3px;white-space:pre-wrap;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
@@ -324,7 +324,7 @@ form[data-kind=number] .f-num,form[data-kind=rollup] .f-roll{display:flex;flex-w
 </head>
 <body>
 <header><div class="wrap">
-  <div class="top"><h1>Goal Tracker</h1><div class="right"><span class="date" id="today"></span><button id="timerBtn" type="button" aria-label="Focus timer" title="Focus timer">⏱</button><button id="searchBtn" type="button" aria-label="Search" title="Search">🔍</button><button id="themeBtn" type="button"></button></div></div>
+  <div class="top"><h1>Goal Tracker</h1><div class="right"><span class="date" id="today"></span><button id="searchBtn" type="button" aria-label="Search" title="Search">🔍</button><button id="themeBtn" type="button"></button></div></div>
   <nav id="nav">
     <button data-view="dash" class="on">Dashboard</button>
     <button data-view="tasks">Tasks</button>
@@ -949,7 +949,7 @@ function drawHabit(){
 document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('[role=button][data-action]')){e.preventDefault();e.target.click()}});
 
 /* ---------- Version ---------- */
-const APP_VERSION='0.26.0';
+const APP_VERSION='0.27.0';
 
 /* ---------- Completion sounds (synthesised, no audio files) ---------- */
 const Sound={
@@ -1284,43 +1284,6 @@ dlg.addEventListener('input',e=>{if(e.target.name!=='q'||!('search' in e.target.
 dlg.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.form&&('search' in e.target.form.dataset))e.preventDefault()});
 dlg.addEventListener('click',e=>{const b=e.target.closest('[data-sr]');if(!b)return;const [k,id]=b.dataset.sr.split(':');openEdit(k,id)});
 $('#searchBtn').addEventListener('click',openSearch);
-/* ---------- Focus timer ---------- */
-const TIMER_KEY='gt-timer';
-function getTimer(){try{const t=JSON.parse(localStorage.getItem(TIMER_KEY)||'null');return t&&t.goalId&&t.start?t:null}catch(e){return null}}
-function setTimer(t){try{t?localStorage.setItem(TIMER_KEY,JSON.stringify(t)):localStorage.removeItem(TIMER_KEY)}catch(e){}}
-function timeGoals(){return S.goals.filter(g=>!g.done&&goalKind(g)==='number'&&/hour|hr|min/i.test(g.unit||''))}
-function mmss(ms){const s=Math.floor(ms/1000),h=Math.floor(s/3600),m=Math.floor(s%3600/60),x=s%60;return (h?h+':'+String(m).padStart(2,'0'):m)+':'+String(x).padStart(2,'0')}
-function timerLabel(){const t=getTimer();$('#timerBtn').textContent=t?'⏱ '+Math.max(1,Math.round((Date.now()-t.start)/60000))+'m':'⏱'}
-let timerTick=null;
-function drawTimer(){
-  let t=getTimer();const goals=timeGoals();
-  const g=t&&goalById(t.goalId);if(t&&!g){setTimer(null);t=null;timerLabel()}
-  dlg.innerHTML=`<form method="dialog" data-timer><h3>Focus timer</h3>`+(t&&g?
-    `<p class="meta">Working on <b>${esc(g.title)}</b></p><div id="tClock" style="font-size:40px;font-weight:700;text-align:center;margin:10px 0">${mmss(Date.now()-t.start)}</div>
-     <div class="dlg-actions"><button type="button" class="ghost" data-timer-act="discard">Discard</button><button type="button" class="btn" data-timer-act="stop">Stop and log</button></div>`
-    :goals.length?`<label>Which goal?</label><select name="goalId">${goals.map(x=>`<option value="${x.id}">${esc(x.title)} (${esc(x.unit)})</option>`).join('')}</select>
-     <div class="dlg-actions"><button class="ghost" value="cancel" formnovalidate>Close</button><button type="button" class="btn" data-timer-act="start">Start</button></div>`
-    :`<div class="empty">No time goals yet. Make a number goal with the unit “hours” or “minutes” and it shows up here.</div><div class="dlg-actions"><button class="ghost" value="cancel" formnovalidate>Close</button></div>`)+`</form>`;
-  clearInterval(timerTick);
-  if(t&&g)timerTick=setInterval(()=>{const c=$('#tClock');if(!c||!dlg.open){clearInterval(timerTick);return}c.textContent=mmss(Date.now()-t.start)},1000);
-}
-function openTimer(){drawTimer();if(!dlg.open)dlg.showModal()}
-async function timerAct(a,f){
-  const t=getTimer();
-  if(a==='start'){const id=f.elements.goalId.value;setTimer({goalId:id,start:Date.now()});Sound.play('task')}
-  else if(a==='discard'){setTimer(null)}
-  else if(a==='stop'&&t){
-    const g=goalById(t.goalId);const ms=Date.now()-t.start;setTimer(null);
-    if(g&&ms>=60000){const mins=/min/i.test(g.unit)&&!/hour|hr/i.test(g.unit);const add=mins?ms/60000:ms/3600000;
-      g.value=Math.round(((+g.value||0)+add)*100)/100;await DB.put('goals',g);Sound.play('goal');toast(`⏱ Logged ${mins?Math.round(add)+' min':(add).toFixed(2)+' h'} to "${g.title}"`);render()}
-    else toast('Under a minute, so nothing was logged');
-  }
-  timerLabel();drawTimer();
-}
-dlg.addEventListener('click',e=>{const b=e.target.closest('[data-timer-act]');if(b)timerAct(b.dataset.timerAct,b.form)});
-dlg.addEventListener('close',()=>clearInterval(timerTick));
-$('#timerBtn').addEventListener('click',openTimer);
-timerLabel();setInterval(timerLabel,30000);
 /* ---------- Backup & restore ---------- */
 function notify(m){typeof toast==='function'?toast(m):alert(m)}
 function backupData(){
