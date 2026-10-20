@@ -5,6 +5,7 @@
     PATCH = bug fix · MINOR = new feature · MAJOR = breaks old backups or data
 
   Changelog
+  0.11.0 Compact view toggle for the Habits tab (one tight row per habit, remembered)
   0.10.0 Goals rework: checkbox / number-target / built-from-sub-goals kinds; parents auto-complete only when all expected
          sub-goals are done (cascades up, un-ticking reopens); period-end review (hit / missed / carry over); manual slider removed
   0.9.0  Completed tasks stay in the Tasks tab (dimmed, at the bottom); task notes; confirm before deleting; archive with full task details and "delete completed"
@@ -208,6 +209,17 @@ form[data-kind=number] .f-num,form[data-kind=rollup] .f-roll{display:flex;flex-w
 .rv .rv-note{width:100%;margin-top:8px;font-size:13px}
 #toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom));transform:translate(-50%,20px);opacity:0;pointer-events:none;z-index:60;background:var(--text);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:14px;box-shadow:0 10px 30px rgba(0,0,0,.25);transition:.2s;max-width:calc(100vw - 32px)}
 #toast.show{opacity:1;transform:translate(-50%,0)}
+/* ---------- Compact habits ---------- */
+.card.hcompact{padding:8px 12px}
+.hcompact .habit{flex-wrap:nowrap;gap:8px}
+.hcompact .habit .grow{flex:1 1 auto;min-width:0}
+.hcompact .title{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hcompact .meta{margin-top:0;font-size:11.5px}
+.hcompact .days{gap:3px;width:auto}
+.hcompact .day{width:26px;height:28px;border-radius:7px;font-size:0}
+.hcompact .day b{font-size:11px}
+.hcompact .icon{padding:2px 4px;font-size:13px}
+@media (max-width:520px){.hcompact .habit .days{width:auto;justify-content:flex-end}.hcompact .habit .day{flex:none}}
 #tip{position:fixed;z-index:50;pointer-events:none;background:var(--text);color:var(--bg);font-size:12px;line-height:1.35;padding:6px 9px;border-radius:8px;white-space:nowrap;opacity:0;transition:opacity .1s;transform:translate(-50%,calc(-100% - 10px))}
 #tip.show{opacity:1}
 </style>
@@ -384,6 +396,11 @@ function dayButtons(h,n=7){
 }
 function habitCard(h,full){
   const s=streak(h);
+  if(full&&S.compact)return `<div class="card hcompact"><div class="habit">
+    <div class="grow habit-open" data-action="open-habit" data-id="${h.id}" role="button" tabindex="0" title="Open history"><div class="title">${esc(h.name)}</div>
+      <div class="meta"><span class="streak">🔥${s}</span><span>${weekCount(h)}/${h.target||7} this wk</span></div></div>
+    ${dayButtons(h)}
+    <button class="icon" data-action="edit-habit" data-id="${h.id}" title="Edit" aria-label="Edit">✎</button></div></div>`;
   let heat='';if(full){for(let i=27;i>=0;i--){const k=ds(addDays(new Date(),-i));heat+=`<i class="${logged(h.id,k)?'on':''}" title="${k}"></i>`}}
   return `<div class="card"><div class="habit">
     <div class="grow habit-open" data-action="open-habit" data-id="${h.id}" role="button" tabindex="0" title="Open history"><div class="title">${esc(h.name)} <span class="chev">›</span></div>
@@ -589,6 +606,7 @@ function habitList(full){
   const today=TODAY();const doneToday=S.habits.filter(h=>logged(h.id,today)).length;
   const shown=S.hideDone?S.habits.filter(h=>!logged(h.id,today)):S.habits;
   const bar=`<div class="filters"><button class="chip ${S.hideDone?'on':''}" data-action="toggle-hide-done" aria-pressed="${S.hideDone}">${S.hideDone?'✓ Hiding done today':'Hide done today'}</button>
+    ${full?`<button class="chip ${S.compact?'on':''}" data-action="toggle-compact" aria-pressed="${S.compact}">${S.compact?'✓ Compact':'Compact'}</button>`:''}
     <span class="meta" style="align-self:center">${doneToday}/${S.habits.length} done${S.hideDone&&doneToday?` · ${doneToday} hidden`:''}</span></div>`;
   const list=shown.length?(full?`<div class="goals">${shown.map(h=>habitCard(h,true)).join('')}</div>`:`<ul class="list">${shown.map(habitToday).join('')}</ul>`):`<div class="allclear">All habits done for today 🎉</div>`;
   return bar+list;
@@ -750,7 +768,7 @@ function drawHabit(){
 document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('[role=button][data-action]')){e.preventDefault();e.target.click()}});
 
 /* ---------- Version ---------- */
-const APP_VERSION='0.10.0';
+const APP_VERSION='0.11.0';
 
 /* ---------- Completion sounds (synthesised, no audio files) ---------- */
 const Sound={
@@ -781,6 +799,7 @@ const Sound={
 };
 Sound.load();
 try{S.hideDone=localStorage.getItem('gt-hide-done')==='1'}catch(e){S.hideDone=false}
+try{S.compact=localStorage.getItem('gt-compact')==='1'}catch(e){S.compact=false}
 
 /* ---------- Period-end review ---------- */
 function rvNote(g){const i=dlg.querySelector(`.rv-note[data-id="${g.id}"]`);const t=i&&i.value.trim();if(t)g.lesson=g.lesson?g.lesson+'\n'+t:t}
@@ -830,6 +849,7 @@ const actions={
   'edit-habit'(el){openEdit('habit',el.dataset.id);return false},
   async 'toggle-task'(el){const t=S.tasks.find(x=>x.id===el.dataset.id);t.done=!t.done;t.doneAt=t.done?Date.now():null;Sound.play(t.done?'task':'undo');await DB.put('tasks',t)},
   'toggle-hide-done'(){S.hideDone=!S.hideDone;try{localStorage.setItem('gt-hide-done',S.hideDone?'1':'0')}catch(e){}},
+  'toggle-compact'(){S.compact=!S.compact;try{localStorage.setItem('gt-compact',S.compact?'1':'0')}catch(e){}},
   'toggle-sound'(){Sound.set(!Sound.on);if(Sound.on)Sound.play('task')},
   async 'del-task'(el){
     const t=S.tasks.find(x=>x.id===el.dataset.id);if(!t)return false;
