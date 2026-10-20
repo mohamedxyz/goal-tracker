@@ -116,6 +116,15 @@ ul.list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;ga
 .hbar .fill{height:100%;border-radius:99px;background:var(--ok)}
 .split{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 @media (max-width:720px){.split{grid-template-columns:1fr}}
+dialog#editDlg{border:1px solid var(--line);border-radius:16px;background:var(--card);color:var(--text);padding:18px;width:min(460px,calc(100vw - 32px));box-shadow:0 18px 50px rgba(40,20,5,.25)}
+dialog#editDlg::backdrop{background:rgba(30,18,10,.45)}
+.dlg h3{margin:0 0 14px;font-size:16px}
+.dlg label{display:block;font-size:12.5px;color:var(--muted);margin:10px 0 4px}
+.dlg input,.dlg select,.dlg textarea{width:100%}
+.dlg .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.dlg .check{display:flex;align-items:center;gap:8px;color:var(--text);font-size:14px;margin-top:12px}
+.dlg .check input{width:auto;accent-color:var(--accent)}
+.dlg-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
 #tip{position:fixed;z-index:50;pointer-events:none;background:var(--text);color:var(--bg);font-size:12px;line-height:1.35;padding:6px 9px;border-radius:8px;white-space:nowrap;opacity:0;transition:opacity .1s;transform:translate(-50%,calc(-100% - 10px))}
 #tip.show{opacity:1}
 </style>
@@ -134,6 +143,7 @@ ul.list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;ga
 <main class="wrap" id="app"></main>
 <input type="file" id="importFile" accept="application/json" hidden>
 <div id="tip" role="tooltip"></div>
+<dialog id="editDlg" class="dlg"></dialog>
 
 <script>
 /* ---------- Database (IndexedDB) ---------- */
@@ -237,6 +247,7 @@ function taskItem(t){
         ${t.priority&&t.priority!=='low'?`<span class="p-${t.priority}">${t.priority==='high'?'High':'Medium'} priority</span>`:''}
         ${g?`<span class="tag">${esc(g.title)}</span>`:''}
       </div></div>
+    <button class="icon" data-action="edit-task" data-id="${t.id}" title="Edit">✎</button>
     <button class="icon" data-action="del-task" data-id="${t.id}" title="Delete">✕</button></li>`;
 }
 function dayButtons(h,n=7){
@@ -254,7 +265,7 @@ function habitCard(h,full){
       <div class="meta"><span class="streak">🔥 ${s} day${s===1?'':'s'}</span>
         <span>This week ${weekCount(h)}/${h.target||7}</span>${full?`<span>30-day ${rate30(h)}%</span>`:''}</div></div>
     ${dayButtons(h)}
-    ${full?`<button class="icon" data-action="del-habit" data-id="${h.id}" title="Delete">✕</button>`:''}
+    ${full?`<button class="icon" data-action="edit-habit" data-id="${h.id}" title="Edit">✎</button><button class="icon" data-action="del-habit" data-id="${h.id}" title="Delete">✕</button>`:''}
   </div>${full?`<div class="heat">${heat}</div>`:''}</div>`;
 }
 function goalCard(g){
@@ -264,6 +275,7 @@ function goalCard(g){
     <div class="row"><div class="grow"><div class="title">${esc(g.title)}</div>
       <div class="meta"><span class="tag">${esc(g.period)}</span>${parent?`<span>↑ ${esc(parent.title)}</span>`:''}${kids?`<span>${kids} sub-goal${kids>1?'s':''}</span>`:''}</div></div>
       <button class="icon" data-action="done-goal" data-id="${g.id}" title="${g.done?'Reopen':'Mark complete'}">${g.done?'↺':'✓'}</button>
+      <button class="icon" data-action="edit-goal" data-id="${g.id}" title="Edit">✎</button>
       <button class="icon" data-action="del-goal" data-id="${g.id}" title="Delete">✕</button></div>
     <div class="bar"><span style="width:${p}%"></span></div>
     <div class="meta"><span>${p}%</span><span>${src}</span></div>
@@ -426,6 +438,66 @@ function render(){
   document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('on',b.dataset.view===S.view));
 }
 
+/* ---------- Edit dialog ---------- */
+const dlg=$('#editDlg');
+function parentOpts(h,sel,selfId){
+  const ph=PARENT[h];if(!ph)return null;
+  return `<option value="">— None —</option>`+S.goals.filter(g=>g.horizon===ph&&g.id!==selfId&&(!g.done||g.id===sel))
+    .map(g=>`<option value="${g.id}" ${g.id===sel?'selected':''}>${esc(g.title)} (${esc(g.period)})</option>`).join('');
+}
+function parentField(h,sel,selfId){
+  const o=parentOpts(h,sel,selfId);
+  return o?`<label>Supports which ${HORIZONS[PARENT[h]].toLowerCase()} goal?</label><select name="parentId">${o}</select>`:'';
+}
+function openEdit(kind,id){
+  let body='',title='';
+  if(kind==='task'){const t=S.tasks.find(x=>x.id===id);title='Edit task';
+    const goals=`<option value="">— No goal —</option>`+S.goals.filter(g=>!g.done||g.id===t.goalId).map(g=>`<option value="${g.id}" ${g.id===t.goalId?'selected':''}>${HORIZONS[g.horizon]} · ${esc(g.title)}</option>`).join('');
+    body=`<label>Title</label><input type="text" name="title" value="${esc(t.title)}" required>
+      <div class="two"><div><label>Due date</label><input type="date" name="due" value="${t.due||''}"></div>
+      <div><label>Priority</label><select name="priority">${[['low','Low'],['med','Medium'],['high','High']].map(([v,l])=>`<option value="${v}" ${t.priority===v?'selected':''}>${l}</option>`).join('')}</select></div></div>
+      <label>Linked goal</label><select name="goalId">${goals}</select>
+      <label class="check"><input type="checkbox" name="done" ${t.done?'checked':''}> Completed</label>`;
+  }
+  if(kind==='goal'){const g=goalById(id);title='Edit goal';
+    body=`<label>Title</label><input type="text" name="title" value="${esc(g.title)}" required>
+      <div class="two"><div><label>Horizon</label><select name="horizon">${Object.entries(HORIZONS).map(([k,l])=>`<option value="${k}" ${g.horizon===k?'selected':''}>${l}</option>`).join('')}</select></div>
+      <div><label>Period</label><input type="text" name="period" value="${esc(g.period)}" required></div></div>
+      <div id="parentWrap">${parentField(g.horizon,g.parentId,g.id)}</div>
+      <label>Notes</label><textarea name="notes">${esc(g.notes)}</textarea>
+      <label class="check"><input type="checkbox" name="done" ${g.done?'checked':''}> Completed</label>`;
+  }
+  if(kind==='habit'){const h=S.habits.find(x=>x.id===id);title='Edit habit';
+    body=`<label>Name</label><input type="text" name="name" value="${esc(h.name)}" required>
+      <label>Target</label><select name="target">${[7,6,5,4,3,2,1].map(n=>`<option value="${n}" ${(h.target||7)===n?'selected':''}>${n}× per week</option>`).join('')}</select>`;
+  }
+  dlg.innerHTML=`<form method="dialog" data-edit="${kind}" data-id="${id}"><h3>${title}</h3>${body}
+    <div class="dlg-actions"><button class="ghost" value="cancel" formnovalidate>Cancel</button><button class="btn" value="save">Save</button></div></form>`;
+  dlg.showModal();const f=dlg.querySelector('input[type=text]');f.focus();f.select();
+}
+dlg.addEventListener('change',e=>{
+  if(e.target.name!=='horizon')return;const f=e.target.form;const g=goalById(f.dataset.id);
+  const h=e.target.value;$('#parentWrap').innerHTML=parentField(h,g.horizon===h?g.parentId:'',g.id);
+  const p=f.elements.period;if(h!==g.horizon)p.value=currentPeriod(h);else p.value=g.period;
+});
+dlg.addEventListener('submit',async e=>{
+  const f=e.target.closest('form[data-edit]');if(!f)return;e.preventDefault();
+  if(e.submitter&&e.submitter.value==='cancel'){dlg.close();return}
+  const v=Object.fromEntries(new FormData(f));const id=f.dataset.id;const kind=f.dataset.edit;
+  if(kind==='task'){const t=S.tasks.find(x=>x.id===id);const done=!!v.done;
+    Object.assign(t,{title:v.title.trim(),due:v.due||null,priority:v.priority,goalId:v.goalId||null});
+    if(done!==t.done){t.done=done;t.doneAt=done?Date.now():null}
+    await DB.put('tasks',t)}
+  if(kind==='goal'){const g=goalById(id);const old=g.horizon;
+    Object.assign(g,{title:v.title.trim(),horizon:v.horizon,period:v.period.trim(),parentId:v.parentId||null,notes:(v.notes||'').trim(),done:!!v.done});
+    if(old!==g.horizon){ // keep the hierarchy valid: unlink sub-goals that no longer sit one level below
+      for(const c of S.goals.filter(c=>c.parentId===g.id&&PARENT[c.horizon]!==g.horizon)){c.parentId=null;await DB.put('goals',c)}
+    }
+    await DB.put('goals',g)}
+  if(kind==='habit'){const h=S.habits.find(x=>x.id===id);Object.assign(h,{name:v.name.trim(),target:+v.target});await DB.put('habits',h)}
+  dlg.close();render();
+});
+
 /* ---------- Actions ---------- */
 async function toggleLog(hid,date){
   const id=hid+'|'+date;
@@ -433,6 +505,9 @@ async function toggleLog(hid,date){
   else{S.logs.add(id);await DB.put('logs',{id,habitId:hid,date})}
 }
 const actions={
+  'edit-task'(el){openEdit('task',el.dataset.id);return false},
+  'edit-goal'(el){openEdit('goal',el.dataset.id);return false},
+  'edit-habit'(el){openEdit('habit',el.dataset.id);return false},
   async 'toggle-task'(el){const t=S.tasks.find(x=>x.id===el.dataset.id);t.done=!t.done;t.doneAt=t.done?Date.now():null;await DB.put('tasks',t)},
   async 'del-task'(el){S.tasks=S.tasks.filter(x=>x.id!==el.dataset.id);await DB.del('tasks',el.dataset.id)},
   'task-filter'(el){S.taskFilter=el.dataset.v},
