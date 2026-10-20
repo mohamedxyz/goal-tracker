@@ -1,0 +1,382 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Goal Tracker</title>
+<style>
+:root{--bg:#f5f4f0;--card:#fff;--text:#1c1c1f;--muted:#6c6c73;--line:#e3e1db;--accent:#4f46e5;--soft:#eceefe;--ok:#16a34a;--warn:#d97706;--bad:#dc2626;--radius:14px}
+@media (prefers-color-scheme:dark){:root{--bg:#111113;--card:#1b1b1f;--text:#ececf1;--muted:#9898a2;--line:#2b2b32;--accent:#8b93ff;--soft:#24264a}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--line)}
+.wrap{max-width:920px;margin:0 auto;padding:0 16px}
+.top{display:flex;align-items:center;justify-content:space-between;padding:14px 0 8px}
+.top h1{font-size:19px;margin:0;letter-spacing:-.01em}
+.top .date{color:var(--muted);font-size:13px}
+nav{display:flex;gap:4px;overflow-x:auto;padding-bottom:10px}
+nav button{flex:none;border:0;background:transparent;color:var(--muted);padding:7px 13px;border-radius:999px;font:inherit;cursor:pointer}
+nav button.on{background:var(--soft);color:var(--accent);font-weight:600}
+main{padding:18px 0 60px}
+h2{font-size:16px;margin:22px 0 10px}
+h2:first-child{margin-top:0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}
+.stat .n{font-size:24px;font-weight:700}
+.stat .l{color:var(--muted);font-size:12.5px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media (max-width:720px){.grid2{grid-template-columns:1fr}}
+form.add{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+input,select,textarea{font:inherit;color:var(--text);background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 10px;min-width:0}
+input[type=text],textarea{flex:1 1 220px}
+textarea{flex-basis:100%;min-height:54px;resize:vertical}
+button.btn{font:inherit;border:0;border-radius:10px;padding:8px 14px;background:var(--accent);color:#fff;cursor:pointer;font-weight:600}
+button.ghost{font:inherit;border:1px solid var(--line);border-radius:10px;padding:7px 12px;background:var(--card);color:var(--text);cursor:pointer}
+button.icon{border:0;background:transparent;color:var(--muted);cursor:pointer;font-size:15px;padding:4px 6px;border-radius:8px}
+button.icon:hover{background:var(--soft);color:var(--text)}
+ul.list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.item{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.item input[type=checkbox]{width:18px;height:18px;accent-color:var(--accent);flex:none}
+.grow{flex:1;min-width:0}
+.title{font-weight:550;overflow-wrap:anywhere}
+.meta{color:var(--muted);font-size:12.5px;display:flex;flex-wrap:wrap;gap:4px 10px;margin-top:2px}
+.done .title{text-decoration:line-through;color:var(--muted)}
+.tag{padding:1px 7px;border-radius:999px;background:var(--soft);color:var(--accent);font-size:11.5px}
+.p-high{color:var(--bad)} .p-med{color:var(--warn)} .overdue{color:var(--bad);font-weight:600}
+.seg{display:flex;gap:4px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:4px;margin-bottom:14px;overflow-x:auto}
+.seg button{flex:1;border:0;background:transparent;color:var(--muted);padding:7px 10px;border-radius:9px;font:inherit;cursor:pointer;white-space:nowrap}
+.seg button.on{background:var(--accent);color:#fff;font-weight:600}
+.goals{display:flex;flex-direction:column;gap:10px}
+.goal .row{display:flex;gap:8px;align-items:flex-start}
+.bar{height:8px;background:var(--line);border-radius:99px;overflow:hidden;margin:10px 0 4px}
+.bar span{display:block;height:100%;background:var(--accent);border-radius:99px;transition:width .25s}
+.goal.isdone .bar span{background:var(--ok)}
+.goal.isdone .title{color:var(--muted);text-decoration:line-through}
+.goal input[type=range]{width:100%;accent-color:var(--accent);padding:0;border:0;background:transparent}
+.notes{color:var(--muted);font-size:13px;margin-top:6px;white-space:pre-wrap}
+.habit{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.days{display:flex;gap:5px}
+.day{width:34px;height:40px;border:1px solid var(--line);border-radius:9px;background:var(--card);color:var(--muted);font:600 11px/1.1 inherit;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.day b{font-size:13px;color:var(--text)}
+.day.on{background:var(--ok);border-color:var(--ok);color:#fff}
+.day.on b{color:#fff}
+.day.today{outline:2px solid var(--accent);outline-offset:1px}
+.heat{display:grid;grid-template-columns:repeat(28,1fr);gap:3px;width:100%;margin-top:8px}
+.heat i{aspect-ratio:1;border-radius:3px;background:var(--line)}
+.heat i.on{background:var(--ok)}
+.streak{font-weight:700}
+.empty{color:var(--muted);text-align:center;padding:18px;border:1px dashed var(--line);border-radius:12px}
+.filters{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.chip{border:1px solid var(--line);background:var(--card);color:var(--muted);border-radius:999px;padding:5px 12px;font:inherit;font-size:13px;cursor:pointer}
+.chip.on{border-color:var(--accent);color:var(--accent);font-weight:600}
+.banner{background:#fef3c7;color:#78350f;padding:8px 12px;border-radius:10px;margin-bottom:12px;font-size:13px}
+.settings .row{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+</style>
+</head>
+<body>
+<header><div class="wrap">
+  <div class="top"><h1>Goal Tracker</h1><span class="date" id="today"></span></div>
+  <nav id="nav">
+    <button data-view="dash" class="on">Dashboard</button>
+    <button data-view="tasks">Tasks</button>
+    <button data-view="goals">Goals</button>
+    <button data-view="habits">Habits</button>
+    <button data-view="data">Data</button>
+  </nav>
+</div></header>
+<main class="wrap" id="app"></main>
+<input type="file" id="importFile" accept="application/json" hidden>
+
+<script>
+/* ---------- Database (IndexedDB) ---------- */
+const STORES=['tasks','goals','habits','logs'];
+const DB={
+  db:null, mem:null,
+  open(){
+    return new Promise(res=>{
+      try{
+        const r=indexedDB.open('goal-tracker-db',1);
+        r.onupgradeneeded=()=>{const d=r.result;STORES.forEach(s=>{if(!d.objectStoreNames.contains(s))d.createObjectStore(s,{keyPath:'id'})})};
+        r.onsuccess=()=>{this.db=r.result;res(true)};
+        r.onerror=()=>{this.useMemory();res(false)};
+      }catch(e){this.useMemory();res(false)}
+    });
+  },
+  useMemory(){this.mem={};STORES.forEach(s=>this.mem[s]=new Map())},
+  req(store,mode,fn){
+    if(this.mem){return Promise.resolve(fn(null))}
+    return new Promise((res,rej)=>{
+      const t=this.db.transaction(store,mode);const r=fn(t.objectStore(store));
+      t.oncomplete=()=>res(r&&'result' in r?r.result:undefined);t.onerror=()=>rej(t.error);
+    });
+  },
+  all(s){return this.mem?Promise.resolve([...this.mem[s].values()]):this.req(s,'readonly',st=>st.getAll())},
+  put(s,v){if(this.mem){this.mem[s].set(v.id,v);return Promise.resolve()}return this.req(s,'readwrite',st=>st.put(v))},
+  del(s,id){if(this.mem){this.mem[s].delete(id);return Promise.resolve()}return this.req(s,'readwrite',st=>st.delete(id))},
+  clear(s){if(this.mem){this.mem[s].clear();return Promise.resolve()}return this.req(s,'readwrite',st=>st.clear())}
+};
+
+/* ---------- Helpers ---------- */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const pad=n=>String(n).padStart(2,'0');
+const ds=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const addDays=(d,n)=>{const x=new Date(d);x.setDate(x.getDate()+n);return x};
+const TODAY=()=>ds(new Date());
+function isoWeek(d){
+  const t=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));
+  const day=t.getUTCDay()||7;t.setUTCDate(t.getUTCDate()+4-day);
+  const y=t.getUTCFullYear();const w=Math.ceil(((t-Date.UTC(y,0,1))/864e5+1)/7);
+  return `${y}-W${pad(w)}`;
+}
+const HORIZONS={weekly:'Weekly',monthly:'Monthly',annual:'Annual',five:'5-Year'};
+const PARENT={weekly:'monthly',monthly:'annual',annual:'five',five:null};
+function currentPeriod(h){
+  const d=new Date(),y=d.getFullYear();
+  return h==='weekly'?isoWeek(d):h==='monthly'?ds(d).slice(0,7):h==='annual'?String(y):`${y}-${y+4}`;
+}
+const fmtDate=s=>{if(!s)return'';const d=new Date(s+'T00:00');return d.toLocaleDateString(undefined,{month:'short',day:'numeric'})};
+
+/* ---------- State ---------- */
+const S={tasks:[],goals:[],habits:[],logs:new Set(),view:'dash',horizon:'weekly',goalScope:'current',taskFilter:'open',persistent:true};
+
+async function load(){
+  S.persistent=await DB.open();
+  const [t,g,h,l]=await Promise.all(STORES.map(s=>DB.all(s)));
+  S.tasks=t;S.goals=g;S.habits=h;S.logs=new Set(l.map(x=>x.id));
+}
+
+/* ---------- Logic ---------- */
+const goalById=id=>S.goals.find(g=>g.id===id);
+function progress(g,seen=new Set()){
+  if(g.done)return 100;
+  if(seen.has(g.id))return g.progress||0; seen.add(g.id);
+  const tasks=S.tasks.filter(t=>t.goalId===g.id);
+  if(tasks.length)return Math.round(tasks.filter(t=>t.done).length/tasks.length*100);
+  const kids=S.goals.filter(c=>c.parentId===g.id);
+  if(kids.length)return Math.round(kids.reduce((a,c)=>a+progress(c,seen),0)/kids.length);
+  return g.progress||0;
+}
+function progressSource(g){
+  if(g.done)return'completed';
+  const n=S.tasks.filter(t=>t.goalId===g.id).length;
+  if(n)return`from ${n} linked task${n>1?'s':''}`;
+  const k=S.goals.filter(c=>c.parentId===g.id).length;
+  if(k)return`from ${k} sub-goal${k>1?'s':''}`;
+  return'manual';
+}
+const logged=(hid,date)=>S.logs.has(hid+'|'+date);
+function streak(h){
+  let d=new Date();if(!logged(h.id,ds(d)))d=addDays(d,-1);
+  let n=0;while(logged(h.id,ds(d))){n++;d=addDays(d,-1)}return n;
+}
+function weekCount(h){
+  const d=new Date();const dow=(d.getDay()+6)%7;let n=0;
+  for(let i=0;i<=dow;i++)if(logged(h.id,ds(addDays(d,-i))))n++;return n;
+}
+function rate30(h){let n=0;for(let i=0;i<30;i++)if(logged(h.id,ds(addDays(new Date(),-i))))n++;return Math.round(n/30*100)}
+
+/* ---------- Components ---------- */
+function taskItem(t){
+  const g=t.goalId&&goalById(t.goalId);const today=TODAY();
+  const overdue=!t.done&&t.due&&t.due<today;
+  return `<li class="item ${t.done?'done':''}">
+    <input type="checkbox" data-action="toggle-task" data-id="${t.id}" ${t.done?'checked':''} aria-label="Complete">
+    <div class="grow"><div class="title">${esc(t.title)}</div>
+      <div class="meta">
+        ${t.due?`<span class="${overdue?'overdue':''}">${overdue?'Overdue · ':''}${t.due===today?'Today':fmtDate(t.due)}</span>`:''}
+        ${t.priority&&t.priority!=='low'?`<span class="p-${t.priority}">${t.priority==='high'?'High':'Medium'} priority</span>`:''}
+        ${g?`<span class="tag">${esc(g.title)}</span>`:''}
+      </div></div>
+    <button class="icon" data-action="del-task" data-id="${t.id}" title="Delete">✕</button></li>`;
+}
+function dayButtons(h,n=7){
+  const today=TODAY();let out='';
+  for(let i=n-1;i>=0;i--){const d=addDays(new Date(),-i);const k=ds(d);
+    out+=`<button class="day ${logged(h.id,k)?'on':''} ${k===today?'today':''}" data-action="toggle-log" data-id="${h.id}" data-date="${k}" title="${k}">
+      ${d.toLocaleDateString(undefined,{weekday:'narrow'})}<b>${d.getDate()}</b></button>`}
+  return `<div class="days">${out}</div>`;
+}
+function habitCard(h,full){
+  const s=streak(h);
+  let heat='';if(full){for(let i=27;i>=0;i--){const k=ds(addDays(new Date(),-i));heat+=`<i class="${logged(h.id,k)?'on':''}" title="${k}"></i>`}}
+  return `<div class="card"><div class="habit">
+    <div class="grow"><div class="title">${esc(h.name)}</div>
+      <div class="meta"><span class="streak">🔥 ${s} day${s===1?'':'s'}</span>
+        <span>This week ${weekCount(h)}/${h.target||7}</span>${full?`<span>30-day ${rate30(h)}%</span>`:''}</div></div>
+    ${dayButtons(h)}
+    ${full?`<button class="icon" data-action="del-habit" data-id="${h.id}" title="Delete">✕</button>`:''}
+  </div>${full?`<div class="heat">${heat}</div>`:''}</div>`;
+}
+function goalCard(g){
+  const p=progress(g);const src=progressSource(g);const parent=g.parentId&&goalById(g.parentId);
+  const kids=S.goals.filter(c=>c.parentId===g.id).length;
+  return `<div class="card goal ${g.done?'isdone':''}">
+    <div class="row"><div class="grow"><div class="title">${esc(g.title)}</div>
+      <div class="meta"><span class="tag">${esc(g.period)}</span>${parent?`<span>↑ ${esc(parent.title)}</span>`:''}${kids?`<span>${kids} sub-goal${kids>1?'s':''}</span>`:''}</div></div>
+      <button class="icon" data-action="done-goal" data-id="${g.id}" title="${g.done?'Reopen':'Mark complete'}">${g.done?'↺':'✓'}</button>
+      <button class="icon" data-action="del-goal" data-id="${g.id}" title="Delete">✕</button></div>
+    <div class="bar"><span style="width:${p}%"></span></div>
+    <div class="meta"><span>${p}%</span><span>${src}</span></div>
+    ${src==='manual'?`<input type="range" min="0" max="100" step="5" value="${p}" data-action="goal-progress" data-id="${g.id}" aria-label="Progress">`:''}
+    ${g.notes?`<div class="notes">${esc(g.notes)}</div>`:''}
+  </div>`;
+}
+const goalOptions=(sel,filter=()=>true)=>`<option value="">— No goal —</option>`+
+  S.goals.filter(g=>!g.done&&filter(g)).map(g=>`<option value="${g.id}" ${g.id===sel?'selected':''}>${HORIZONS[g.horizon]} · ${esc(g.title)}</option>`).join('');
+
+/* ---------- Views ---------- */
+function viewDash(){
+  const today=TODAY();
+  const open=S.tasks.filter(t=>!t.done);
+  const due=open.filter(t=>t.due&&t.due<=today).sort((a,b)=>a.due.localeCompare(b.due));
+  const hd=S.habits.filter(h=>logged(h.id,today)).length;
+  const active=S.goals.filter(g=>!g.done).length;
+  const best=S.habits.length?Math.max(...S.habits.map(streak)):0;
+  const wk=S.goals.filter(g=>g.horizon==='weekly'&&g.period===currentPeriod('weekly'));
+  return `<div class="stats">
+    <div class="card stat"><div class="n">${due.length}</div><div class="l">Tasks due / overdue</div></div>
+    <div class="card stat"><div class="n">${hd}/${S.habits.length}</div><div class="l">Habits done today</div></div>
+    <div class="card stat"><div class="n">${active}</div><div class="l">Active goals</div></div>
+    <div class="card stat"><div class="n">🔥 ${best}</div><div class="l">Best current streak</div></div>
+  </div>
+  <div class="grid2"><div>
+    <h2>Due today</h2>${due.length?`<ul class="list">${due.map(taskItem).join('')}</ul>`:`<div class="empty">Nothing due. Add tasks in the Tasks tab.</div>`}
+    <h2>This week's goals</h2>${wk.length?`<div class="goals">${wk.map(goalCard).join('')}</div>`:`<div class="empty">No weekly goals for ${currentPeriod('weekly')}.</div>`}
+  </div><div>
+    <h2>Habits</h2>${S.habits.length?`<div class="goals">${S.habits.map(h=>habitCard(h,false)).join('')}</div>`:`<div class="empty">No habits yet.</div>`}
+  </div></div>`;
+}
+function viewTasks(){
+  const today=TODAY();const f=S.taskFilter;
+  let list=S.tasks.filter(t=>f==='done'?t.done:f==='all'?true:!t.done);
+  if(f==='today')list=list.filter(t=>t.due&&t.due<=today);
+  list.sort((a,b)=>(a.done-b.done)||((a.due||'9999').localeCompare(b.due||'9999'))||(({high:0,med:1,low:2}[a.priority]??2)-({high:0,med:1,low:2}[b.priority]??2)));
+  const chip=(k,l)=>`<button class="chip ${f===k?'on':''}" data-action="task-filter" data-v="${k}">${l}</button>`;
+  return `<form class="add" data-form="task">
+    <input type="text" name="title" placeholder="New task…" required>
+    <input type="date" name="due" value="${today}">
+    <select name="priority"><option value="low">Low</option><option value="med">Medium</option><option value="high">High</option></select>
+    <select name="goalId">${goalOptions('')}</select>
+    <button class="btn">Add</button></form>
+  <div class="filters">${chip('open','Open')}${chip('today','Due today')}${chip('done','Done')}${chip('all','All')}</div>
+  ${list.length?`<ul class="list">${list.map(taskItem).join('')}</ul>`:`<div class="empty">No tasks here.</div>`}`;
+}
+function viewGoals(){
+  const h=S.horizon;const cur=currentPeriod(h);const ph=PARENT[h];
+  let list=S.goals.filter(g=>g.horizon===h);
+  if(S.goalScope==='current')list=list.filter(g=>g.period===cur);
+  list.sort((a,b)=>(a.done-b.done)||b.period.localeCompare(a.period));
+  const seg=Object.entries(HORIZONS).map(([k,l])=>`<button class="${k===h?'on':''}" data-action="horizon" data-v="${k}">${l}</button>`).join('');
+  return `<div class="seg">${seg}</div>
+  <form class="add" data-form="goal">
+    <input type="text" name="title" placeholder="New ${HORIZONS[h].toLowerCase()} goal…" required>
+    <input type="text" name="period" value="${cur}" style="flex:0 1 130px" title="Period">
+    ${ph?`<select name="parentId">${goalOptions('',g=>g.horizon===ph).replace('— No goal —','— Supports which '+HORIZONS[ph].toLowerCase()+' goal? —')}</select>`:''}
+    <textarea name="notes" placeholder="Why it matters / how you'll measure it (optional)"></textarea>
+    <button class="btn">Add goal</button></form>
+  <div class="filters">
+    <button class="chip ${S.goalScope==='current'?'on':''}" data-action="goal-scope" data-v="current">Current (${cur})</button>
+    <button class="chip ${S.goalScope==='all'?'on':''}" data-action="goal-scope" data-v="all">All periods</button></div>
+  ${list.length?`<div class="goals">${list.map(goalCard).join('')}</div>`:`<div class="empty">No ${HORIZONS[h].toLowerCase()} goals yet.</div>`}`;
+}
+function viewHabits(){
+  return `<form class="add" data-form="habit">
+    <input type="text" name="name" placeholder="New habit (e.g. Code 1 hour)…" required>
+    <select name="target" title="Target days per week">${[7,6,5,4,3,2,1].map(n=>`<option value="${n}">${n}×/week</option>`).join('')}</select>
+    <button class="btn">Add habit</button></form>
+  ${S.habits.length?`<div class="goals">${S.habits.map(h=>habitCard(h,true)).join('')}</div>`:`<div class="empty">No habits yet. Tap a day to check it off.</div>`}`;
+}
+function viewData(){
+  return `<div class="card settings">
+    <div class="title">Your data</div>
+    <div class="meta">${S.tasks.length} tasks · ${S.goals.length} goals · ${S.habits.length} habits · ${S.logs.size} check-ins</div>
+    <p class="meta">Stored in this browser's IndexedDB. Export regularly to back up or move to another device.</p>
+    <div class="row">
+      <button class="ghost" data-action="export">Export JSON</button>
+      <button class="ghost" data-action="import">Import JSON</button>
+      <button class="ghost" data-action="wipe" style="color:var(--bad)">Erase everything</button>
+    </div></div>`;
+}
+
+function render(){
+  const v={dash:viewDash,tasks:viewTasks,goals:viewGoals,habits:viewHabits,data:viewData}[S.view];
+  $('#app').innerHTML=(S.persistent?'':`<div class="banner">This browser blocked storage — data will be lost on reload. Use Export to save it.</div>`)+v();
+  document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('on',b.dataset.view===S.view));
+}
+
+/* ---------- Actions ---------- */
+async function toggleLog(hid,date){
+  const id=hid+'|'+date;
+  if(S.logs.has(id)){S.logs.delete(id);await DB.del('logs',id)}
+  else{S.logs.add(id);await DB.put('logs',{id,habitId:hid,date})}
+}
+const actions={
+  async 'toggle-task'(el){const t=S.tasks.find(x=>x.id===el.dataset.id);t.done=!t.done;t.doneAt=t.done?Date.now():null;await DB.put('tasks',t)},
+  async 'del-task'(el){S.tasks=S.tasks.filter(x=>x.id!==el.dataset.id);await DB.del('tasks',el.dataset.id)},
+  'task-filter'(el){S.taskFilter=el.dataset.v},
+  horizon(el){S.horizon=el.dataset.v},
+  'goal-scope'(el){S.goalScope=el.dataset.v},
+  async 'done-goal'(el){const g=goalById(el.dataset.id);g.done=!g.done;await DB.put('goals',g)},
+  async 'goal-progress'(el){const g=goalById(el.dataset.id);g.progress=+el.value;await DB.put('goals',g)},
+  async 'del-goal'(el){
+    const id=el.dataset.id;if(!confirm('Delete this goal? Linked tasks and sub-goals are kept but unlinked.'))return false;
+    for(const t of S.tasks.filter(t=>t.goalId===id)){t.goalId=null;await DB.put('tasks',t)}
+    for(const c of S.goals.filter(c=>c.parentId===id)){c.parentId=null;await DB.put('goals',c)}
+    S.goals=S.goals.filter(g=>g.id!==id);await DB.del('goals',id);
+  },
+  async 'toggle-log'(el){await toggleLog(el.dataset.id,el.dataset.date)},
+  async 'del-habit'(el){
+    const id=el.dataset.id;if(!confirm('Delete this habit and its history?'))return false;
+    S.habits=S.habits.filter(h=>h.id!==id);await DB.del('habits',id);
+    for(const k of [...S.logs].filter(k=>k.startsWith(id+'|'))){S.logs.delete(k);await DB.del('logs',k)}
+  },
+  export(){
+    const data={app:'goal-tracker',version:1,exported:new Date().toISOString(),tasks:S.tasks,goals:S.goals,habits:S.habits,
+      logs:[...S.logs].map(id=>{const i=id.lastIndexOf('|');return{id,habitId:id.slice(0,i),date:id.slice(i+1)}})};
+    const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));
+    a.download=`goal-tracker-${TODAY()}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);return false;
+  },
+  import(){$('#importFile').click();return false},
+  async wipe(){if(!confirm('Erase all tasks, goals, habits and history? This cannot be undone.'))return false;
+    for(const s of STORES)await DB.clear(s);S.tasks=[];S.goals=[];S.habits=[];S.logs=new Set();}
+};
+
+document.addEventListener('click',async e=>{
+  const nav=e.target.closest('#nav button');if(nav){S.view=nav.dataset.view;render();return}
+  const el=e.target.closest('[data-action]');if(!el||el.type==='checkbox'||el.type==='range')return;
+  const fn=actions[el.dataset.action];if(fn&&(await fn(el))!==false)render();
+});
+document.addEventListener('change',async e=>{
+  const el=e.target.closest('[data-action]');
+  if(el&&(el.type==='checkbox'||el.type==='range')){await actions[el.dataset.action](el);render()}
+});
+document.addEventListener('submit',async e=>{
+  const f=e.target.closest('form[data-form]');if(!f)return;e.preventDefault();
+  const v=Object.fromEntries(new FormData(f));const kind=f.dataset.form;
+  if(kind==='task'){const t={id:uid(),title:v.title.trim(),due:v.due||null,priority:v.priority,goalId:v.goalId||null,done:false,created:Date.now()};S.tasks.push(t);await DB.put('tasks',t)}
+  if(kind==='goal'){const g={id:uid(),title:v.title.trim(),horizon:S.horizon,period:(v.period||currentPeriod(S.horizon)).trim(),parentId:v.parentId||null,notes:(v.notes||'').trim(),progress:0,done:false,created:Date.now()};S.goals.push(g);await DB.put('goals',g)}
+  if(kind==='habit'){const h={id:uid(),name:v.name.trim(),target:+v.target,created:Date.now()};S.habits.push(h);await DB.put('habits',h)}
+  render();
+  const first=$('#app form input[type=text]');if(first)first.focus();
+});
+$('#importFile').addEventListener('change',async e=>{
+  const file=e.target.files[0];if(!file)return;
+  try{
+    const d=JSON.parse(await file.text());
+    if(!Array.isArray(d.tasks)||!Array.isArray(d.goals))throw new Error('Not a Goal Tracker export');
+    if(!confirm('Replace all current data with this file?'))return;
+    for(const s of STORES){await DB.clear(s);for(const row of (d[s]||[]))await DB.put(s,row)}
+    await load();render();alert('Import complete.');
+  }catch(err){alert('Import failed: '+err.message)}
+  finally{e.target.value=''}
+});
+
+(async()=>{
+  $('#today').textContent=new Date().toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'});
+  await load();render();
+})();
+</script>
+</body>
+</html>
