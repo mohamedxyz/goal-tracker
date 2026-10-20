@@ -60,6 +60,8 @@ ul.list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;ga
 .notes{color:var(--muted);font-size:13px;margin-top:6px;white-space:pre-wrap}
 .habit{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
 .days{display:flex;gap:5px}
+.habit .grow{flex:1 1 150px}
+@media (max-width:520px){.habit .days{width:100%;justify-content:space-between}.habit .day{flex:1;max-width:44px}}
 .day{width:34px;height:40px;border:1px solid var(--line);border-radius:9px;background:var(--card);color:var(--muted);font:600 11px/1.1 inherit;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center}
 .day b{font-size:13px;color:var(--text)}
 .day.on{background:var(--ok);border-color:var(--ok);color:var(--on-ok)}
@@ -75,6 +77,47 @@ ul.list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;ga
 .chip.on{border-color:var(--accent);color:var(--accent);font-weight:600}
 .banner{background:var(--banner-bg);color:var(--banner-text);padding:8px 12px;border-radius:10px;margin-bottom:12px;font-size:13px}
 .settings .row{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+/* ---------- Dashboard visuals ---------- */
+:root{--h0:var(--line);--h1:color-mix(in oklab,var(--ok) 38%,var(--card));--h2:color-mix(in oklab,var(--ok) 60%,var(--card));--h3:color-mix(in oklab,var(--ok) 80%,var(--card));--h4:var(--ok)}
+.vcard{margin-top:16px}
+.vhead{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:10px}
+.vhead .title{font-size:14.5px}
+.vhead .sub{color:var(--muted);font-size:12.5px}
+.hm-months{display:grid;grid-template-columns:repeat(26,1fr);gap:3px;font-size:10.5px;color:var(--muted);margin-bottom:3px;height:13px}
+.hm-months span{white-space:nowrap;overflow:visible}
+.hm{display:grid;grid-template-columns:repeat(26,1fr);grid-template-rows:repeat(7,auto);grid-auto-flow:column;gap:3px}
+.hm i{aspect-ratio:1;border-radius:3px;background:var(--h0)}
+.hm i.l1{background:var(--h1)} .hm i.l2{background:var(--h2)} .hm i.l3{background:var(--h3)} .hm i.l4{background:var(--h4)}
+.hm i.fut{background:transparent}
+.hm i.tod{outline:1.5px solid var(--accent);outline-offset:1px}
+.hm-legend{display:flex;align-items:center;gap:4px;justify-content:flex-end;color:var(--muted);font-size:11.5px;margin-top:8px}
+.hm-legend i{width:11px;height:11px;border-radius:3px;display:inline-block}
+.hm-foot{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;align-items:center;margin-top:8px}
+.hm-foot .meta{margin:0}
+.rings{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;text-align:center}
+.ring svg{width:100%;max-width:74px;height:auto;display:block;margin:0 auto}
+.ring .rt{fill:none;stroke:var(--line);stroke-width:7}
+.ring .rv{fill:none;stroke:var(--accent);stroke-width:7;stroke-linecap:round;transform:rotate(-90deg);transform-origin:50% 50%;transition:stroke-dasharray .4s}
+.ring .num{fill:var(--text);font:700 15px system-ui,sans-serif}
+.ring .lbl{font-size:12px;font-weight:600;margin-top:4px}
+.ring .cnt{font-size:11px;color:var(--muted)}
+.barchart svg{width:100%;height:auto;display:block}
+.barchart .bar{fill:var(--accent)}
+.barchart .bar.zero{fill:var(--line)}
+.barchart .hit{fill:transparent;cursor:default}
+.barchart .hit:hover+.bar,.barchart g:hover .bar{opacity:.8}
+.barchart .ax{fill:var(--muted);font:10px system-ui,sans-serif}
+.barchart .base{stroke:var(--line);stroke-width:1}
+.hbars{display:flex;flex-direction:column;gap:9px}
+.hbar .top{display:flex;justify-content:space-between;font-size:13px;gap:8px}
+.hbar .top span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hbar .top span:last-child{color:var(--muted);flex:none}
+.hbar .track{height:8px;border-radius:99px;background:var(--line);margin-top:4px;overflow:hidden}
+.hbar .fill{height:100%;border-radius:99px;background:var(--ok)}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media (max-width:720px){.split{grid-template-columns:1fr}}
+#tip{position:fixed;z-index:50;pointer-events:none;background:var(--text);color:var(--bg);font-size:12px;line-height:1.35;padding:6px 9px;border-radius:8px;white-space:nowrap;opacity:0;transition:opacity .1s;transform:translate(-50%,calc(-100% - 10px))}
+#tip.show{opacity:1}
 </style>
 </head>
 <body>
@@ -90,6 +133,7 @@ ul.list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;ga
 </div></header>
 <main class="wrap" id="app"></main>
 <input type="file" id="importFile" accept="application/json" hidden>
+<div id="tip" role="tooltip"></div>
 
 <script>
 /* ---------- Database (IndexedDB) ---------- */
@@ -230,6 +274,75 @@ function goalCard(g){
 const goalOptions=(sel,filter=()=>true)=>`<option value="">— No goal —</option>`+
   S.goals.filter(g=>!g.done&&filter(g)).map(g=>`<option value="${g.id}" ${g.id===sel?'selected':''}>${HORIZONS[g.horizon]} · ${esc(g.title)}</option>`).join('');
 
+/* ---------- Dashboard visuals ---------- */
+function dayActivity(){
+  const m={};
+  for(const id of S.logs){const d=id.slice(id.lastIndexOf('|')+1);(m[d]||(m[d]={h:0,t:0})).h++}
+  for(const t of S.tasks){if(t.done&&t.doneAt){const d=ds(new Date(t.doneAt));(m[d]||(m[d]={h:0,t:0})).t++}}
+  return m;
+}
+function heatmapCard(){
+  const act=dayActivity();const now=new Date();const today=TODAY();
+  const monday=addDays(now,-((now.getDay()+6)%7));const start=addDays(monday,-25*7);
+  let cells='',months='',total=0,activeDays=0,max=0;
+  for(let i=0;i<182;i++){const k=ds(addDays(start,i));const a=act[k];if(a)max=Math.max(max,a.h+a.t)}
+  let lastMonth=-1;
+  for(let w=0;w<26;w++){
+    const colStart=addDays(start,w*7);
+    const firstOfMonth=[...Array(7)].map((_,j)=>addDays(colStart,j)).find(d=>d.getDate()===1);
+    const mo=firstOfMonth||(w===0?colStart:null);
+    if(mo&&mo.getMonth()!==lastMonth){months+=`<span>${mo.toLocaleDateString(undefined,{month:'short'})}</span>`;lastMonth=mo.getMonth()}else months+='<span></span>';
+    for(let j=0;j<7;j++){
+      const d=addDays(colStart,j);const k=ds(d);
+      if(k>today){cells+='<i class="fut"></i>';continue}
+      const a=act[k]||{h:0,t:0};const c=a.h+a.t;total+=c;if(c)activeDays++;
+      const lvl=c?Math.max(1,Math.ceil(c/max*4)):0;
+      const label=d.toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'});
+      cells+=`<i class="l${lvl} ${k===today?'tod':''}" data-tip="${label}: ${a.h} habit check-in${a.h===1?'':'s'}, ${a.t} task${a.t===1?'':'s'} done"></i>`;
+    }
+  }
+  return `<div class="card vcard"><div class="vhead"><div class="title">Activity</div><div class="sub">Last 26 weeks</div></div>
+    <div class="hm-months">${months}</div><div class="hm" role="img" aria-label="Activity heatmap: ${total} actions on ${activeDays} days">${cells}</div>
+    <div class="hm-foot"><div class="meta"><span><b>${total}</b> actions</span><span><b>${activeDays}</b> active days</span></div>
+    <div class="hm-legend">Less <i style="background:var(--h0)"></i><i style="background:var(--h1)"></i><i style="background:var(--h2)"></i><i style="background:var(--h3)"></i><i style="background:var(--h4)"></i> More</div></div></div>`;
+}
+function ringsCard(){
+  const r=26,C=2*Math.PI*r;
+  const rings=Object.entries(HORIZONS).map(([h,l])=>{
+    const gs=S.goals.filter(g=>g.horizon===h&&g.period===currentPeriod(h));
+    const p=gs.length?Math.round(gs.reduce((a,g)=>a+progress(g),0)/gs.length):0;
+    const done=gs.filter(g=>g.done).length;
+    return `<div class="ring" data-tip="${l} (${esc(currentPeriod(h))}): ${gs.length?p+'% average across '+gs.length+' goal'+(gs.length>1?'s':''):'no goals set'}">
+      <svg viewBox="0 0 64 64" aria-hidden="true"><circle class="rt" cx="32" cy="32" r="${r}"/>
+      ${gs.length?`<circle class="rv" cx="32" cy="32" r="${r}" stroke-dasharray="${(p/100*C).toFixed(1)} ${C.toFixed(1)}"/>`:''}
+      <text class="num" x="32" y="37" text-anchor="middle">${gs.length?p+'%':'–'}</text></svg>
+      <div class="lbl">${l}</div><div class="cnt">${gs.length?done+'/'+gs.length+' done':'none yet'}</div></div>`;
+  }).join('');
+  return `<div class="card vcard"><div class="vhead"><div class="title">Goal progress</div><div class="sub">Current periods</div></div><div class="rings">${rings}</div></div>`;
+}
+function tasksChartCard(){
+  const days=14,W=300,H=130,pt=14,pb=20,gap=2;const bw=W/days;
+  const counts=[...Array(days)].map((_,i)=>{const d=addDays(new Date(),i-(days-1));const k=ds(d);return{d,k,n:S.tasks.filter(t=>t.done&&t.doneAt&&ds(new Date(t.doneAt))===k).length}});
+  const max=Math.max(1,...counts.map(c=>c.n));const sum=counts.reduce((a,c)=>a+c.n,0);
+  const base=H-pb,ph=base-pt;
+  const bars=counts.map((c,i)=>{
+    const x=i*bw+gap/2,w=bw-gap,h=c.n?Math.max(4,c.n/max*ph):3,y=base-h,rr=Math.min(4,w/2,h);
+    const path=`M${x},${base}V${y+rr}Q${x},${y} ${x+rr},${y}H${x+w-rr}Q${x+w},${y} ${x+w},${y+rr}V${base}Z`;
+    const lab=c.d.toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'});
+    const ax=(i%2===(days-1)%2)?`<text class="ax" x="${x+w/2}" y="${H-5}" text-anchor="middle">${c.d.getDate()}</text>`:'';
+    return `<g data-tip="${lab}: ${c.n} task${c.n===1?'':'s'} completed"><rect class="hit" x="${i*bw}" y="0" width="${bw}" height="${base}"/><path class="bar ${c.n?'':'zero'}" d="${path}"/>${ax}</g>`;
+  }).join('');
+  return `<div class="card vcard barchart"><div class="vhead"><div class="title">Tasks completed</div><div class="sub">${sum} in 14 days</div></div>
+    <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Tasks completed per day, last 14 days, ${sum} total">${bars}<line class="base" x1="0" x2="${W}" y1="${base}" y2="${base}"/></svg></div>`;
+}
+function consistencyCard(){
+  if(!S.habits.length)return `<div class="card vcard"><div class="vhead"><div class="title">Habit consistency</div><div class="sub">Last 30 days</div></div><div class="empty">Add habits to see consistency.</div></div>`;
+  const rows=[...S.habits].map(h=>({h,r:rate30(h),s:streak(h)})).sort((a,b)=>b.r-a.r).map(({h,r,s})=>
+    `<div class="hbar" data-tip="${esc(h.name)}: ${r}% of the last 30 days, current streak ${s}"><div class="top"><span>${esc(h.name)}</span><span>${r}% · 🔥${s}</span></div>
+     <div class="track"><div class="fill" style="width:${r}%"></div></div></div>`).join('');
+  return `<div class="card vcard"><div class="vhead"><div class="title">Habit consistency</div><div class="sub">Last 30 days</div></div><div class="hbars">${rows}</div></div>`;
+}
+
 /* ---------- Views ---------- */
 function viewDash(){
   const today=TODAY();
@@ -245,7 +358,10 @@ function viewDash(){
     <div class="card stat"><div class="n">${active}</div><div class="l">Active goals</div></div>
     <div class="card stat"><div class="n">🔥 ${best}</div><div class="l">Best current streak</div></div>
   </div>
-  <div class="grid2"><div>
+  ${heatmapCard()}
+  <div class="split"><div>${tasksChartCard()}</div><div>${ringsCard()}</div></div>
+  ${consistencyCard()}
+  <div class="grid2" style="margin-top:6px"><div>
     <h2>Due today</h2>${due.length?`<ul class="list">${due.map(taskItem).join('')}</ul>`:`<div class="empty">Nothing due. Add tasks in the Tasks tab.</div>`}
     <h2>This week's goals</h2>${wk.length?`<div class="goals">${wk.map(goalCard).join('')}</div>`:`<div class="empty">No weekly goals for ${currentPeriod('weekly')}.</div>`}
   </div><div>
@@ -376,6 +492,16 @@ $('#importFile').addEventListener('change',async e=>{
   }catch(err){alert('Import failed: '+err.message)}
   finally{e.target.value=''}
 });
+
+/* ---------- Tooltips (hover + tap) ---------- */
+const tip=$('#tip');let tipEl=null;
+function showTip(el,x,y){tipEl=el;tip.textContent=el.dataset.tip;
+  const r=tip.getBoundingClientRect();const half=r.width/2+8;
+  tip.style.left=Math.min(Math.max(x,half),innerWidth-half)+'px';tip.style.top=Math.max(y,r.height+14)+'px';tip.classList.add('show')}
+function hideTip(){tipEl=null;tip.classList.remove('show')}
+document.addEventListener('pointermove',e=>{if(e.pointerType!=='mouse')return;const el=e.target.closest('[data-tip]');el?showTip(el,e.clientX,e.clientY):hideTip()});
+document.addEventListener('pointerdown',e=>{if(e.pointerType==='mouse')return;const el=e.target.closest('[data-tip]');if(el){const r=el.getBoundingClientRect();showTip(el,r.left+r.width/2,r.top)}else hideTip()});
+addEventListener('scroll',hideTip,{passive:true});
 
 /* ---------- Theme: auto → light → dark ---------- */
 const THEME_LABEL={auto:'◐ Auto',light:'☀ Light',dark:'☾ Dark'};
