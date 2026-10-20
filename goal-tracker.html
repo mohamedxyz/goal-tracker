@@ -5,6 +5,7 @@
     PATCH = bug fix · MINOR = new feature · MAJOR = breaks old backups or data
 
   Changelog
+  0.25.0 Quality pass: timer clears itself if its goal was deleted; checked speed on 2 years of data with every new feature, old backups (no checklists/schedules/order) load and render in every view
   0.24.0 Reorder habits and folders: Habits tab → Reorder shows ▲▼ on every habit (within its folder) and every folder; order is remembered
   0.23.0 Weekly report (Dashboard → Weekly report): tasks done and missed, habit completion per habit, weekly goal progress and goals finished; browse earlier weeks
   0.22.0 Undo after deleting a task, goal, habit or the completed-archive clean-up: a 6-second Undo button restores it with its links and history
@@ -927,7 +928,7 @@ function drawHabit(){
 document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('[role=button][data-action]')){e.preventDefault();e.target.click()}});
 
 /* ---------- Version ---------- */
-const APP_VERSION='0.24.0';
+const APP_VERSION='0.25.0';
 
 /* ---------- Completion sounds (synthesised, no audio files) ---------- */
 const Sound={
@@ -1271,8 +1272,8 @@ function mmss(ms){const s=Math.floor(ms/1000),h=Math.floor(s/3600),m=Math.floor(
 function timerLabel(){const t=getTimer();$('#timerBtn').textContent=t?'⏱ '+Math.max(1,Math.round((Date.now()-t.start)/60000))+'m':'⏱'}
 let timerTick=null;
 function drawTimer(){
-  const t=getTimer();const goals=timeGoals();
-  const g=t&&goalById(t.goalId);
+  let t=getTimer();const goals=timeGoals();
+  const g=t&&goalById(t.goalId);if(t&&!g){setTimer(null);t=null;timerLabel()}
   dlg.innerHTML=`<form method="dialog" data-timer><h3>Focus timer</h3>`+(t&&g?
     `<p class="meta">Working on <b>${esc(g.title)}</b></p><div id="tClock" style="font-size:40px;font-weight:700;text-align:center;margin:10px 0">${mmss(Date.now()-t.start)}</div>
      <div class="dlg-actions"><button type="button" class="ghost" data-timer-act="discard">Discard</button><button type="button" class="btn" data-timer-act="stop">Stop and log</button></div>`
