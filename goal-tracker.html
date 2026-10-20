@@ -5,6 +5,8 @@
     PATCH = bug fix · MINOR = new feature · MAJOR = breaks old backups or data
 
   Changelog
+  0.10.0 Goals rework: checkbox / number-target / built-from-sub-goals kinds; parents auto-complete only when all expected
+         sub-goals are done (cascades up, un-ticking reopens); period-end review (hit / missed / carry over); manual slider removed
   0.9.0  Completed tasks stay in the Tasks tab (dimmed, at the bottom); task notes; confirm before deleting; archive with full task details and "delete completed"
   0.8.0  "Defeat" sound when unchecking; dashboard shows only today's tasks and habits (one-tap check for today)
   0.7.0  Hide habits already done today; completion sounds with on/off switch; version shown in Data tab
@@ -186,6 +188,26 @@ dialog#editDlg::backdrop{background:rgba(30,18,10,.45)}
 .tcheck:hover{border-color:var(--ok)}
 .tcheck.on{background:var(--ok);border-color:var(--ok);color:var(--on-ok)}
 .allclear{color:var(--ok);font-weight:600;text-align:center;padding:18px;border:1px dashed var(--line);border-radius:12px}
+/* ---------- Goals 0.10 ---------- */
+.f-num,.f-roll{display:none}
+form[data-kind=number] .f-num,form[data-kind=rollup] .f-roll{display:flex;flex-wrap:wrap;gap:8px;flex:1 1 100%}
+.dlg form[data-kind=number] .f-num,.dlg form[data-kind=rollup] .f-roll{display:block}
+.tag.t-ok{background:color-mix(in oklab,var(--ok) 18%,var(--card));color:var(--ok)}
+.tag.t-bad{background:color-mix(in oklab,var(--bad) 15%,var(--card));color:var(--bad)}
+.tag.t-warn{background:color-mix(in oklab,var(--warn) 18%,var(--card));color:var(--warn)}
+.goal.ismissed .bar span{background:var(--bad)}
+.goal.ismissed .title{color:var(--muted)}
+.numrow{display:flex;align-items:center;gap:8px;margin-top:10px}
+.numrow .ghost{width:40px;height:36px;padding:0;font-size:18px;font-weight:700}
+.numval{flex:1;height:36px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--text);font:700 15px system-ui,sans-serif;cursor:pointer}
+.numval span{font-weight:500;color:var(--muted)}
+.review-cta{display:flex;align-items:center;gap:12px;margin-bottom:12px;border-color:color-mix(in oklab,var(--warn) 45%,var(--line));background:color-mix(in oklab,var(--warn) 8%,var(--card))}
+.rv .rv-actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.rv .rv-actions .ghost{flex:1 1 auto;font-size:13px;padding:7px 8px}
+.rv .rv-actions .ok{color:var(--ok)} .rv .rv-actions .bad{color:var(--bad)}
+.rv .rv-note{width:100%;margin-top:8px;font-size:13px}
+#toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom));transform:translate(-50%,20px);opacity:0;pointer-events:none;z-index:60;background:var(--text);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:14px;box-shadow:0 10px 30px rgba(0,0,0,.25);transition:.2s;max-width:calc(100vw - 32px)}
+#toast.show{opacity:1;transform:translate(-50%,0)}
 #tip{position:fixed;z-index:50;pointer-events:none;background:var(--text);color:var(--bg);font-size:12px;line-height:1.35;padding:6px 9px;border-radius:8px;white-space:nowrap;opacity:0;transition:opacity .1s;transform:translate(-50%,calc(-100% - 10px))}
 #tip.show{opacity:1}
 </style>
@@ -204,6 +226,7 @@ dialog#editDlg::backdrop{background:rgba(30,18,10,.45)}
 <main class="wrap" id="app"></main>
 <input type="file" id="importFile" accept="application/json" hidden>
 <div id="tip" role="tooltip"></div>
+<div id="toast" role="status"></div>
 <dialog id="editDlg" class="dlg"></dialog>
 
 <script>
@@ -268,22 +291,56 @@ async function load(){
 
 /* ---------- Logic ---------- */
 const goalById=id=>S.goals.find(g=>g.id===id);
-function progress(g,seen=new Set()){
-  if(g.done)return 100;
-  if(seen.has(g.id))return g.progress||0; seen.add(g.id);
-  const tasks=S.tasks.filter(t=>t.goalId===g.id);
-  if(tasks.length)return Math.round(tasks.filter(t=>t.done).length/tasks.length*100);
-  const kids=S.goals.filter(c=>c.parentId===g.id);
-  if(kids.length)return Math.round(kids.reduce((a,c)=>a+progress(c,seen),0)/kids.length);
-  return g.progress||0;
+/* Goal kinds:
+   check  – done when ticked, or automatically when all linked tasks are done
+   number – target + unit (e.g. 40 hours); done automatically at 100%
+   rollup – built from sub-goals; progress = sum of children ÷ EXPECTED count (not just the ones created so far),
+            so one finished week can't complete a whole month */
+const CHILD={monthly:'weekly',annual:'monthly',five:'annual'};
+function goalKind(g){return g.kind||(S.goals.some(c=>c.parentId===g.id)?'rollup':'check')}
+function periodEnd(h,p){let m;
+  if(h==='weekly'&&(m=/^(\d{4})-W(\d{2})$/.exec(p))){const jan4=new Date(+m[1],0,4);const mon=addDays(jan4,-((jan4.getDay()+6)%7)+(+m[2]-1)*7);return ds(addDays(mon,6))}
+  if(h==='monthly'&&(m=/^(\d{4})-(\d{2})$/.exec(p)))return ds(new Date(+m[1],+m[2],0));
+  if(h==='annual'&&(m=/^(\d{4})$/.exec(p)))return m[1]+'-12-31';
+  if(h==='five'&&(m=/^(\d{4})-(\d{4})$/.exec(p)))return m[2]+'-12-31';
+  return null;}
+function defaultExpected(g){
+  if(g.horizon==='monthly'){const m=/^(\d{4})-(\d{2})$/.exec(g.period||'');if(!m)return 4;let n=0;const days=new Date(+m[1],+m[2],0).getDate();
+    for(let d=1;d<=days;d++)if(new Date(+m[1],+m[2]-1,d).getDay()===4)n++;return n} // ISO weeks whose Thursday is in the month
+  return{annual:12,five:5}[g.horizon]||1;}
+const expectedOf=g=>Math.max(1,+g.expected||defaultExpected(g));
+const fmtNum=n=>String(+(+n||0).toFixed(2));
+function progressRaw(g,seen=new Set()){
+  if(seen.has(g.id))return 0;seen.add(g.id);
+  const k=goalKind(g);
+  if(k==='number'){const t=+g.target||0;return t>0?Math.min(100,Math.round((+g.value||0)/t*100)):0}
+  if(k==='rollup'){const kids=S.goals.filter(c=>c.parentId===g.id);const n=Math.max(expectedOf(g),kids.length);
+    return Math.min(100,Math.round(kids.reduce((a,c)=>a+progress(c,seen),0)/n))}
+  const t=S.tasks.filter(x=>x.goalId===g.id);return t.length?Math.round(t.filter(x=>x.done).length/t.length*100):0;
 }
-function progressSource(g){
-  if(g.done)return'completed';
-  const n=S.tasks.filter(t=>t.goalId===g.id).length;
-  if(n)return`from ${n} linked task${n>1?'s':''}`;
-  const k=S.goals.filter(c=>c.parentId===g.id).length;
-  if(k)return`from ${k} sub-goal${k>1?'s':''}`;
-  return'manual';
+function progress(g,seen=new Set()){return g.done?100:progressRaw(g,seen)}
+function goalDetail(g){
+  const k=goalKind(g);
+  if(k==='number')return'';
+  if(k==='rollup'){const kids=S.goals.filter(c=>c.parentId===g.id),n=Math.max(expectedOf(g),kids.length),d=kids.filter(c=>c.done).length;
+    const lbl=CHILD[g.horizon]?HORIZONS[CHILD[g.horizon]].toLowerCase():'sub';
+    return`${d} of ${n} ${lbl} goals done${kids.length<n?` · ${n-kids.length} still to plan`:''}`}
+  const t=S.tasks.filter(x=>x.goalId===g.id);return t.length?`${t.filter(x=>x.done).length}/${t.length} linked tasks done`:'tick ✓ when done';
+}
+const needsReview=g=>{if(g.done||g.status==='missed')return false;const e=periodEnd(g.horizon,g.period);return!!e&&e<TODAY()};
+// Auto-complete goals that reached 100% (cascading upward); reopen auto-completed ones that dropped below.
+function syncGoals(){
+  const changed=new Set(),newly=new Set();
+  for(let pass=0,dirty=true;dirty&&pass<10;pass++){dirty=false;
+    for(const g of S.goals){
+      if(g.status==='missed')continue;
+      const raw=progressRaw(g);
+      if(g.manualOpen&&raw<100){g.manualOpen=false;changed.add(g)}
+      if(!g.done&&!g.manualOpen&&raw>=100){g.done=true;g.autoDone=true;g.doneAt=Date.now();changed.add(g);newly.add(g);dirty=true}
+      else if(g.done&&g.autoDone&&raw<100){g.done=false;g.autoDone=false;g.doneAt=null;changed.add(g);newly.delete(g);dirty=true}
+    }}
+  for(const g of changed)DB.put('goals',g);
+  return[...newly].filter(g=>g.done);
 }
 const logged=(hid,date)=>S.logs.has(hid+'|'+date);
 function streak(h){
@@ -337,17 +394,28 @@ function habitCard(h,full){
   </div>${full?`<div class="heat">${heat}</div>`:''}</div>`;
 }
 function goalCard(g){
-  const p=progress(g);const src=progressSource(g);const parent=g.parentId&&goalById(g.parentId);
-  const kids=S.goals.filter(c=>c.parentId===g.id).length;
-  return `<div class="card goal ${g.done?'isdone':''}">
+  const p=progress(g),k=goalKind(g),parent=g.parentId&&goalById(g.parentId),rv=needsReview(g),missed=g.status==='missed';
+  const tags=[`<span class="tag">${esc(g.period)}</span>`];
+  if(g.done)tags.push(`<span class="tag t-ok">✓ Done${g.autoDone?' · auto':''}</span>`);
+  if(missed)tags.push('<span class="tag t-bad">Missed</span>');
+  if(rv)tags.push('<span class="tag t-warn">Needs review</span>');
+  if(parent)tags.push(`<span>↑ ${esc(parent.title)}</span>`);
+  if(g.carried&&g.carried.length)tags.push(`<span>↪ carried from ${esc(g.carried[g.carried.length-1])}</span>`);
+  const det=goalDetail(g);
+  const num=k==='number'?`<div class="numrow"><button class="ghost" data-action="goal-dec" data-id="${g.id}" aria-label="Decrease">−</button>
+    <button class="numval" data-action="goal-set" data-id="${g.id}" title="Set exact value">${fmtNum(g.value)} <span>/ ${fmtNum(g.target)} ${esc(g.unit||'')}</span></button>
+    <button class="ghost" data-action="goal-inc" data-id="${g.id}" aria-label="Increase">+</button></div>`:'';
+  return `<div class="card goal ${g.done?'isdone':''} ${missed?'ismissed':''}">
     <div class="row"><div class="grow"><div class="title">${esc(g.title)}</div>
-      <div class="meta"><span class="tag">${esc(g.period)}</span>${parent?`<span>↑ ${esc(parent.title)}</span>`:''}${kids?`<span>${kids} sub-goal${kids>1?'s':''}</span>`:''}</div></div>
+      <div class="meta">${tags.join('')}</div></div>
       <button class="icon" data-action="done-goal" data-id="${g.id}" title="${g.done?'Reopen':'Mark complete'}">${g.done?'↺':'✓'}</button>
       <button class="icon" data-action="edit-goal" data-id="${g.id}" title="Edit">✎</button>
       <button class="icon" data-action="del-goal" data-id="${g.id}" title="Delete">✕</button></div>
     <div class="bar"><span style="width:${p}%"></span></div>
-    <div class="meta"><span>${p}%</span><span>${src}</span></div>
-    ${src==='manual'?`<input type="range" min="0" max="100" step="5" value="${p}" data-action="goal-progress" data-id="${g.id}" aria-label="Progress">`:''}
+    <div class="meta"><span><b>${p}%</b></span>${det?`<span>${det}</span>`:''}</div>
+    ${num}
+    ${rv?`<button class="chip" style="margin-top:10px" data-action="open-review">Review now →</button>`:''}
+    ${g.lesson?`<div class="notes">💬 ${esc(g.lesson)}</div>`:''}
     ${g.notes?`<div class="notes">${esc(g.notes)}</div>`:''}
   </div>`;
 }
@@ -431,10 +499,11 @@ function viewDash(){
   const todaysDone=todays.filter(t=>t.done).length;
   const overdue=open.filter(t=>t.due&&t.due<today).length;
   const hd=S.habits.filter(h=>logged(h.id,today)).length;
-  const active=S.goals.filter(g=>!g.done).length;
+  const active=S.goals.filter(g=>!g.done&&g.status!=='missed').length;
+  const nRv=S.goals.filter(needsReview).length;
   const best=S.habits.length?Math.max(...S.habits.map(streak)):0;
   const wk=S.goals.filter(g=>g.horizon==='weekly'&&g.period===currentPeriod('weekly'));
-  return `<div class="stats">
+  return `${nRv?`<div class="card review-cta"><div class="grow"><div class="title">${nRv} goal${nRv>1?'s':''} from past periods need${nRv>1?'':'s'} a review</div><div class="meta">Hit it, missed, or carry over. About a minute.</div></div><button class="btn" data-action="open-review">Review</button></div>`:''}<div class="stats">
     <div class="card stat"><div class="n">${todaysDone}/${todays.length}</div><div class="l">Today's tasks done</div></div>
     <div class="card stat"><div class="n">${hd}/${S.habits.length}</div><div class="l">Habits done today</div></div>
     <div class="card stat"><div class="n">${active}</div><div class="l">Active goals</div></div>
@@ -479,13 +548,17 @@ function viewTasks(){
 function viewGoals(){
   const h=S.horizon;const cur=currentPeriod(h);const ph=PARENT[h];
   let list=S.goals.filter(g=>g.horizon===h);
-  if(S.goalScope==='current')list=list.filter(g=>g.period===cur);
-  list.sort((a,b)=>(a.done-b.done)||b.period.localeCompare(a.period));
+  if(S.goalScope==='current')list=list.filter(g=>g.period===cur||needsReview(g));
+  list.sort((a,b)=>(needsReview(b)-needsReview(a))||(a.done-b.done)||((a.status==='missed')-(b.status==='missed'))||b.period.localeCompare(a.period));
+  const defKind=h==='weekly'?'check':'rollup';
   const seg=Object.entries(HORIZONS).map(([k,l])=>`<button class="${k===h?'on':''}" data-action="horizon" data-v="${k}">${l}</button>`).join('');
   return `<div class="seg">${seg}</div>
-  <form class="add" data-form="goal">
+  <form class="add" data-form="goal" data-kind="${defKind}">
     <input type="text" name="title" placeholder="New ${HORIZONS[h].toLowerCase()} goal…" required>
     <input type="text" name="period" value="${cur}" style="flex:0 1 130px" title="Period">
+    <select name="kind" title="How will you measure it?"><option value="check" ${defKind==='check'?'selected':''}>☐ Checkbox</option><option value="number">🔢 Number target</option>${h!=='weekly'?`<option value="rollup" selected>🧩 Built from ${HORIZONS[CHILD[h]].toLowerCase()} goals</option>`:''}</select>
+    <span class="f-num"><input type="number" name="target" min="0" step="any" placeholder="Target, e.g. 40" style="flex:1 1 120px"><input type="text" name="unit" placeholder="Unit, e.g. hours" style="flex:1 1 120px"></span>
+    ${h!=='weekly'?`<span class="f-roll"><input type="number" name="expected" min="1" step="1" placeholder="How many ${HORIZONS[CHILD[h]].toLowerCase()} goals? (default ${defaultExpected({horizon:h,period:cur})})" style="flex:1 1 100%"></span>`:''}
     ${ph?`<select name="parentId">${goalOptions('',g=>g.horizon===ph).replace('— No goal —','— Supports which '+HORIZONS[ph].toLowerCase()+' goal? —')}</select>`:''}
     <textarea name="notes" placeholder="Why it matters / how you'll measure it (optional)"></textarea>
     <button class="btn">Add goal</button></form>
@@ -566,6 +639,9 @@ function viewData(){
 }
 
 function render(){
+  const newly=syncGoals();
+  if(S.booted&&newly.length){Sound.play('goal');setTimeout(()=>toast('🎯 Goal complete: '+newly.map(g=>g.title).join(', ')),50)}
+  S.booted=true;
   const v={dash:viewDash,tasks:viewTasks,goals:viewGoals,habits:viewHabits,data:viewData,archive:viewArchive}[S.view]||viewDash;
   $('#app').innerHTML=(S.persistent?'':`<div class="banner">This browser blocked storage — data will be lost on reload. Use Export to save it.</div>`)+v();
   const nv=S.view==='archive'?'data':S.view;
@@ -599,8 +675,14 @@ function openEdit(kind,id){
       <div class="two"><div><label>Horizon</label><select name="horizon">${Object.entries(HORIZONS).map(([k,l])=>`<option value="${k}" ${g.horizon===k?'selected':''}>${l}</option>`).join('')}</select></div>
       <div><label>Period</label><input type="text" name="period" value="${esc(g.period)}" required></div></div>
       <div id="parentWrap">${parentField(g.horizon,g.parentId,g.id)}</div>
+      <label>How it's measured</label><select name="kind">${[['check','☐ Checkbox (or all linked tasks done)'],['number','🔢 Number target'],['rollup','🧩 Built from sub-goals']].map(([v,l])=>`<option value="${v}" ${goalKind(g)===v?'selected':''}>${l}</option>`).join('')}</select>
+      <div class="f-num"><div class="two"><div><label>Target</label><input type="number" name="target" min="0" step="any" value="${+g.target||''}"></div>
+        <div><label>Unit</label><input type="text" name="unit" value="${esc(g.unit||'')}" placeholder="hours, pages…"></div></div>
+        <label>Current value</label><input type="number" name="value" step="any" value="${+g.value||0}"></div>
+      <div class="f-roll"><label>Sub-goals needed to complete it</label><input type="number" name="expected" min="1" step="1" value="${g.expected||''}" placeholder="default ${defaultExpected(g)}"></div>
+      <label>Status</label><select name="status">${[['active','Active'],['done','Done'],['missed','Missed']].map(([v,l])=>`<option value="${v}" ${(g.done?'done':g.status==='missed'?'missed':'active')===v?'selected':''}>${l}</option>`).join('')}</select>
       <label>Notes</label><textarea name="notes">${esc(g.notes)}</textarea>
-      <label class="check"><input type="checkbox" name="done" ${g.done?'checked':''}> Completed</label>`;
+      <label>Review note (what got in the way / what worked)</label><textarea name="lesson">${esc(g.lesson||'')}</textarea>`;
   }
   if(kind==='habit'){const h=S.habits.find(x=>x.id===id);title='Edit habit';
     body=`<label>Name</label><input type="text" name="name" value="${esc(h.name)}" required>
@@ -608,6 +690,7 @@ function openEdit(kind,id){
   }
   dlg.innerHTML=`<form method="dialog" data-edit="${kind}" data-id="${id}"><h3>${title}</h3>${body}
     <div class="dlg-actions"><button class="ghost" value="cancel" formnovalidate>Cancel</button><button class="btn" value="save">Save</button></div></form>`;
+  if(kind==='goal')dlg.querySelector('form').dataset.kind=goalKind(goalById(id));
   dlg.showModal();const f=dlg.querySelector('input[type=text]');f.focus();f.select();
 }
 dlg.addEventListener('change',e=>{
@@ -624,7 +707,12 @@ dlg.addEventListener('submit',async e=>{
     if(done!==t.done){t.done=done;t.doneAt=done?Date.now():null;Sound.play(done?'task':'undo')}
     await DB.put('tasks',t)}
   if(kind==='goal'){const g=goalById(id);const old=g.horizon;
-    Object.assign(g,{title:v.title.trim(),horizon:v.horizon,period:v.period.trim(),parentId:v.parentId||null,notes:(v.notes||'').trim(),done:!!v.done});
+    let gk=v.kind||'check';if(gk==='rollup'&&v.horizon==='weekly')gk='check';
+    Object.assign(g,{title:v.title.trim(),horizon:v.horizon,period:v.period.trim(),parentId:v.parentId||null,notes:(v.notes||'').trim(),
+      kind:gk,target:+v.target||0,unit:(v.unit||'').trim(),value:+v.value||0,expected:v.expected?Math.max(1,Math.round(+v.expected)):null,lesson:(v.lesson||'').trim()});
+    if(v.status==='done'){if(!g.done){g.done=true;g.doneAt=Date.now()}g.autoDone=false;g.status=null;g.manualOpen=false}
+    else if(v.status==='missed'){g.done=false;g.autoDone=false;g.status='missed'}
+    else{if(g.done&&progressRaw(g)>=100)g.manualOpen=true;g.done=false;g.autoDone=false;g.status=null}
     if(old!==g.horizon){ // keep the hierarchy valid: unlink sub-goals that no longer sit one level below
       for(const c of S.goals.filter(c=>c.parentId===g.id&&PARENT[c.horizon]!==g.horizon)){c.parentId=null;await DB.put('goals',c)}
     }
@@ -662,7 +750,7 @@ function drawHabit(){
 document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('[role=button][data-action]')){e.preventDefault();e.target.click()}});
 
 /* ---------- Version ---------- */
-const APP_VERSION='0.9.0';
+const APP_VERSION='0.10.0';
 
 /* ---------- Completion sounds (synthesised, no audio files) ---------- */
 const Sound={
@@ -677,7 +765,8 @@ const Sound={
       // task: bright rising C–E–G · habit: softer two-note "pop" · undo: falling G–E♭–C "womp", last note sags
       const S_={task:{n:[[1046.5,0],[1318.5,.07],[1568,.14]],len:.38,vol:.16},
                 habit:{n:[[784,0],[1174.7,.08]],len:.38,vol:.16},
-                undo:{n:[[392,0],[311.1,.16],[261.6,.32]],len:.5,vol:.13,sag:true}}[kind]||null;
+                undo:{n:[[392,0],[311.1,.16],[261.6,.32]],len:.5,vol:.13,sag:true},
+                goal:{n:[[784,0],[1046.5,.1],[1318.5,.2],[1568,.3],[2093,.42]],len:.55,vol:.15}}[kind]||null;
       if(!S_)return;
       const t0=C.currentTime+.01;
       S_.n.forEach(([f,dt],i)=>{
@@ -692,6 +781,28 @@ const Sound={
 };
 Sound.load();
 try{S.hideDone=localStorage.getItem('gt-hide-done')==='1'}catch(e){S.hideDone=false}
+
+/* ---------- Period-end review ---------- */
+function rvNote(g){const i=dlg.querySelector(`.rv-note[data-id="${g.id}"]`);const t=i&&i.value.trim();if(t)g.lesson=g.lesson?g.lesson+'\n'+t:t}
+function openReview(){drawReview();if(S.goals.some(needsReview)&&!dlg.open)dlg.showModal()}
+function drawReview(){
+  const ord={weekly:0,monthly:1,annual:2,five:3};
+  const list=S.goals.filter(needsReview).sort((a,b)=>ord[a.horizon]-ord[b.horizon]||a.period.localeCompare(b.period));
+  if(!list.length){if(dlg.open){dlg.close();notify('All caught up. Reviews done ✓')}return}
+  dlg.innerHTML=`<div class="hist"><div class="hist-top"><h3>Review ${list.length} goal${list.length>1?'s':''}</h3><button type="button" class="icon" data-action="dlg-close" aria-label="Close">✕</button></div>
+    <p class="meta">These periods have ended. Be honest. This is where the system gets smarter.</p>
+    <div class="goals" style="margin-top:10px">${list.map(g=>`<div class="card rv">
+      <div class="title">${esc(g.title)}</div>
+      <div class="meta"><span class="tag">${HORIZONS[g.horizon]} · ${esc(g.period)}</span><span><b>${progress(g)}%</b>${goalDetail(g)?' · '+goalDetail(g):goalKind(g)==='number'?` · ${fmtNum(g.value)}/${fmtNum(g.target)} ${esc(g.unit||'')}`:''}</span></div>
+      <input type="text" class="rv-note" data-id="${g.id}" placeholder="What got in the way / what worked? (optional)">
+      <div class="rv-actions"><button type="button" class="ghost ok" data-action="rv-hit" data-id="${g.id}">✓ Hit it</button>
+        <button type="button" class="ghost bad" data-action="rv-miss" data-id="${g.id}">✗ Missed</button>
+        <button type="button" class="ghost" data-action="rv-carry" data-id="${g.id}">→ Carry to ${esc(currentPeriod(g.horizon))}</button></div></div>`).join('')}</div></div>`;
+}
+// Show the right extra fields (target/unit, sub-goal count) for the chosen goal kind.
+document.addEventListener('change',e=>{if(e.target.name==='kind'&&e.target.form)e.target.form.dataset.kind=e.target.value});
+let toastTimer;
+function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),2800)}
 
 /* ---------- Actions ---------- */
 async function toggleLog(hid,date){
@@ -728,7 +839,18 @@ const actions={
   'task-filter'(el){S.taskFilter=el.dataset.v},
   horizon(el){S.horizon=el.dataset.v},
   'goal-scope'(el){S.goalScope=el.dataset.v},
-  async 'done-goal'(el){const g=goalById(el.dataset.id);g.done=!g.done;await DB.put('goals',g)},
+  async 'done-goal'(el){const g=goalById(el.dataset.id);
+    if(g.done){g.done=false;g.autoDone=false;g.doneAt=null;if(progressRaw(g)>=100)g.manualOpen=true;Sound.play('undo')}
+    else{g.done=true;g.autoDone=false;g.doneAt=Date.now();g.status=null;g.manualOpen=false;Sound.play('task')}
+    await DB.put('goals',g)},
+  async 'goal-inc'(el){const g=goalById(el.dataset.id);g.value=+((+g.value||0)+1).toFixed(2);await DB.put('goals',g)},
+  async 'goal-dec'(el){const g=goalById(el.dataset.id);g.value=Math.max(0,+((+g.value||0)-1).toFixed(2));await DB.put('goals',g)},
+  async 'goal-set'(el){const g=goalById(el.dataset.id);const r=prompt(`${g.title}\nCurrent value${g.unit?' ('+g.unit+')':''}:`,fmtNum(g.value));
+    if(r===null||r.trim()===''||isNaN(+r))return false;g.value=Math.max(0,+r);await DB.put('goals',g)},
+  'open-review'(){openReview();return false},
+  async 'rv-hit'(el){const g=goalById(el.dataset.id);Object.assign(g,{done:true,autoDone:false,doneAt:Date.now(),status:null,reviewedAt:Date.now()});rvNote(g);Sound.play('task');await DB.put('goals',g);drawReview()},
+  async 'rv-miss'(el){const g=goalById(el.dataset.id);Object.assign(g,{status:'missed',reviewedAt:Date.now()});rvNote(g);Sound.play('undo');await DB.put('goals',g);drawReview()},
+  async 'rv-carry'(el){const g=goalById(el.dataset.id);g.carried=(g.carried||[]).concat(g.period);g.period=currentPeriod(g.horizon);g.reviewedAt=Date.now();rvNote(g);await DB.put('goals',g);drawReview()},
   async 'goal-progress'(el){const g=goalById(el.dataset.id);g.progress=+el.value;await DB.put('goals',g)},
   async 'del-goal'(el){
     const id=el.dataset.id;if(!confirm('Delete this goal? Linked tasks and sub-goals are kept but unlinked.'))return false;
@@ -770,7 +892,12 @@ document.addEventListener('submit',async e=>{
   const f=e.target.closest('form[data-form]');if(!f)return;e.preventDefault();
   const v=Object.fromEntries(new FormData(f));const kind=f.dataset.form;
   if(kind==='task'){const t={id:uid(),title:v.title.trim(),notes:(v.notes||'').trim(),due:v.due||null,priority:v.priority,goalId:v.goalId||null,done:false,created:Date.now()};S.tasks.push(t);await DB.put('tasks',t)}
-  if(kind==='goal'){const g={id:uid(),title:v.title.trim(),horizon:S.horizon,period:(v.period||currentPeriod(S.horizon)).trim(),parentId:v.parentId||null,notes:(v.notes||'').trim(),progress:0,done:false,created:Date.now()};S.goals.push(g);await DB.put('goals',g)}
+  if(kind==='goal'){
+    let gk=v.kind||'check';if(gk==='rollup'&&S.horizon==='weekly')gk='check';
+    if(gk==='number'&&!(+v.target>0)){alert('Set a target number for this goal (for example 40).');return}
+    const g={id:uid(),title:v.title.trim(),horizon:S.horizon,period:(v.period||currentPeriod(S.horizon)).trim(),parentId:v.parentId||null,notes:(v.notes||'').trim(),
+      kind:gk,target:+v.target||0,unit:(v.unit||'').trim(),value:0,expected:v.expected?Math.max(1,Math.round(+v.expected)):null,done:false,created:Date.now()};
+    S.goals.push(g);await DB.put('goals',g)}
   if(kind==='habit'){const h={id:uid(),name:v.name.trim(),target:+v.target,created:Date.now()};S.habits.push(h);await DB.put('habits',h)}
   render();
   const first=$('#app form input[type=text]');if(first)first.focus();
