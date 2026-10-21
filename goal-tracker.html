@@ -5,6 +5,7 @@
     PATCH = bug fix · MINOR = new feature · MAJOR = breaks old backups or data
 
   Changelog
+  0.34.0 Arabic language support (Settings → Language): full right-to-left layout, Arabic text, dates in Arabic; switch back to English any time
   0.33.0 Exam and quiz logger (Study tab): add exams and quizzes with date, time and subject, countdowns and Dashboard warnings, log scores afterwards, and picks favour subjects with an exam coming up
   0.32.0 Student mode (Settings → Student mode): a Study tab with a retrospective revision timetable. Subjects and topics, tap a day to log a study session with a Weak/OK/Strong colour, daily picks list (weakest and untouched topics first)
   0.31.0 Setting for avoid habits: a day counts as clean unless you log a slip (default) or as a slip unless you confirm it clean; can also be changed per habit (existing check-ins are flipped so history stays correct)
@@ -111,6 +112,11 @@ ul.list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;ga
 .trow .top{display:flex;align-items:center;gap:6px;margin-bottom:6px}.trow .top .grow{min-width:0}
 .tgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
 .cdot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;background:var(--line)}.cdot.c1{background:#b4442f}.cdot.c2{background:#d9a13b}.cdot.c3{background:var(--ok)}
+[dir=rtl] .srow{text-align:right}[dir=rtl] .cdot{margin-right:0;margin-left:5px}[dir=rtl] .kv span:last-child{text-align:left}[dir=rtl] .cd .star{right:auto;left:3px}
+[dir=rtl] #toast button{margin-left:0;margin-right:10px}[dir=rtl] .backup-cta{padding-right:16px;padding-left:46px}[dir=rtl] .backup-cta .icon{right:auto;left:8px}
+[dir=rtl] .daypick .dp-lbl{margin-right:0;margin-left:2px}[dir=rtl] .daypick .dp-hint{margin-left:0;margin-right:2px}
+[dir=rtl] input.sw::after{left:auto;right:3px}[dir=rtl] input.sw:checked::after{transform:translateX(-18px)}
+[dir=rtl] input[type=date],[dir=rtl] input[type=time],[dir=rtl] input[type=number]{text-align:right}
 .tnotes{color:var(--muted);font-size:13px;margin-top:3px;white-space:pre-wrap;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .divider{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:12.5px;font-weight:600;margin:18px 0 8px}
 .divider::after{content:'';flex:1;height:1px;background:var(--line)}
@@ -416,9 +422,10 @@ function currentPeriod(h){
   const d=new Date(),y=d.getFullYear();
   return h==='weekly'?isoWeek(d):h==='monthly'?ds(d).slice(0,7):h==='annual'?String(y):`${y}-${y+4}`;
 }
+let LOCALE;
 const _fmts={};
 // Creating a formatter is the slow part of toLocale*String, so build each one once and reuse it.
-const fmt=(d,o)=>{const k=JSON.stringify(o);return(_fmts[k]||(_fmts[k]=new Intl.DateTimeFormat(undefined,o))).format(d)};
+const fmt=(d,o)=>{const k=LOCALE+JSON.stringify(o);return(_fmts[k]||(_fmts[k]=new Intl.DateTimeFormat(LOCALE,o))).format(d)};
 const fmtDate=s=>{if(!s)return'';const d=new Date(s+'T00:00');return fmt(d,{month:'short',day:'numeric'})};
 
 /* ---------- State ---------- */
@@ -842,6 +849,7 @@ function settingsCard(){
   return `<h2>Settings</h2>
   <div class="card settings"><div class="title">General</div>
     ${sw('sound','Sound effects','Chimes when you finish or undo something',Sound.on)}
+    ${sel('lang','Language / اللغة',[['en','English'],['ar','العربية']],c.lang)}
     ${sel('theme','Theme',[['auto','Auto'],['light','Light'],['dark','Dark']],getTheme())}
     ${sel('prio','Default priority for new tasks',[['low','Low'],['med','Medium'],['high','High']],c.prio)}
     ${sw('showDone','Show completed tasks','The dimmed "Completed" list under your tasks',c.showDone)}
@@ -1037,7 +1045,7 @@ function drawHabit(){
 document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('[role=button][data-action]')){e.preventDefault();e.target.click()}});
 
 /* ---------- Version ---------- */
-const APP_VERSION='0.33.0';
+const APP_VERSION='0.34.0';
 
 /* ---------- Completion sounds (synthesised, no audio files) ---------- */
 const Sound={
@@ -1067,10 +1075,102 @@ const Sound={
   }
 };
 Sound.load();
-const CFG_DEF={avoidHide:true,cTask:true,cGoal:true,cHabit:true,dCharts:true,dTasks:true,dGoals:true,dHabits:true,prio:'low',showDone:true,dueDef:'today',sortBy:'due',groupTags:true,autoArch:'0',defFilter:'all',showSubs:true,showNotes:true,dOverdue:false,avoidMode:'clean',student:false};
+const CFG_DEF={avoidHide:true,cTask:true,cGoal:true,cHabit:true,dCharts:true,dTasks:true,dGoals:true,dHabits:true,prio:'low',showDone:true,dueDef:'today',sortBy:'due',groupTags:true,autoArch:'0',defFilter:'all',showSubs:true,showNotes:true,dOverdue:false,avoidMode:'clean',student:false,lang:'en'};
 try{S.cfg={...CFG_DEF,...JSON.parse(localStorage.getItem('gt-settings')||'{}')}}catch(e){S.cfg={...CFG_DEF}}
 S.taskFilter=S.cfg.defFilter;
 const saveCfg=()=>{try{localStorage.setItem('gt-settings',JSON.stringify(S.cfg))}catch(e){}};
+/* ---------- Language: English / العربية ---------- */
+// The app is written in English. In Arabic mode every piece of text that appears on screen is translated from this dictionary
+// as it is added to the page (and restored when you switch back), and the layout flips to right-to-left.
+const AR={
+'Goal Tracker':'متتبع الأهداف','Dashboard':'لوحة المتابعة','Home':'الرئيسية','Tasks':'المهام','Goals':'الأهداف','Habits':'العادات','Study':'الدراسة','Settings':'الإعدادات','Auto':'تلقائي','Light':'فاتح','Dark':'داكن',
+'Search':'بحث','Search everything…':'ابحث في كل شيء…','Type to search tasks, goals and habits.':'اكتب للبحث في المهام والأهداف والعادات.','Nothing found.':'لا توجد نتائج.','Close':'إغلاق','Cancel':'إلغاء','Save':'حفظ','Add':'إضافة','Edit':'تعديل','Delete':'حذف','Copy':'نسخ','Restore':'استعادة','Undo':'تراجع','Check off':'تم','Dismiss':'إخفاء',
+'Theme: auto (tap to change)':'السمة: تلقائي (اضغط للتغيير)','Theme: light (tap to change)':'السمة: فاتح (اضغط للتغيير)','Theme: dark (tap to change)':'السمة: داكن (اضغط للتغيير)','Theme':'السمة',
+// dashboard
+'Today':'اليوم','Tomorrow':'غدًا','yesterday':'أمس','Overdue':'متأخرة','Today\'s tasks':'مهام اليوم','Today\'s habits':'عادات اليوم','This week\'s goals':'أهداف هذا الأسبوع','Today\'s picks':'اختيارات اليوم','Today\'s tasks done':'مهام اليوم المنجزة','Habits done today':'العادات المنجزة اليوم',
+'Nothing due today.':'لا شيء مستحق اليوم.','Plan this week':'خطّط هذا الأسبوع','Weekly report':'التقرير الأسبوعي','Activity':'النشاط','Activity heatmap':'خريطة النشاط','Less':'أقل','More':'أكثر','actions':'إجراءات','active days':'أيام نشطة','Last 26 weeks':'آخر 26 أسبوعًا','Last 30 days':'آخر 30 يومًا','Last 30':'آخر 30','Total days':'إجمالي الأيام','Best current streak':'أفضل سلسلة حالية','Best streak':'أفضل سلسلة','Habit consistency':'انتظام العادات','Tasks completed':'المهام المنجزة','Goal progress':'تقدم الأهداف','Active goals':'الأهداف النشطة','none yet':'لا شيء بعد','Current':'الحالية','Current periods':'الفترات الحالية','Sections':'الأقسام',
+'Review':'مراجعة','Hit it, missed, or carry over. About a minute.':'حققته أو فاتني أو أرحّله. دقيقة تقريبًا.','These periods have ended. Be honest. This is where the system gets smarter.':'انتهت هذه الفترات. كن صادقًا، هنا يصبح النظام أذكى.','All caught up. Reviews done ✓':'لا شيء متأخر. اكتملت المراجعات ✓','✓ Hit it':'✓ حققته','✗ Missed':'✗ فاتني','Hit it':'حققته','Missed':'فاتني','Review note (what got in the way / what worked)':'ملاحظة المراجعة (ما الذي أعاق / ما الذي نجح)','What got in the way / what worked? (optional)':'ما الذي أعاق / ما الذي نجح؟ (اختياري)',
+'No backup yet':'لا توجد نسخة احتياطية بعد','Your data lives only in this browser. Copy a backup and keep it somewhere safe.':'بياناتك محفوظة في هذا المتصفح فقط. انسخ نسخة احتياطية واحتفظ بها في مكان آمن.','Copy backup':'نسخ احتياطي','Remind me later':'ذكّرني لاحقًا','Dismiss backup reminder':'إخفاء تذكير النسخ الاحتياطي','OK →':'حسنًا →',
+// tasks
+'New task…':'مهمة جديدة…','Notes (optional)':'ملاحظات (اختياري)','Notes':'ملاحظات','Checklist':'قائمة تحقق','Checklist (optional, one item per line)':'قائمة تحقق (اختياري، عنصر في كل سطر)','Checklist (one item per line)':'قائمة تحقق (عنصر في كل سطر)','Item one Item two':'عنصر أول عنصر ثانٍ','Tag folder':'مجلد الوسم','Tag folder (optional)':'مجلد الوسم (اختياري)','None. Type a name to create one':'لا شيء. اكتب اسمًا لإنشاء مجلد','Title':'العنوان','Due date':'تاريخ الاستحقاق','Due':'الاستحقاق','Priority':'الأولوية','Low':'منخفضة','Medium':'متوسطة','High':'عالية','High priority':'أولوية عالية','Medium priority':'أولوية متوسطة','Linked goal':'الهدف المرتبط','— No goal —':'— بدون هدف —','Repeat':'التكرار','Repeats':'يتكرر','No repeat':'بلا تكرار','Daily':'يوميًا','Weekdays':'أيام الأسبوع','Weekly':'أسبوعيًا','Monthly':'شهريًا','Annual':'سنويًا','5-Year':'5 سنوات','🔁 Daily':'🔁 يوميًا','🔁 Weekdays':'🔁 أيام العمل','🔁 Weekly':'🔁 أسبوعيًا','🔁 Monthly':'🔁 شهريًا','Details, links, anything…':'تفاصيل، روابط، أي شيء…','Completed':'مكتملة','Mark complete':'تحديد كمكتملة','Complete':'إكمال','All':'الكل','Due today':'مستحقة اليوم','Done':'منجزة','Archive':'أرشفة','Archived':'مؤرشفة','Edit task':'تعديل المهمة','Edit goal':'تعديل الهدف','Edit habit':'تعديل العادة','Edit topic':'تعديل الموضوع','Edit exam':'تعديل الاختبار','Edit quiz':'تعديل الاختبار القصير','No tasks here.':'لا مهام هنا.','Missed tasks':'المهام الفائتة','Restore to tasks':'استعادة إلى المهام',
+'Archived tasks':'المهام المؤرشفة','Nothing archived yet. Use the archive button on a task to move it here.':'لا شيء مؤرشف بعد. استخدم زر الأرشفة في المهمة لنقلها إلى هنا.','View archived tasks →':'عرض المهام المؤرشفة →','← Settings':'← الإعدادات','Created':'أُنشئت','Status':'الحالة','Not completed':'غير مكتملة',
+// goals
+'New weekly goal…':'هدف أسبوعي جديد…','Add goal':'إضافة هدف','All periods':'كل الفترات','Horizon':'المدى','Period':'الفترة','How will you measure it?':'كيف ستقيس تقدمه؟','How it\'s measured':'طريقة القياس','☐ Checkbox':'☐ مربع اختيار','☐ Checkbox (or all linked tasks done)':'☐ مربع اختيار (أو إنجاز كل المهام المرتبطة)','🔢 Number':'🔢 رقم','🔢 Number target':'🔢 هدف رقمي','🧩 Built from sub-goals':'🧩 مبني من أهداف فرعية','Target':'الهدف','Unit':'الوحدة','Current value':'القيمة الحالية','Target, e.g. 10':'الهدف، مثال: 10','Target, e.g. 40':'الهدف، مثال: 40','Unit, e.g. hours':'الوحدة، مثال: ساعات','hours, pages…':'ساعات، صفحات…','Sub-goals needed to complete it':'عدد الأهداف الفرعية اللازمة لإكماله','Why it matters / how you\'ll measure it (optional)':'لماذا يهم / كيف ستقيسه (اختياري)','— None —':'— لا شيء —','— Supports which monthly goal? —':'— أي هدف شهري يدعم؟ —','Supports which monthly goal?':'أي هدف شهري يدعم؟','Supports which annual goal?':'أي هدف سنوي يدعم؟','Standalone weekly goals':'أهداف أسبوعية مستقلة','A weekly goal of its own…':'هدف أسبوعي خاص به…','Active':'نشط','Weekly goals':'الأهداف الأسبوعية','Goals finished':'الأهداف المنجزة','Goal':'الهدف','Carry':'ترحيل',
+'Plan':'تخطيط','Previous week':'الأسبوع السابق','Next week':'الأسبوع التالي','Previous month':'الشهر السابق','Next month':'الشهر التالي','This week':'هذا الأسبوع','Last week':'الأسبوع الماضي',
+'No monthly goals built from weekly goals for 2026-10 yet. Add standalone goals below, or create a monthly goal on the Goals tab first.':'لا توجد أهداف شهرية مبنية من أهداف أسبوعية بعد. أضف أهدافًا مستقلة بالأسفل أو أنشئ هدفًا شهريًا من تبويب الأهداف أولًا.',
+// habits
+'New habit (e.g. Code 1 hour, or No smoking)…':'عادة جديدة (مثال: برمجة ساعة، أو عدم التدخين)…','Add habit':'إضافة عادة','Habit type':'نوع العادة','✅ Build: tick it when done':'✅ بناء: علّمها عند الإنجاز','🚫 Avoid: clean unless you slip':'🚫 تجنّب: نظيف ما لم تنزلق','🚫 Avoid: tick each clean day':'🚫 تجنّب: علّم كل يوم نظيف','Target days per week':'أيام الهدف في الأسبوع','Folder':'المجلد','Folder (optional), e.g. Morning routine':'مجلد (اختياري)، مثال: روتين الصباح','Rename folder':'إعادة تسمية المجلد','Schedule':'الجدول','Days':'الأيام','Days it\'s due (none = every day)':'الأيام المطلوبة (لا شيء = كل يوم)','none = every day':'لا شيء = كل يوم','Hide done today':'إخفاء المنجز اليوم','✓ Hiding done today':'✓ المنجز اليوم مخفي','Compact':'مضغوط','✓ Compact':'✓ مضغوط','↕ Reorder':'↕ ترتيب','✓ Reordering':'✓ جارٍ الترتيب','Move up':'تحريك لأعلى','Move down':'تحريك لأسفل','Open history':'فتح السجل','Name':'الاسم','Type':'النوع','tick ✓ when done':'علّم ✓ عند الإنجاز','Tap any past day to check it off or undo it.':'اضغط أي يوم سابق لتعليمه أو التراجع عنه.','All habits done for today 🎉':'اكتملت كل عادات اليوم 🎉','Off today':'إجازة اليوم','All done':'اكتمل كل شيء',
+// study
+'Study today':'الدراسة اليوم','📚 Study today':'📚 دراسة اليوم','Open Study →':'فتح الدراسة →','Add your subjects and topics to start your revision timetable.':'أضف موادك ومواضيعك لتبدأ جدول المراجعة.','Subject':'المادة','Subject (e.g. Biochemistry)':'المادة (مثال: الكيمياء الحيوية)','Topic':'الموضوع','Topics, one per line':'المواضيع، موضوع في كل سطر','Add topics':'إضافة مواضيع','Weak and untouched topics come first. Tap a day to log it.':'المواضيع الضعيفة وغير المدروسة أولًا. اضغط يومًا لتسجيله.','Never studied':'لم تُدرس بعد','Not started':'لم تبدأ','Weak':'ضعيف','OK':'مقبول','Strong':'قوي','Weak →':'ضعيف ←','OK →':'مقبول ←','Strong → clear. Backfill past days to build your retrospective timetable.':'قوي ← مسح. سجّل الأيام السابقة لبناء جدولك الاسترجاعي.','Tap a day:':'اضغط يومًا:','No subjects yet.':'لا توجد مواد بعد.','Everything has been studied today 🎉':'تمت دراسة كل شيء اليوم 🎉','Add topics below to get daily picks.':'أضف مواضيع بالأسفل لتحصل على اختيارات يومية.',
+'Exams & quizzes':'الاختبارات والاختبارات القصيرة','+ Add':'+ إضافة','Add exam or quiz':'إضافة اختبار','📝 Exam':'📝 اختبار','❓ Quiz / test':'❓ اختبار قصير','Time (optional)':'الوقت (اختياري)','Date':'التاريخ','Score (after it)':'الدرجة (بعد الاختبار)','Out of':'من','Room, syllabus, what to bring…':'القاعة، المنهج، ما يجب إحضاره…','e.g. Biochemistry midterm':'مثال: نصفي الكيمياء الحيوية','Log result':'تسجيل النتيجة','Nothing coming up. Add your exams and quizzes so you never miss one.':'لا شيء قادم. أضف اختباراتك حتى لا يفوتك أي منها.','Student mode':'وضع الطالب','Adds a Study tab: revision timetable, today\'s picks, and exams':'يضيف تبويب الدراسة: جدول المراجعة واختيارات اليوم والاختبارات',
+// settings
+'General':'عام','Sound effects':'المؤثرات الصوتية','Chimes when you finish or undo something':'نغمة عند الإنجاز أو التراجع','Language / اللغة':'اللغة / Language','Default priority for new tasks':'الأولوية الافتراضية للمهام الجديدة','Show completed tasks':'إظهار المهام المكتملة','The dimmed "Completed" list under your tasks':'قائمة "المكتملة" الباهتة أسفل مهامك','Default due date for new tasks':'تاريخ الاستحقاق الافتراضي للمهام الجديدة','No date':'بدون تاريخ','Sort open tasks by':'ترتيب المهام المفتوحة حسب','Due date':'تاريخ الاستحقاق','Newest first':'الأحدث أولًا','A to Z':'أبجديًا','Tasks tab opens on':'يفتح تبويب المهام على','Overdue':'متأخرة','Auto-archive finished tasks':'أرشفة المهام المنجزة تلقائيًا','Never':'أبدًا','After 1 day':'بعد يوم','After 7 days':'بعد 7 أيام','After 30 days':'بعد 30 يومًا','Group tasks into tag folders':'تجميع المهام في مجلدات وسوم','Turn off for one flat list':'أوقفه للحصول على قائمة واحدة','Show notes on task rows':'إظهار الملاحظات في صفوف المهام','Show checklist items on task rows':'إظهار عناصر القائمة في صفوف المهام','Off keeps just the 2/4 counter':'عند الإيقاف يبقى العدّاد فقط','Overdue tasks on the Dashboard':'المهام المتأخرة في لوحة المتابعة','Adds late tasks to Today\'s tasks':'يضيف المهام المتأخرة إلى مهام اليوم',
+'Hide habits done today':'إخفاء العادات المنجزة اليوم','Same as the chip in the Habits tab':'مثل الزر في تبويب العادات','Compact habit list':'قائمة عادات مضغوطة','One tight row per habit':'صف مضغوط لكل عادة','New avoid habits: a day counts as':'عادات التجنّب الجديدة: يُحتسب اليوم','Clean unless I log a slip':'نظيفًا ما لم أسجّل انزلاقًا','A slip unless I tick it clean':'انزلاقًا ما لم أعلّمه نظيفًا','Hide avoid habits while clean':'إخفاء عادات التجنّب وهي نظيفة','Only matters when "Hide habits done today" is on':'يؤثر فقط عند تفعيل "إخفاء العادات المنجزة اليوم"',
+'Ask before deleting':'اسأل قبل الحذف','You always get a 6-second Undo after deleting.':'يظهر لك زر تراجع لمدة 6 ثوانٍ بعد كل حذف.','Dashboard sections':'أقسام لوحة المتابعة','Heatmap and charts':'الخريطة الحرارية والرسوم','Your data':'بياناتك','Storage & backup':'التخزين والنسخ الاحتياطي','Stored in this browser\'s IndexedDB. Export regularly to back up or move to another device.':'تُحفظ البيانات في IndexedDB بهذا المتصفح. صدّر نسخة بانتظام للحفظ أو للنقل إلى جهاز آخر.','Last backup:':'آخر نسخة احتياطية:','Storage:':'التخزين:','never':'أبدًا','not protected':'غير محمي','protected':'محمي','checking…':'جارٍ الفحص…','unknown':'غير معروف','Ask again':'اسأل مجددًا','Version':'الإصدار','Export JSON':'تصدير JSON','Import JSON':'استيراد JSON','Copy backup text':'نسخ نص النسخة الاحتياطية','Paste backup text':'لصق نص النسخة الاحتياطية','Erase everything':'مسح كل شيء','Backup as text':'نسخة احتياطية كنص','Restore from text':'استعادة من نص','Copy this and paste it somewhere safe, like a note or a message to yourself.':'انسخ هذا والصقه في مكان آمن، مثل ملاحظة أو رسالة لنفسك.','Paste a backup you copied earlier. This replaces all current data.':'الصق نسخة احتياطية نسختها سابقًا. هذا يستبدل كل البيانات الحالية.','Paste backup here…':'الصق النسخة الاحتياطية هنا…','Copied ✓':'تم النسخ ✓','Select all and copy manually':'حدّد الكل وانسخ يدويًا',
+'The browser may clear this data if the phone runs low on space. Bookmarking the page or adding it to the home screen often lets it be protected.':'قد يمسح المتصفح هذه البيانات إذا قلّت مساحة الهاتف. حفظ الصفحة في المفضلة أو إضافتها إلى الشاشة الرئيسية يساعد على حمايتها.',
+'Weekly · ':'أسبوعي · ','Monthly · ':'شهري · ','Annual · ':'سنوي · ',
+// toasts / dialogs
+'Task deleted.':'تم حذف المهمة.','Goal deleted.':'تم حذف الهدف.','Habit deleted.':'تم حذف العادة.','Topic deleted.':'تم حذف الموضوع.','Deleted.':'تم الحذف.','Under a minute, so nothing was logged':'أقل من دقيقة، لم يُسجَّل شيء','Those topics already exist':'هذه المواضيع موجودة بالفعل',
+'Delete this goal? Linked tasks and sub-goals are kept but unlinked.':'حذف هذا الهدف؟ تبقى المهام والأهداف الفرعية المرتبطة لكن دون ارتباط.','Delete this habit and its history?':'حذف هذه العادة وسجلها؟','Erase all tasks, goals, habits and history? This cannot be undone.':'مسح كل المهام والأهداف والعادات والسجل؟ لا يمكن التراجع.','This can\'t be undone.':'لا يمكن التراجع عن هذا.','This can\'t be undone. Tip: archive it instead to keep its history.':'لا يمكن التراجع عن هذا. نصيحة: أرشفها بدلًا من ذلك للاحتفاظ بسجلها.','Set a target number for this goal (for example 10).':'حدد رقمًا مستهدفًا لهذا الهدف (مثال: 10).','Set a target number for this goal (for example 40).':'حدد رقمًا مستهدفًا لهذا الهدف (مثال: 40).','(Leave empty to remove the folder. Its habits are kept.)':'(اتركه فارغًا لإزالة المجلد. تبقى عاداته.)','This can\'t be undone. Not-completed archived tasks are kept.':'لا يمكن التراجع. تبقى المهام المؤرشفة غير المكتملة.','Replace all current data with this backup?':'استبدال كل البيانات الحالية بهذه النسخة الاحتياطية؟',
+'None':'لا شيء','habits':'العادات','tasks done':'مهام منجزة','tasks missed':'مهام فائتة','Item one\nItem two':'عنصر أول\nعنصر ثانٍ'
+};
+const PAT=[
+[/^(\d+) days? this month$/,m=>`${m[1]} يومًا هذا الشهر`],[/^(\d+) studied today$/,m=>`${m[1]} تمت دراستها اليوم`],[/^(\d+) weak$/,m=>`${m[1]} ضعيفة`],[/^(\d+) not started$/,m=>`${m[1]} لم تبدأ`],
+[/^(\d+)\/(\d+) done$/,m=>`${m[1]}/${m[2]} منجز`],[/^(\d+)\/(\d+) strong$/,m=>`${m[1]}/${m[2]} قوية`],[/^(\d+)\/(\d+) due done$/,m=>`${m[1]}/${m[2]} مستحق منجز`],
+[/^(\d+) archived · (\d+) completed$/,m=>`${m[1]} مؤرشفة · ${m[2]} مكتملة`],[/^(\d+) goals? from past periods needs? a review$/,m=>`${m[1]} هدف من فترات سابقة يحتاج مراجعة`],
+[/^(\d+) overdue from earlier days →$/,m=>`${m[1]} متأخرة من أيام سابقة →`],[/^(\d+) past exams?\/quiz(?:zes)? without a result$/,m=>`${m[1]} اختبار سابق بدون نتيجة`],
+[/^(\d+)×(?: per week|\/week)$/,m=>`${m[1]}× أسبوعيًا`],[/^(\d+) in 14 days$/,m=>`${m[1]} خلال 14 يومًا`],[/^(\d+) tasks · (\d+) goals · (\d+) habits · (\d+) check-ins$/,m=>`${m[1]} مهمة · ${m[2]} هدف · ${m[3]} عادة · ${m[4]} تسجيل`],
+[/^30-day (\d+)%$/,m=>`آخر 30 يومًا ${m[1]}%`],[/^This week (\d+\/\d+)$/,m=>`هذا الأسبوع ${m[1]}`],[/^(\d+)\/(\d+) this wk$/,m=>`${m[1]}/${m[2]} هذا الأسبوع`],
+[/^Check off (.+) for today$/,m=>`تعليم ${m[1]} لهذا اليوم`],[/^Clean today\. Tap to log a slip$/,()=>'نظيف اليوم. اضغط لتسجيل انزلاق'],[/^Slipped today\. Tap to undo$/,()=>'انزلاق اليوم. اضغط للتراجع'],
+[/^Delete (\d+) completed$/,m=>`حذف ${m[1]} مكتملة`],[/^Delete "(.+)"\?$/,m=>`حذف "${m[1]}"؟`],[/^Delete topic "(.+)" and its study log\?$/,m=>`حذف الموضوع "${m[1]}" وسجل دراسته؟`],[/^Delete (.+)$/,m=>`حذف ${m[1]}`],[/^Edit (.+)$/,m=>`تعديل ${m[1]}`],
+[/^Completed · (\d+)$/,m=>`المكتملة · ${m[1]}`],[/^Completed (.+)$/,m=>`اكتملت ${m[1]}`],[/^Done (.+)$/,m=>`أُنجزت ${m[1]}`],[/^Created (.+)$/,m=>`أُنشئت ${m[1]}`],[/^Overdue · (.+)$/,m=>`متأخرة · ${m[1]}`],
+[/^in (\d+) days$/,m=>`بعد ${m[1]} يومًا`],[/^(\d+) days? ago$/,m=>`قبل ${m[1]} يومًا`],[/^Last: (.+)$/,m=>`آخر مرة: ${trText(m[1])}`],
+[/^(Hide|Show) past \((.+)\)$/,m=>`${m[1]==='Hide'?'إخفاء':'إظهار'} السابقة (${trText(m[2])})`],[/^(\d+) · result missing$/,m=>`${m[1]} · النتيجة ناقصة`],
+[/^Plan (.+)$/,m=>`تخطيط ${m[1]}`],[/^Review (\d+) goals?$/,m=>`مراجعة ${m[1]} هدف`],[/^Carry to (.+)$/,m=>`ترحيل إلى ${m[1]}`],
+[/^Topic (.+): not studied$/,m=>`الموضوع ${m[1]}: لم يُدرس`],[/^Topic (.+): (Weak|OK|Strong)$/,m=>`الموضوع ${m[1]}: ${AR[m[2]]}`],[/^default (\d+)$/,m=>`الافتراضي ${m[1]}`],
+[/^Activity heatmap: (\d+) actions on (\d+) days$/,m=>`خريطة النشاط: ${m[1]} إجراء في ${m[2]} يومًا`],[/^Tasks completed per day, last 14 days, (\d+) total$/,m=>`المهام المنجزة يوميًا، آخر 14 يومًا، المجموع ${m[1]}`],
+[/^(\d+) days? clean$/,m=>`${m[1]} يومًا نظيفًا`],[/^(\d+) days?$/,m=>`${m[1]} يومًا`],[/^Added (\d+) topics? to (.+)$/,m=>`تمت إضافة ${m[1]} موضوع إلى ${m[2]}`],
+[/^Goal complete: (.+)$/,m=>`اكتمل الهدف: ${m[1]}`],[/^Next "(.+)" on (.+)$/,m=>`التالية "${m[1]}" في ${m[2]}`],[/^Slip logged for "(.+)"\. Tap the day again to undo\.$/,m=>`تم تسجيل انزلاق في "${m[1]}". اضغط اليوم مرة أخرى للتراجع.`],
+[/^(.+): all done for today$/,m=>`${m[1]}: اكتمل كل شيء اليوم`],[/^Deleted (\d+) archived tasks?\.$/,m=>`تم حذف ${m[1]} مهمة مؤرشفة.`],
+[/^Permanently delete (\d+) completed archived tasks?\?$/,m=>`حذف ${m[1]} مهمة مؤرشفة مكتملة نهائيًا؟`],[/^Restored (.+)\.$/,m=>`تمت الاستعادة: ${m[1]}.`],[/^Imported (.+)\.$/,m=>`تم الاستيراد: ${m[1]}.`],
+[/^Saved (.+) \((.+) KB\) to Downloads\.$/,m=>`تم حفظ ${m[1]} (${m[2]} ك.ب) في التنزيلات.`],[/^Rename folder "(.+)"$/,m=>`إعادة تسمية المجلد "${m[1]}"`],
+[/^Last backup (.+)$/,m=>`آخر نسخة احتياطية ${m[1]}`],[/^(\d+) tasks? done$/,m=>`${m[1]} مهمة منجزة`],[/^(\d+) tasks? missed$/,m=>`${m[1]} مهمة فائتة`],[/^· (\d+) of (\d+) weekly goals done · (\d+) still to plan$/,m=>`· ${m[1]} من ${m[2]} أهداف أسبوعية منجزة · ${m[3]} بانتظار التخطيط`]
+];
+const ARROW={'→':'←','←':'→'};
+function trCore(s){if(Object.prototype.hasOwnProperty.call(AR,s))return AR[s];for(const[re,fn]of PAT){const m=s.match(re);if(m)return fn(m)}return null}
+function trText(s){
+  s=String(s);const t=s.trim();if(!t||!/[A-Za-z]/.test(t))return s;
+  const lead=s.slice(0,s.length-s.trimStart().length),trail=s.slice(s.trimEnd().length);
+  let r=trCore(t);
+  if(r===null){const m=t.match(/^([^A-Za-z0-9]*)(.*?)([^A-Za-z0-9)\]]*)$/);if(m&&m[2]){const c=trCore(m[2]);if(c!==null)r=m[1]+c+m[3]}}
+  if(r===null)return s;
+  return lead+r.replace(/[→←]/g,c=>ARROW[c])+trail;
+}
+const TR_ATTRS=['placeholder','title','aria-label'];
+function trNode(root){
+  if(S.cfg.lang!=='ar'||!root)return;
+  const doText=n=>{const p=n.parentElement;if(p&&(p.tagName==='SCRIPT'||p.tagName==='STYLE'||p.tagName==='TEXTAREA'))return;const v=n.nodeValue,r=trText(v);if(r!==v){n._en=v;n.nodeValue=r}};
+  const doEl=e=>{for(const a of TR_ATTRS){const v=e.getAttribute&&e.getAttribute(a);if(v){const r=trText(v);if(r!==v){if(!e.hasAttribute('data-en-'+a))e.setAttribute('data-en-'+a,v);e.setAttribute(a,r)}}}};
+  if(root.nodeType===3){doText(root);return}
+  if(root.nodeType!==1)return;
+  doEl(root);root.querySelectorAll('[placeholder],[title],[aria-label]').forEach(doEl);
+  const w=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);let n;while(n=w.nextNode())doText(n);
+}
+function untrNode(root){
+  const w=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);let n;while(n=w.nextNode()){if(n._en!==undefined){n.nodeValue=n._en;delete n._en}}
+  root.querySelectorAll('*').forEach(e=>{for(const a of TR_ATTRS){const o=e.getAttribute('data-en-'+a);if(o!==null){e.setAttribute(a,o);e.removeAttribute('data-en-'+a)}}});
+}
+function applyLang(){
+  const ar=S.cfg.lang==='ar';
+  document.documentElement.lang=ar?'ar':'en';document.documentElement.dir=ar?'rtl':'ltr';LOCALE=ar?'ar-u-nu-latn':undefined;
+  const t=$('#today');if(t)t.textContent=new Date().toLocaleDateString(LOCALE,{weekday:'long',month:'long',day:'numeric'});
+  if(ar)trNode(document.body);else untrNode(document.body);
+}
+new MutationObserver(ms=>{if(S.cfg.lang!=='ar')return;for(const m of ms)for(const n of m.addedNodes)trNode(n)}).observe(document.body,{childList:true,subtree:true});
+const _al=window.alert.bind(window),_co=window.confirm.bind(window),_pr=window.prompt.bind(window);
+const trMsg=m=>S.cfg.lang==='ar'?String(m).split('\n').map(trText).join('\n'):m;
+window.alert=m=>_al(trMsg(m));window.confirm=m=>_co(trMsg(m));window.prompt=(m,d)=>_pr(trMsg(m),d);
+
 try{S.hideDone=localStorage.getItem('gt-hide-done')==='1'}catch(e){S.hideDone=false}
 try{S.compact=localStorage.getItem('gt-compact')==='1'}catch(e){S.compact=false}
 try{S.collapsed=new Set(JSON.parse(localStorage.getItem('gt-collapsed')||'[]'))}catch(e){S.collapsed=new Set()}
@@ -1252,7 +1352,7 @@ const actions={
     else if(k==='hideDone'){S.hideDone=v;try{localStorage.setItem('gt-hide-done',v?'1':'0')}catch(e){}}
     else if(k==='compact'){S.compact=v;try{localStorage.setItem('gt-compact',v?'1':'0')}catch(e){}}
     else if(k==='theme')setTheme(v);
-    else if(k in CFG_DEF){S.cfg[k]=v;saveCfg();if(k==='autoArch')return autoArchive().then(()=>{render()})}},
+    else if(k in CFG_DEF){S.cfg[k]=v;saveCfg();if(k==='lang')applyLang();if(k==='autoArch')return autoArchive().then(()=>{render()})}},
   'toggle-sound'(){Sound.set(!Sound.on);if(Sound.on)Sound.play('task')},
   async 'del-task'(el){
     const t=S.tasks.find(x=>x.id===el.dataset.id);if(!t)return false;
@@ -1549,7 +1649,7 @@ async function autoArchive(){
   for(const t of S.tasks)if(t.done&&!t.archived&&t.doneAt&&t.doneAt<cut){t.archived=true;t.archivedAt=Date.now();await DB.put('tasks',t)}
 }
 (async()=>{
-  $('#today').textContent=new Date().toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'});
+  applyLang();
   await load();await autoArchive();render();
   await checkStorage(true);if(S.view==='data')render();
 })();
