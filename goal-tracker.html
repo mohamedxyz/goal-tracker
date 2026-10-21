@@ -5,6 +5,7 @@
     PATCH = bug fix · MINOR = new feature · MAJOR = breaks old backups or data
 
   Changelog
+  0.39.0 Safer restore: rows are validated first (bad rows skipped and reported), settings are filtered, language/student mode apply immediately, and if a restore fails midway your previous data is put back; share dialog keyboard-friendly; dialogs announce their title to screen readers
   0.38.0 Share button on every task, habit, exam and topic: opens the share dialog with just that item ready to send (Settings entry still shares several at once)
   0.37.0 Study insights: per-subject summary (strong/OK/weak/new bar, last studied, due topics, days to exam), a 14-day chart of topics studied per day, and a Study section in the weekly report when student mode is on
   0.36.0 Spaced repetition: every topic gets a next-review date from its latest colour (Weak 1 day, OK 3 days, Strong 1/3/7/14/30 growing with consecutive Strong ratings, shorter before an exam); due topics lead Today's picks and show a Due badge; intervals editable in Settings
@@ -1058,7 +1059,7 @@ function drawHabit(){
 document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('[role=button][data-action]')){e.preventDefault();e.target.click()}});
 
 /* ---------- Version ---------- */
-const APP_VERSION='0.38.0';
+const APP_VERSION='0.39.0';
 
 /* ---------- Completion sounds (synthesised, no audio files) ---------- */
 const Sound={
@@ -1179,6 +1180,7 @@ function applyLang(){
   const t=$('#today');if(t)t.textContent=new Date().toLocaleDateString(LOCALE,{weekday:'long',month:'long',day:'numeric'});
   if(ar)trNode(document.body);else untrNode(document.body);
 }
+new MutationObserver(()=>setTimeout(()=>{const h=dlg.querySelector('h3');if(h)dlg.setAttribute('aria-label',h.textContent)},0)).observe(dlg,{childList:true});
 new MutationObserver(ms=>{if(S.cfg.lang!=='ar')return;for(const m of ms)for(const n of m.addedNodes)trNode(n)}).observe(document.body,{childList:true,subtree:true});
 const _al=window.alert.bind(window),_co=window.confirm.bind(window),_pr=window.prompt.bind(window);
 const trMsg=m=>S.cfg.lang==='ar'?String(m).split('\n').map(trText).join('\n'):m;
@@ -1660,7 +1662,7 @@ function openShareImport(){
   SHP=null;
   dlg.innerHTML=`<form method="dialog" data-shimp><h3>Import shared items</h3><p class="meta">Paste what your friend sent, or choose their .json file. You will see a preview before anything is added.</p>
     <textarea name="text" spellcheck="false" placeholder="Paste shared text here…" style="min-height:120px;font:12px/1.4 ui-monospace,monospace"></textarea>
-    <div class="row" style="margin-top:6px"><label class="ghost" style="cursor:pointer;display:inline-flex;align-items:center;padding:8px 12px">Choose file<input type="file" id="shFile" accept=".json,application/json" hidden></label></div>
+    <div class="row" style="margin-top:6px"><button type="button" class="ghost" data-shimp-act="file">Choose file</button><input type="file" id="shFile" accept=".json,application/json" hidden></div>
     <div class="dlg-actions"><button class="ghost" value="cancel" formnovalidate>Close</button><button type="button" class="btn" data-shimp-act="read">Preview</button></div></form>`;
   dlg.showModal();
 }
@@ -1701,6 +1703,7 @@ async function shimpAdd(){
 dlg.addEventListener('click',e=>{
   const b=e.target.closest('[data-sh]');if(b){shareDo(b.dataset.sh);return}
   const c=e.target.closest('[data-shimp-act]');if(!c)return;
+  if(c.dataset.shimpAct==='file')dlg.querySelector('#shFile').click();
   if(c.dataset.shimpAct==='read')shimpPreview(dlg.querySelector('textarea[name=text]').value);
   if(c.dataset.shimpAct==='add')shimpAdd();
 });
@@ -1718,11 +1721,15 @@ async function restore(text,source){
   let d;
   try{d=JSON.parse(text)}catch(e){throw new Error(`the ${source} is cut off or isn't valid JSON (${(text.length/1024).toFixed(1)} KB). Export it again, or use "Copy backup text" instead.`)}
   if(!d||!Array.isArray(d.tasks)||!Array.isArray(d.goals))throw new Error("that isn't a Goal Tracker backup.");
-  const n=`${d.tasks.length} tasks, ${d.goals.length} goals, ${(d.habits||[]).length} habits, ${(d.logs||[]).length} check-ins`;
+  const rows={};let skipped=0;
+  for(const st of STORES){const src=Array.isArray(d[st])?d[st]:[];rows[st]=src.filter(r=>{const ok=r&&typeof r==='object'&&typeof r.id==='string'&&r.id&&(st!=='logs'||r.id.includes('|'));if(!ok)skipped++;return ok})}
+  const n=`${rows.tasks.length} tasks, ${rows.goals.length} goals, ${rows.habits.length} habits, ${rows.logs.length} check-ins`+(rows.topics.length||rows.exams.length?`, ${rows.topics.length} topics, ${rows.exams.length} exams`:'')+(skipped?` (${skipped} damaged rows skipped)`:'');
   if(!confirm(`Replace all current data with this backup?\n\n${n}`))return false;
-  for(const s of STORES){await DB.clear(s);for(const row of (d[s]||[]))await DB.put(s,row)}
+  const snap=backupData();
+  try{for(const st of STORES){await DB.clear(st);for(const row of rows[st])await DB.put(st,row)}}
+  catch(err){try{for(const st of STORES){await DB.clear(st);for(const row of (snap[st]||[]))await DB.put(st,row)}await load();render()}catch(_){}throw new Error('the restore failed part-way, so your previous data was put back ('+err.message+').')}
   if(d.settings&&typeof d.settings==='object'){const st=d.settings;
-    if(st.cfg&&typeof st.cfg==='object'){S.cfg={...CFG_DEF,...st.cfg};saveCfg()}
+    if(st.cfg&&typeof st.cfg==='object'){const o={};for(const k in CFG_DEF)if(k in st.cfg&&typeof st.cfg[k]===typeof CFG_DEF[k])o[k]=st.cfg[k];S.cfg={...CFG_DEF,...o};saveCfg();applyLang()}
     if(typeof st.sound==='boolean')Sound.set(st.sound);
     if(typeof st.hideDone==='boolean'){S.hideDone=st.hideDone;try{localStorage.setItem('gt-hide-done',st.hideDone?'1':'0')}catch(e){}}
     if(typeof st.compact==='boolean'){S.compact=st.compact;try{localStorage.setItem('gt-compact',st.compact?'1':'0')}catch(e){}}}
