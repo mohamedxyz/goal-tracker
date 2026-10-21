@@ -5,6 +5,7 @@
     PATCH = bug fix · MINOR = new feature · MAJOR = breaks old backups or data
 
   Changelog
+  0.27.2 Archived tasks are only reachable from the Data tab (removed the archived-count link from the Tasks tab)
   0.27.1 Fix: goals no longer complete early. A goal at 99.6% used to round up to 100% and auto-complete; progress now only reaches 100% when the target is truly met
   0.27.0 Removed the focus timer
   0.26.0 Task tag folders: give a task a tag and open tasks group into collapsible folders per tag with done counts; with "Hide done today" a habit folder disappears once everything in it is done
@@ -688,7 +689,6 @@ function viewTasks(){
   const open=list.filter(t=>!t.done).sort((a,b)=>((a.due||'9999').localeCompare(b.due||'9999'))||pr(a)-pr(b));
   const done=list.filter(t=>t.done).sort((a,b)=>(b.doneAt||0)-(a.doneAt||0));
   const nOver=live.filter(t=>!t.done&&t.due&&t.due<today).length;
-  const nArch=S.tasks.length-live.length;
   const chip=(k,l)=>`<button class="chip ${f===k?'on':''}" data-action="task-filter" data-v="${k}">${l}</button>`;
   return `<form class="add" data-form="task">
     <input type="text" name="title" placeholder="New task…" required>
@@ -702,8 +702,7 @@ function viewTasks(){
     <button class="btn">Add</button></form>
   <div class="filters">${chip('all','All')}${chip('today','Due today')}${chip('overdue','Overdue'+(nOver?' · '+nOver:''))}${chip('done','Done')}</div>
   ${open.length?taskGroups(open):(done.length?'':`<div class="empty">No tasks here.</div>`)}
-  ${done.length?`${f==='done'?'':`<div class="divider">Completed · ${done.length}</div>`}<ul class="list">${done.map(taskItem).join('')}</ul>`:''}
-  ${nArch?`<button class="chip" style="margin-top:14px" data-action="open-archive">${nArch} archived task${nArch>1?'s':''} →</button>`:''}`;
+  ${done.length?`${f==='done'?'':`<div class="divider">Completed · ${done.length}</div>`}<ul class="list">${done.map(taskItem).join('')}</ul>`:''}`;
 }
 function viewGoals(){
   const h=S.horizon;const cur=currentPeriod(h);const ph=PARENT[h];
@@ -950,7 +949,7 @@ function drawHabit(){
 document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('[role=button][data-action]')){e.preventDefault();e.target.click()}});
 
 /* ---------- Version ---------- */
-const APP_VERSION='0.27.1';
+const APP_VERSION='0.27.2';
 
 /* ---------- Completion sounds (synthesised, no audio files) ---------- */
 const Sound={
