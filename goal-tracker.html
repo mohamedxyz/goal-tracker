@@ -5,6 +5,7 @@
     PATCH = bug fix · MINOR = new feature · MAJOR = breaks old backups or data
 
   Changelog
+  0.27.1 Fix: goals no longer complete early. A goal at 99.6% used to round up to 100% and auto-complete; progress now only reaches 100% when the target is truly met
   0.27.0 Removed the focus timer
   0.26.0 Task tag folders: give a task a tag and open tasks group into collapsible folders per tag with done counts; with "Hide done today" a habit folder disappears once everything in it is done
   0.25.0 Quality pass: timer clears itself if its goal was deleted; checked speed on 2 years of data with every new feature, old backups (no checklists/schedules/order) load and render in every view
@@ -433,10 +434,10 @@ const fmtNum=n=>String(+(+n||0).toFixed(2));
 function progressRaw(g,seen=new Set()){
   if(seen.has(g.id))return 0;seen.add(g.id);
   const k=goalKind(g);
-  if(k==='number'){const t=+g.target||0;return t>0?Math.min(100,Math.round((+g.value||0)/t*100)):0}
+  if(k==='number'){const t=+g.target||0;const v=+g.value||0;return t<=0?0:v>=t?100:Math.min(99,Math.floor(v/t*100))}
   if(k==='rollup'){const kids=S.goals.filter(c=>c.parentId===g.id);const n=Math.max(expectedOf(g),kids.length);
-    return Math.min(100,Math.round(kids.reduce((a,c)=>a+progress(c,seen),0)/n))}
-  const t=S.tasks.filter(x=>x.goalId===g.id);return t.length?Math.round(t.filter(x=>x.done).length/t.length*100):0;
+    const sum=kids.reduce((a,c)=>a+progress(c,seen),0);return sum>=n*100?100:Math.min(99,Math.floor(sum/n))}
+  const t=S.tasks.filter(x=>x.goalId===g.id);if(!t.length)return 0;const d=t.filter(x=>x.done).length;return d===t.length?100:Math.min(99,Math.floor(d/t.length*100));
 }
 function progress(g,seen=new Set()){return g.done?100:progressRaw(g,seen)}
 function goalDetail(g){
@@ -949,7 +950,7 @@ function drawHabit(){
 document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('[role=button][data-action]')){e.preventDefault();e.target.click()}});
 
 /* ---------- Version ---------- */
-const APP_VERSION='0.27.0';
+const APP_VERSION='0.27.1';
 
 /* ---------- Completion sounds (synthesised, no audio files) ---------- */
 const Sound={
