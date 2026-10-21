@@ -5,6 +5,7 @@
     PATCH = bug fix · MINOR = new feature · MAJOR = breaks old backups or data
 
   Changelog
+  0.40.0 Final quality pass: Study tab 12x faster with hundreds of topics and exams (cached exam lookups and review dates), Tasks tab shows the 40 newest completed tasks with a Show all button (lighter on big lists), Arabic dictionary updated
   0.39.0 Safer restore: rows are validated first (bad rows skipped and reported), settings are filtered, language/student mode apply immediately, and if a restore fails midway your previous data is put back; share dialog keyboard-friendly; dialogs announce their title to screen readers
   0.38.0 Share button on every task, habit, exam and topic: opens the share dialog with just that item ready to send (Settings entry still shares several at once)
   0.37.0 Study insights: per-subject summary (strong/OK/weak/new bar, last studied, due topics, days to exam), a 14-day chart of topics studied per day, and a Study section in the weekly report when student mode is on
@@ -747,7 +748,7 @@ function viewTasks(){
     <button class="btn">Add</button></form>
   <div class="filters">${chip('all','All')}${chip('today','Due today')}${chip('overdue','Overdue'+(nOver?' · '+nOver:''))}${chip('done','Done')}</div>
   ${open.length?taskGroups(open):((done.length&&showDone)?'':`<div class="empty">No tasks here.</div>`)}
-  ${(done.length&&showDone)?`${f==='done'?'':`<div class="divider">Completed · ${done.length}</div>`}<ul class="list">${done.map(taskItem).join('')}</ul>`:''}`;
+  ${(done.length&&showDone)?`${f==='done'?'':`<div class="divider">Completed · ${done.length}</div>`}<ul class="list">${(S.doneAll?done:done.slice(0,40)).map(taskItem).join('')}</ul>${done.length>40?`<button class="chip" style="margin-top:8px" data-action="toggle-done-all">${S.doneAll?'Show fewer':'Show all '+done.length+' completed'}</button>`:''}`:''}`;
 }
 function viewGoals(){
   const h=S.horizon;const cur=currentPeriod(h);const ph=PARENT[h];
@@ -922,6 +923,7 @@ function viewData(){
 }
 
 function render(){
+  _exMap=null;_srMemo=new Map();
   const newly=syncGoals();
   if(S.booted&&newly.length){Sound.play('goal');setTimeout(()=>toast('🎯 Goal complete: '+newly.map(g=>g.title).join(', ')),50)}
   S.booted=true;
@@ -1059,7 +1061,7 @@ function drawHabit(){
 document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('[role=button][data-action]')){e.preventDefault();e.target.click()}});
 
 /* ---------- Version ---------- */
-const APP_VERSION='0.39.0';
+const APP_VERSION='0.40.0';
 
 /* ---------- Completion sounds (synthesised, no audio files) ---------- */
 const Sound={
@@ -1126,7 +1128,7 @@ const AR={
 // toasts / dialogs
 'Task deleted.':'تم حذف المهمة.','Goal deleted.':'تم حذف الهدف.','Habit deleted.':'تم حذف العادة.','Topic deleted.':'تم حذف الموضوع.','Deleted.':'تم الحذف.','Under a minute, so nothing was logged':'أقل من دقيقة، لم يُسجَّل شيء','Those topics already exist':'هذه المواضيع موجودة بالفعل',
 'Delete this goal? Linked tasks and sub-goals are kept but unlinked.':'حذف هذا الهدف؟ تبقى المهام والأهداف الفرعية المرتبطة لكن دون ارتباط.','Delete this habit and its history?':'حذف هذه العادة وسجلها؟','Erase all tasks, goals, habits and history? This cannot be undone.':'مسح كل المهام والأهداف والعادات والسجل؟ لا يمكن التراجع.','This can\'t be undone.':'لا يمكن التراجع عن هذا.','This can\'t be undone. Tip: archive it instead to keep its history.':'لا يمكن التراجع عن هذا. نصيحة: أرشفها بدلًا من ذلك للاحتفاظ بسجلها.','Set a target number for this goal (for example 10).':'حدد رقمًا مستهدفًا لهذا الهدف (مثال: 10).','Set a target number for this goal (for example 40).':'حدد رقمًا مستهدفًا لهذا الهدف (مثال: 40).','(Leave empty to remove the folder. Its habits are kept.)':'(اتركه فارغًا لإزالة المجلد. تبقى عاداته.)','This can\'t be undone. Not-completed archived tasks are kept.':'لا يمكن التراجع. تبقى المهام المؤرشفة غير المكتملة.','Replace all current data with this backup?':'استبدال كل البيانات الحالية بهذه النسخة الاحتياطية؟',
-'None':'لا شيء','Share':'مشاركة','More items…':'عناصر أخرى…','today':'اليوم','Insights':'الإحصاءات','Topics studied per day':'المواضيع المدروسة يوميًا','Not studied yet':'لم تُدرس بعد','Study sessions':'جلسات الدراسة','Topics studied':'المواضيع المدروسة','Exams and quizzes this week':'اختبارات هذا الأسبوع','Spaced repetition':'التكرار المتباعد','Topics come back for review when their date arrives':'تعود المواضيع للمراجعة عند حلول موعدها','Review Weak topics after':'مراجعة المواضيع الضعيفة بعد','Review OK topics after':'مراجعة المواضيع المقبولة بعد','Review Strong topics after':'مراجعة المواضيع القوية بعد','1, 3, 7, 14, 30 days':'1، 3، 7، 14، 30 يومًا','1, 2, 4, 7, 14 days (tight)':'1، 2، 4، 7، 14 يومًا (مكثف)','2, 5, 10, 21, 45 days (relaxed)':'2، 5، 10، 21، 45 يومًا (مريح)','Due for review':'حان وقت المراجعة','Share with friends':'المشاركة مع الأصدقاء','Send habits, tasks or homework, exams and quizzes, and study topics to a friend as a small JSON file or text. Your history, check-ins and scores are never included.':'أرسل العادات أو المهام والواجبات أو الاختبارات أو مواضيع الدراسة إلى صديق كملف JSON صغير أو كنص. لا يتم إرسال سجلك أو تسجيلاتك أو درجاتك أبدًا.','Share items…':'مشاركة عناصر…','Import shared items…':'استيراد عناصر مشاركة…','Share items':'مشاركة عناصر','Tick what to send. Only titles, dates, notes and settings are shared.':'حدد ما تريد إرساله. تُشارَك العناوين والتواريخ والملاحظات والإعدادات فقط.','Tasks and homework':'المهام والواجبات','Exams and quizzes':'الاختبارات والاختبارات القصيرة','Study topics':'مواضيع الدراسة','Nothing to share yet.':'لا شيء للمشاركة بعد.','Select all':'تحديد الكل','Clear':'مسح','Save file':'حفظ ملف','Copy text':'نسخ النص','Share…':'مشاركة…','Import shared items':'استيراد عناصر مشاركة','Paste what your friend sent, or choose their .json file. You will see a preview before anything is added.':'الصق ما أرسله صديقك أو اختر ملف .json الخاص به. سترى معاينة قبل إضافة أي شيء.','Paste shared text here…':'الصق النص المشارَك هنا…','Choose file':'اختيار ملف','Preview':'معاينة','Add shared items?':'إضافة العناصر المشاركة؟','Add selected':'إضافة المحدد','Nothing usable in that file.':'لا يوجد شيء صالح في هذا الملف.','Tick at least one item first':'حدد عنصرًا واحدًا على الأقل أولًا','Could not copy on this browser. Use Save file instead.':'تعذر النسخ في هذا المتصفح. استخدم حفظ ملف بدلًا من ذلك.','Sharing is not available here. Use Copy text.':'المشاركة غير متاحة هنا. استخدم نسخ النص.','That isn\'t valid shared text. Ask your friend to share it again.':'هذا ليس نصًا مشاركًا صالحًا. اطلب من صديقك مشاركته مجددًا.','That isn\'t a shared Goal Tracker file.':'هذا ليس ملف مشاركة من متتبع الأهداف.','habits':'العادات','tasks done':'مهام منجزة','tasks missed':'مهام فائتة','Item one\nItem two':'عنصر أول\nعنصر ثانٍ'
+'None':'لا شيء','Show fewer':'عرض أقل','Share':'مشاركة','More items…':'عناصر أخرى…','today':'اليوم','Insights':'الإحصاءات','Topics studied per day':'المواضيع المدروسة يوميًا','Not studied yet':'لم تُدرس بعد','Study sessions':'جلسات الدراسة','Topics studied':'المواضيع المدروسة','Exams and quizzes this week':'اختبارات هذا الأسبوع','Spaced repetition':'التكرار المتباعد','Topics come back for review when their date arrives':'تعود المواضيع للمراجعة عند حلول موعدها','Review Weak topics after':'مراجعة المواضيع الضعيفة بعد','Review OK topics after':'مراجعة المواضيع المقبولة بعد','Review Strong topics after':'مراجعة المواضيع القوية بعد','1, 3, 7, 14, 30 days':'1، 3، 7، 14، 30 يومًا','1, 2, 4, 7, 14 days (tight)':'1، 2، 4، 7، 14 يومًا (مكثف)','2, 5, 10, 21, 45 days (relaxed)':'2، 5، 10، 21، 45 يومًا (مريح)','Due for review':'حان وقت المراجعة','Share with friends':'المشاركة مع الأصدقاء','Send habits, tasks or homework, exams and quizzes, and study topics to a friend as a small JSON file or text. Your history, check-ins and scores are never included.':'أرسل العادات أو المهام والواجبات أو الاختبارات أو مواضيع الدراسة إلى صديق كملف JSON صغير أو كنص. لا يتم إرسال سجلك أو تسجيلاتك أو درجاتك أبدًا.','Share items…':'مشاركة عناصر…','Import shared items…':'استيراد عناصر مشاركة…','Share items':'مشاركة عناصر','Tick what to send. Only titles, dates, notes and settings are shared.':'حدد ما تريد إرساله. تُشارَك العناوين والتواريخ والملاحظات والإعدادات فقط.','Tasks and homework':'المهام والواجبات','Exams and quizzes':'الاختبارات والاختبارات القصيرة','Study topics':'مواضيع الدراسة','Nothing to share yet.':'لا شيء للمشاركة بعد.','Select all':'تحديد الكل','Clear':'مسح','Save file':'حفظ ملف','Copy text':'نسخ النص','Share…':'مشاركة…','Import shared items':'استيراد عناصر مشاركة','Paste what your friend sent, or choose their .json file. You will see a preview before anything is added.':'الصق ما أرسله صديقك أو اختر ملف .json الخاص به. سترى معاينة قبل إضافة أي شيء.','Paste shared text here…':'الصق النص المشارَك هنا…','Choose file':'اختيار ملف','Preview':'معاينة','Add shared items?':'إضافة العناصر المشاركة؟','Add selected':'إضافة المحدد','Nothing usable in that file.':'لا يوجد شيء صالح في هذا الملف.','Tick at least one item first':'حدد عنصرًا واحدًا على الأقل أولًا','Could not copy on this browser. Use Save file instead.':'تعذر النسخ في هذا المتصفح. استخدم حفظ ملف بدلًا من ذلك.','Sharing is not available here. Use Copy text.':'المشاركة غير متاحة هنا. استخدم نسخ النص.','That isn\'t valid shared text. Ask your friend to share it again.':'هذا ليس نصًا مشاركًا صالحًا. اطلب من صديقك مشاركته مجددًا.','That isn\'t a shared Goal Tracker file.':'هذا ليس ملف مشاركة من متتبع الأهداف.','habits':'العادات','tasks done':'مهام منجزة','tasks missed':'مهام فائتة','Item one\nItem two':'عنصر أول\nعنصر ثانٍ'
 };
 const PAT=[
 [/^(\d+) days? this month$/,m=>`${m[1]} يومًا هذا الشهر`],[/^(\d+) studied today$/,m=>`${m[1]} تمت دراستها اليوم`],[/^(\d+) weak$/,m=>`${m[1]} ضعيفة`],[/^(\d+) not started$/,m=>`${m[1]} لم تبدأ`],
@@ -1148,7 +1150,7 @@ const PAT=[
 [/^(.+): all done for today$/,m=>`${m[1]}: اكتمل كل شيء اليوم`],[/^Deleted (\d+) archived tasks?\.$/,m=>`تم حذف ${m[1]} مهمة مؤرشفة.`],
 [/^Permanently delete (\d+) completed archived tasks?\?$/,m=>`حذف ${m[1]} مهمة مؤرشفة مكتملة نهائيًا؟`],[/^Restored (.+)\.$/,m=>`تمت الاستعادة: ${m[1]}.`],[/^Imported (.+)\.$/,m=>`تم الاستيراد: ${m[1]}.`],
 [/^Saved (.+) \((.+) KB\) to Downloads\.$/,m=>`تم حفظ ${m[1]} (${m[2]} ك.ب) في التنزيلات.`],[/^Rename folder "(.+)"$/,m=>`إعادة تسمية المجلد "${m[1]}"`],
-[/^Last backup (.+)$/,m=>`آخر نسخة احتياطية ${m[1]}`],[/^Copied (\d+) items?\. Paste it to your friend\.$/,m=>`تم نسخ ${m[1]} عنصر. الصقه لصديقك.`],[/^Saved (goal-tracker-share-.+)$/,m=>`تم حفظ ${m[1]}`],[/^Added (\d+) items?(?:, skipped (\d+) you already have)?(\. Student mode is on)?$/,m=>`تمت إضافة ${m[1]} عنصر${m[2]?`، وتخطي ${m[2]} موجود لديك`:''}${m[3]?'. وضع الطالب مفعّل':''}`],[/^(\d+) strong$/,m=>`${m[1]} قوية`],[/^(\d+) OK$/,m=>`${m[1]} مقبولة`],[/^Last studied: (.+)$/,m=>`آخر دراسة: ${trText(m[1])}`],[/^Exam (.+)$/,m=>`الاختبار ${trText(m[1])}`],[/^(\d+) in 14 days$/,m=>`${m[1]} خلال 14 يومًا`],[/^Topics studied per day, last 14 days, (\d+) total$/,m=>`المواضيع المدروسة يوميًا، آخر 14 يومًا، المجموع ${m[1]}`],[/^Next review: (.+)$/,m=>`المراجعة التالية: ${m[1]}`],[/^(\d+) due for review$/,m=>`${m[1]} بانتظار المراجعة`],[/^(\d+) tasks? done$/,m=>`${m[1]} مهمة منجزة`],[/^(\d+) tasks? missed$/,m=>`${m[1]} مهمة فائتة`],[/^· (\d+) of (\d+) weekly goals done · (\d+) still to plan$/,m=>`· ${m[1]} من ${m[2]} أهداف أسبوعية منجزة · ${m[3]} بانتظار التخطيط`]
+[/^Last backup (.+)$/,m=>`آخر نسخة احتياطية ${m[1]}`],[/^Copied (\d+) items?\. Paste it to your friend\.$/,m=>`تم نسخ ${m[1]} عنصر. الصقه لصديقك.`],[/^Saved (goal-tracker-share-.+)$/,m=>`تم حفظ ${m[1]}`],[/^Added (\d+) items?(?:, skipped (\d+) you already have)?(\. Student mode is on)?$/,m=>`تمت إضافة ${m[1]} عنصر${m[2]?`، وتخطي ${m[2]} موجود لديك`:''}${m[3]?'. وضع الطالب مفعّل':''}`],[/^(\d+) strong$/,m=>`${m[1]} قوية`],[/^(\d+) OK$/,m=>`${m[1]} مقبولة`],[/^Last studied: (.+)$/,m=>`آخر دراسة: ${trText(m[1])}`],[/^Exam (.+)$/,m=>`الاختبار ${trText(m[1])}`],[/^(\d+) in 14 days$/,m=>`${m[1]} خلال 14 يومًا`],[/^Topics studied per day, last 14 days, (\d+) total$/,m=>`المواضيع المدروسة يوميًا، آخر 14 يومًا، المجموع ${m[1]}`],[/^Show all (\d+) completed$/,m=>`عرض كل المكتملة (${m[1]})`],[/^Next review: (.+)$/,m=>`المراجعة التالية: ${m[1]}`],[/^(\d+) due for review$/,m=>`${m[1]} بانتظار المراجعة`],[/^(\d+) tasks? done$/,m=>`${m[1]} مهمة منجزة`],[/^(\d+) tasks? missed$/,m=>`${m[1]} مهمة فائتة`],[/^· (\d+) of (\d+) weekly goals done · (\d+) still to plan$/,m=>`· ${m[1]} من ${m[2]} أهداف أسبوعية منجزة · ${m[3]} بانتظار التخطيط`]
 ];
 const ARROW={'→':'←','←':'→'};
 function trCore(s){if(Object.prototype.hasOwnProperty.call(AR,s))return AR[s];for(const[re,fn]of PAT){const m=s.match(re);if(m)return fn(m)}return null}
@@ -1314,6 +1316,7 @@ const actions={
   'see-overdue'(){S.taskFilter='overdue';S.view='tasks';scrollTo(0,0)},
   async 'archive-task'(el){const t=S.tasks.find(x=>x.id===el.dataset.id);t.archived=true;t.archivedAt=Date.now();await DB.put('tasks',t)},
   async 'unarchive'(el){const t=S.tasks.find(x=>x.id===el.dataset.id);t.archived=false;t.archivedAt=null;await DB.put('tasks',t)},
+  'toggle-done-all'(){S.doneAll=!S.doneAll},
   'open-share'(){openShare();return false},
   'share-item'(el){openShare(el.dataset.k+':'+el.dataset.id);return false},
   'open-share-import'(){openShareImport();return false},
@@ -1483,8 +1486,13 @@ function examsCard(){
   return `<div class="card" style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;align-items:center"><div class="title">Exams &amp; quizzes</div><button class="chip" data-action="add-exam">+ Add</button></div>
     ${up.length?up.map(examRow).join(''):'<div class="empty">Nothing coming up. Add your exams and quizzes so you never miss one.</div>'}
     ${past.length?`<button class="chip" style="margin-top:8px" data-action="toggle-past-exams">${open?'Hide':'Show'} past (${past.length}${past.some(needsResult)?' · result missing':''})</button>${open?past.map(examRow).join(''):''}`:''}</div>`}
-function examDaysFor(subject){let best=null;for(const e of upcomingExams()){if(e.subject===subject){const n=daysTo(e.date);if(best===null||n<best)best=n}}return best}
+let _exMap=null,_srMemo=new Map();
+function examDaysFor(subject){if(!_exMap){_exMap=new Map();for(const e of S.exams){if(!e.subject)continue;const n=daysTo(e.date);if(n>=0&&(!_exMap.has(e.subject)||n<_exMap.get(e.subject)))_exMap.set(e.subject,n)}}return _exMap.has(subject)?_exMap.get(subject):null}
 function srNext(t){
+  const sig=(t.sessions||[]).length+'|'+TODAY(),hit=_srMemo.get(t.id);if(hit&&hit.sig===sig)return hit.v;
+  const v=srNextRaw(t);_srMemo.set(t.id,{sig,v});return v;
+}
+function srNextRaw(t){
   if(!S.cfg.srOn)return null;const ss=[...(t.sessions||[])].sort((a,b)=>a.d.localeCompare(b.d));if(!ss.length)return null;
   const last=ss[ss.length-1];let iv;
   if(last.c===1)iv=+S.cfg.srWeak||1;else if(last.c===2)iv=+S.cfg.srOk||3;
@@ -1495,8 +1503,9 @@ function srNext(t){
 const srDue=t=>{const n=srNext(t);return n!==null&&n<=TODAY()};
 const srBadge=t=>{const n=srNext(t);if(n===null)return '';return n<=TODAY()?'<span class="overdue">Due for review</span>':`<span>Next review: ${fmtDate(n)}</span>`};
 function topicPicks(){
-  const rank=t=>({1:0,0:1,2:2,3:3}[topicConf(t)]);const today=TODAY();const urg=urgentSubjects();
-  return S.topics.filter(t=>!(t.sessions||[]).some(x=>x.d===today)).sort((a,b)=>((srDue(a)?0:1)-(srDue(b)?0:1))||(rank(a)-rank(b))||((urg.get(a.subject)??99)-(urg.get(b.subject)??99))||((lastSess(a)?.d||'').localeCompare(lastSess(b)?.d||'')))
+  const today=TODAY(),urg=urgentSubjects();
+  return S.topics.filter(t=>!(t.sessions||[]).some(x=>x.d===today)).map(t=>{const l=lastSess(t);return{t,due:srDue(t)?0:1,rank:{1:0,0:1,2:2,3:3}[l?l.c:0],urg:urg.get(t.subject)??99,last:l?l.d:''}})
+    .sort((a,b)=>(a.due-b.due)||(a.rank-b.rank)||(a.urg-b.urg)||a.last.localeCompare(b.last)).map(x=>x.t)
 }
 function studiedToday(){const t=TODAY();return S.topics.filter(x=>(x.sessions||[]).some(s=>s.d===t)).length}
 function topicCells(t,n=7){let out='';for(let i=n-1;i>=0;i--){const d=addDays(new Date(),-i),k=ds(d),se=(t.sessions||[]).find(x=>x.d===k);
@@ -1545,7 +1554,7 @@ function viewStudy(){
   ${examsCard()}
   <div class="card"><div class="title">Today's picks</div><div class="meta"><span>${studiedToday()} studied today</span><span>Weak and untouched topics come first. Tap a day to log it.</span></div>
     ${picks.length?picks.map(t=>row(t,false)).join(''):`<div class="empty">${S.topics.length?'Everything has been studied today 🎉':'Add topics below to get daily picks.'}</div>`}</div>
-  ${insightsCard()?`<div style="margin-top:12px">${insightsCard()}</div>`:''}
+  ${(()=>{const ins=insightsCard();return ins?`<div style="margin-top:12px">${ins}</div>`:''})()}
   <form class="add" data-form="topics" style="margin-top:12px">
     <input type="text" name="subject" list="subjListAdd" placeholder="Subject (e.g. Biochemistry)" required autocomplete="off">${subjList('subjListAdd')}
     <textarea name="names" placeholder="Topics, one per line" required style="min-height:70px"></textarea>
