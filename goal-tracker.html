@@ -5,6 +5,7 @@
     PATCH = bug fix · MINOR = new feature · MAJOR = breaks old backups or data
 
   Changelog
+  0.38.0 Share button on every task, habit, exam and topic: opens the share dialog with just that item ready to send (Settings entry still shares several at once)
   0.37.0 Study insights: per-subject summary (strong/OK/weak/new bar, last studied, due topics, days to exam), a 14-day chart of topics studied per day, and a Study section in the weekly report when student mode is on
   0.36.0 Spaced repetition: every topic gets a next-review date from its latest colour (Weak 1 day, OK 3 days, Strong 1/3/7/14/30 growing with consecutive Strong ratings, shorter before an exam); due topics lead Today's picks and show a Due badge; intervals editable in Settings
   0.35.0 Share with friends (Settings → Share): pick habits, tasks/homework, exams/quizzes and topics, send them as copied text, a .json file or the phone's share sheet; friends import them from a preview (duplicates skipped, no history or personal data included)
@@ -544,7 +545,7 @@ function taskItem(t){
         ${g?`<span class="tag">${esc(g.title)}</span>`:''}
       </div></div>
     <button class="icon" data-action="edit-task" data-id="${t.id}" title="Edit" aria-label="Edit">✎</button>
-    <button class="icon" data-action="archive-task" data-id="${t.id}" title="Archive" aria-label="Archive">${ARCHIVE_ICON}</button>
+    ${shareBtn('task',t.id)}<button class="icon" data-action="archive-task" data-id="${t.id}" title="Archive" aria-label="Archive">${ARCHIVE_ICON}</button>
     <button class="icon" data-action="del-task" data-id="${t.id}" title="Delete" aria-label="Delete">✕</button></li>`;
 }
 function dayButtons(h,n=7){
@@ -567,7 +568,7 @@ function habitCard(h,full){
       <div class="meta"><span class="streak">${isNeg(h)?'🛡 '+s+' day'+(s===1?'':'s')+' clean':'🔥 '+s+' day'+(s===1?'':'s')}</span>
         <span>This week ${weekCount(h)}/${weekTarget(h)}</span>${full?`<span>30-day ${rate30(h)}%</span>`:''}${hasSched(h)?`<span>${schedText(h)}</span>`:''}</div></div>
     ${dayButtons(h)}
-    ${full?`${mvBtns('move-habit',h.id,`data-id="${h.id}"`)}<button class="icon" data-action="edit-habit" data-id="${h.id}" title="Edit" aria-label="Edit ${esc(h.name)}">✎</button><button class="icon" data-action="del-habit" data-id="${h.id}" title="Delete" aria-label="Delete ${esc(h.name)}">✕</button>`:''}
+    ${full?`${mvBtns('move-habit',h.id,`data-id="${h.id}"`)}${shareBtn('habit',h.id)}<button class="icon" data-action="edit-habit" data-id="${h.id}" title="Edit" aria-label="Edit ${esc(h.name)}">✎</button><button class="icon" data-action="del-habit" data-id="${h.id}" title="Delete" aria-label="Delete ${esc(h.name)}">✕</button>`:''}
   </div>${full?`<div class="heat">${heat}</div>`:''}</div>`;
 }
 function goalCard(g){
@@ -1057,7 +1058,7 @@ function drawHabit(){
 document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('[role=button][data-action]')){e.preventDefault();e.target.click()}});
 
 /* ---------- Version ---------- */
-const APP_VERSION='0.37.0';
+const APP_VERSION='0.38.0';
 
 /* ---------- Completion sounds (synthesised, no audio files) ---------- */
 const Sound={
@@ -1124,7 +1125,7 @@ const AR={
 // toasts / dialogs
 'Task deleted.':'تم حذف المهمة.','Goal deleted.':'تم حذف الهدف.','Habit deleted.':'تم حذف العادة.','Topic deleted.':'تم حذف الموضوع.','Deleted.':'تم الحذف.','Under a minute, so nothing was logged':'أقل من دقيقة، لم يُسجَّل شيء','Those topics already exist':'هذه المواضيع موجودة بالفعل',
 'Delete this goal? Linked tasks and sub-goals are kept but unlinked.':'حذف هذا الهدف؟ تبقى المهام والأهداف الفرعية المرتبطة لكن دون ارتباط.','Delete this habit and its history?':'حذف هذه العادة وسجلها؟','Erase all tasks, goals, habits and history? This cannot be undone.':'مسح كل المهام والأهداف والعادات والسجل؟ لا يمكن التراجع.','This can\'t be undone.':'لا يمكن التراجع عن هذا.','This can\'t be undone. Tip: archive it instead to keep its history.':'لا يمكن التراجع عن هذا. نصيحة: أرشفها بدلًا من ذلك للاحتفاظ بسجلها.','Set a target number for this goal (for example 10).':'حدد رقمًا مستهدفًا لهذا الهدف (مثال: 10).','Set a target number for this goal (for example 40).':'حدد رقمًا مستهدفًا لهذا الهدف (مثال: 40).','(Leave empty to remove the folder. Its habits are kept.)':'(اتركه فارغًا لإزالة المجلد. تبقى عاداته.)','This can\'t be undone. Not-completed archived tasks are kept.':'لا يمكن التراجع. تبقى المهام المؤرشفة غير المكتملة.','Replace all current data with this backup?':'استبدال كل البيانات الحالية بهذه النسخة الاحتياطية؟',
-'None':'لا شيء','today':'اليوم','Insights':'الإحصاءات','Topics studied per day':'المواضيع المدروسة يوميًا','Not studied yet':'لم تُدرس بعد','Study sessions':'جلسات الدراسة','Topics studied':'المواضيع المدروسة','Exams and quizzes this week':'اختبارات هذا الأسبوع','Spaced repetition':'التكرار المتباعد','Topics come back for review when their date arrives':'تعود المواضيع للمراجعة عند حلول موعدها','Review Weak topics after':'مراجعة المواضيع الضعيفة بعد','Review OK topics after':'مراجعة المواضيع المقبولة بعد','Review Strong topics after':'مراجعة المواضيع القوية بعد','1, 3, 7, 14, 30 days':'1، 3، 7، 14، 30 يومًا','1, 2, 4, 7, 14 days (tight)':'1، 2، 4، 7، 14 يومًا (مكثف)','2, 5, 10, 21, 45 days (relaxed)':'2، 5، 10، 21، 45 يومًا (مريح)','Due for review':'حان وقت المراجعة','Share with friends':'المشاركة مع الأصدقاء','Send habits, tasks or homework, exams and quizzes, and study topics to a friend as a small JSON file or text. Your history, check-ins and scores are never included.':'أرسل العادات أو المهام والواجبات أو الاختبارات أو مواضيع الدراسة إلى صديق كملف JSON صغير أو كنص. لا يتم إرسال سجلك أو تسجيلاتك أو درجاتك أبدًا.','Share items…':'مشاركة عناصر…','Import shared items…':'استيراد عناصر مشاركة…','Share items':'مشاركة عناصر','Tick what to send. Only titles, dates, notes and settings are shared.':'حدد ما تريد إرساله. تُشارَك العناوين والتواريخ والملاحظات والإعدادات فقط.','Tasks and homework':'المهام والواجبات','Exams and quizzes':'الاختبارات والاختبارات القصيرة','Study topics':'مواضيع الدراسة','Nothing to share yet.':'لا شيء للمشاركة بعد.','Select all':'تحديد الكل','Clear':'مسح','Save file':'حفظ ملف','Copy text':'نسخ النص','Share…':'مشاركة…','Import shared items':'استيراد عناصر مشاركة','Paste what your friend sent, or choose their .json file. You will see a preview before anything is added.':'الصق ما أرسله صديقك أو اختر ملف .json الخاص به. سترى معاينة قبل إضافة أي شيء.','Paste shared text here…':'الصق النص المشارَك هنا…','Choose file':'اختيار ملف','Preview':'معاينة','Add shared items?':'إضافة العناصر المشاركة؟','Add selected':'إضافة المحدد','Nothing usable in that file.':'لا يوجد شيء صالح في هذا الملف.','Tick at least one item first':'حدد عنصرًا واحدًا على الأقل أولًا','Could not copy on this browser. Use Save file instead.':'تعذر النسخ في هذا المتصفح. استخدم حفظ ملف بدلًا من ذلك.','Sharing is not available here. Use Copy text.':'المشاركة غير متاحة هنا. استخدم نسخ النص.','That isn\'t valid shared text. Ask your friend to share it again.':'هذا ليس نصًا مشاركًا صالحًا. اطلب من صديقك مشاركته مجددًا.','That isn\'t a shared Goal Tracker file.':'هذا ليس ملف مشاركة من متتبع الأهداف.','habits':'العادات','tasks done':'مهام منجزة','tasks missed':'مهام فائتة','Item one\nItem two':'عنصر أول\nعنصر ثانٍ'
+'None':'لا شيء','Share':'مشاركة','More items…':'عناصر أخرى…','today':'اليوم','Insights':'الإحصاءات','Topics studied per day':'المواضيع المدروسة يوميًا','Not studied yet':'لم تُدرس بعد','Study sessions':'جلسات الدراسة','Topics studied':'المواضيع المدروسة','Exams and quizzes this week':'اختبارات هذا الأسبوع','Spaced repetition':'التكرار المتباعد','Topics come back for review when their date arrives':'تعود المواضيع للمراجعة عند حلول موعدها','Review Weak topics after':'مراجعة المواضيع الضعيفة بعد','Review OK topics after':'مراجعة المواضيع المقبولة بعد','Review Strong topics after':'مراجعة المواضيع القوية بعد','1, 3, 7, 14, 30 days':'1، 3، 7، 14، 30 يومًا','1, 2, 4, 7, 14 days (tight)':'1، 2، 4، 7، 14 يومًا (مكثف)','2, 5, 10, 21, 45 days (relaxed)':'2، 5، 10، 21، 45 يومًا (مريح)','Due for review':'حان وقت المراجعة','Share with friends':'المشاركة مع الأصدقاء','Send habits, tasks or homework, exams and quizzes, and study topics to a friend as a small JSON file or text. Your history, check-ins and scores are never included.':'أرسل العادات أو المهام والواجبات أو الاختبارات أو مواضيع الدراسة إلى صديق كملف JSON صغير أو كنص. لا يتم إرسال سجلك أو تسجيلاتك أو درجاتك أبدًا.','Share items…':'مشاركة عناصر…','Import shared items…':'استيراد عناصر مشاركة…','Share items':'مشاركة عناصر','Tick what to send. Only titles, dates, notes and settings are shared.':'حدد ما تريد إرساله. تُشارَك العناوين والتواريخ والملاحظات والإعدادات فقط.','Tasks and homework':'المهام والواجبات','Exams and quizzes':'الاختبارات والاختبارات القصيرة','Study topics':'مواضيع الدراسة','Nothing to share yet.':'لا شيء للمشاركة بعد.','Select all':'تحديد الكل','Clear':'مسح','Save file':'حفظ ملف','Copy text':'نسخ النص','Share…':'مشاركة…','Import shared items':'استيراد عناصر مشاركة','Paste what your friend sent, or choose their .json file. You will see a preview before anything is added.':'الصق ما أرسله صديقك أو اختر ملف .json الخاص به. سترى معاينة قبل إضافة أي شيء.','Paste shared text here…':'الصق النص المشارَك هنا…','Choose file':'اختيار ملف','Preview':'معاينة','Add shared items?':'إضافة العناصر المشاركة؟','Add selected':'إضافة المحدد','Nothing usable in that file.':'لا يوجد شيء صالح في هذا الملف.','Tick at least one item first':'حدد عنصرًا واحدًا على الأقل أولًا','Could not copy on this browser. Use Save file instead.':'تعذر النسخ في هذا المتصفح. استخدم حفظ ملف بدلًا من ذلك.','Sharing is not available here. Use Copy text.':'المشاركة غير متاحة هنا. استخدم نسخ النص.','That isn\'t valid shared text. Ask your friend to share it again.':'هذا ليس نصًا مشاركًا صالحًا. اطلب من صديقك مشاركته مجددًا.','That isn\'t a shared Goal Tracker file.':'هذا ليس ملف مشاركة من متتبع الأهداف.','habits':'العادات','tasks done':'مهام منجزة','tasks missed':'مهام فائتة','Item one\nItem two':'عنصر أول\nعنصر ثانٍ'
 };
 const PAT=[
 [/^(\d+) days? this month$/,m=>`${m[1]} يومًا هذا الشهر`],[/^(\d+) studied today$/,m=>`${m[1]} تمت دراستها اليوم`],[/^(\d+) weak$/,m=>`${m[1]} ضعيفة`],[/^(\d+) not started$/,m=>`${m[1]} لم تبدأ`],
@@ -1312,6 +1313,7 @@ const actions={
   async 'archive-task'(el){const t=S.tasks.find(x=>x.id===el.dataset.id);t.archived=true;t.archivedAt=Date.now();await DB.put('tasks',t)},
   async 'unarchive'(el){const t=S.tasks.find(x=>x.id===el.dataset.id);t.archived=false;t.archivedAt=null;await DB.put('tasks',t)},
   'open-share'(){openShare();return false},
+  'share-item'(el){openShare(el.dataset.k+':'+el.dataset.id);return false},
   'open-share-import'(){openShareImport();return false},
   'open-archive'(){S.view='archive';scrollTo(0,0)},
   'back-data'(){S.view='data';scrollTo(0,0)},
@@ -1472,7 +1474,7 @@ function examRow(e){const n=daysTo(e.date);const pct=e.score!=null&&e.max>0?Math
   return `<div class="trow"><div class="top"><div class="grow"><b>${examIcon(e)} ${esc(e.title)}</b><div class="meta">${e.subject?`<span>${esc(e.subject)}</span>`:''}<span>${fmtDate(e.date)}${e.time?' · '+esc(e.time):''}</span>
     ${e.score!=null?`<span class="okc">${e.score}${e.max?'/'+e.max:''}${pct!=null?' · '+pct+'%':''}</span>`:n>=0?`<span class="${n<=3?'overdue':''}">${whenText(n)}</span>`:`<button type="button" class="chip" data-action="edit-exam" data-id="${e.id}">Log result</button>`}</div>
     ${e.notes?`<div class="tnotes">${esc(e.notes)}</div>`:''}</div>
-    <button class="icon" data-action="edit-exam" data-id="${e.id}" aria-label="Edit ${esc(e.title)}">✎</button><button class="icon" data-action="del-exam" data-id="${e.id}" aria-label="Delete ${esc(e.title)}">✕</button></div></div>`}
+    ${shareBtn('exam',e.id)}<button class="icon" data-action="edit-exam" data-id="${e.id}" aria-label="Edit ${esc(e.title)}">✎</button><button class="icon" data-action="del-exam" data-id="${e.id}" aria-label="Delete ${esc(e.title)}">✕</button></div></div>`}
 function examsCard(){
   const up=upcomingExams(),past=S.exams.filter(e=>daysTo(e.date)<0).sort((a,b)=>b.date.localeCompare(a.date));
   const open=S.examsPast;
@@ -1528,7 +1530,7 @@ function viewStudy(){
   const picks=topicPicks().slice(0,10);const bySub=new Map();
   for(const t of S.topics){if(!bySub.has(t.subject))bySub.set(t.subject,[]);bySub.get(t.subject).push(t)}
   const row=(t,full)=>`<div class="trow"><div class="top"><div class="grow"><b>${esc(t.name)}</b><div class="meta"><span><i class="cdot c${topicConf(t)}"></i>${CONF_LABEL[topicConf(t)]}</span><span>${lastSess(t)?'Last: '+agoDays(lastSess(t).d):'Never studied'}</span>${srBadge(t)}${full?'':`<span>${esc(t.subject)}</span>`}</div></div>
-    ${full?`<button class="icon" data-action="edit-topic" data-id="${t.id}" aria-label="Edit ${esc(t.name)}">✎</button><button class="icon" data-action="del-topic" data-id="${t.id}" aria-label="Delete ${esc(t.name)}">✕</button>`:''}</div>
+    ${full?`${shareBtn('topic',t.id)}<button class="icon" data-action="edit-topic" data-id="${t.id}" aria-label="Edit ${esc(t.name)}">✎</button><button class="icon" data-action="del-topic" data-id="${t.id}" aria-label="Delete ${esc(t.name)}">✕</button>`:''}</div>
     ${full?topicCells(t):`<div class="tgrid" style="grid-template-columns:1fr">${topicCells(t,1).replace('class="tgrid"','class="tgrid" style="grid-template-columns:1fr"')}</div>`}</div>`;
   let sections='';
   for(const name of [...bySub.keys()].sort()){const ts=bySub.get(name),key='sub:'+name,collapsed=S.collapsed.has(key);
@@ -1613,17 +1615,20 @@ dlg.addEventListener('click',e=>{const b=e.target.closest('[data-sr]');if(!b)ret
 $('#searchBtn').addEventListener('click',openSearch);
 /* ---------- Share with friends (JSON) ---------- */
 const SHARE_APP='goal-tracker-share';
-function shareRows(key,label,arr,nameOf,sub){
-  return arr.length?`<h2 style="margin:12px 0 4px">${label}</h2>${arr.map(x=>`<label class="check"><input type="checkbox" data-sh-item="${key}:${x.id}"> <span>${esc(nameOf(x))}${sub?` <small class="meta">${esc(sub(x)||'')}</small>`:''}</span></label>`).join('')}`:''}
-function openShare(){
-  const tasks=S.tasks.filter(t=>!t.archived&&!t.done);
+const SHARE_ICON='<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 10.5l6.8-4M8.6 13.5l6.8 4"/></svg>';
+const shareBtn=(k,id)=>`<button class="icon" data-action="share-item" data-k="${k}" data-id="${id}" title="Share" aria-label="Share">${SHARE_ICON}</button>`;
+function shareRows(key,label,arr,nameOf,sub,chk){
+  return arr.length?`<h2 style="margin:12px 0 4px">${label}</h2>${arr.map(x=>`<label class="check"><input type="checkbox" data-sh-item="${key}:${x.id}" ${chk?'checked':''}> <span>${esc(nameOf(x))}${sub?` <small class="meta">${esc(sub(x)||'')}</small>`:''}</span></label>`).join('')}`:''}
+function openShare(pre){
+  const one=pre?pre.split(':'):null,only=(k,arr)=>one?(one[0]===k?arr.filter(x=>x.id===one[1]):[]):arr;
+  const tasks=only('task',S.tasks.filter(t=>one?true:!t.archived&&!t.done)),habitsL=only('habit',S.habits),examsL=only('exam',S.exams),topicsL=only('topic',S.topics);
   dlg.innerHTML=`<form method="dialog" data-share><h3>Share items</h3><p class="meta">Tick what to send. Only titles, dates, notes and settings are shared.</p>
-    <div style="max-height:46vh;overflow:auto">${shareRows('habit','Habits',S.habits,h=>(h.kind==='avoid'?'🚫 ':'')+h.name,h=>h.group)}
-    ${shareRows('task','Tasks and homework',tasks,t=>t.title,t=>t.due?fmtDate(t.due):'')}
-    ${shareRows('exam','Exams and quizzes',S.exams,e=>(e.kind==='quiz'?'❓ ':'📝 ')+e.title,e=>e.subject?e.subject+' · '+fmtDate(e.date):fmtDate(e.date))}
-    ${shareRows('topic','Study topics',S.topics,t=>t.name,t=>t.subject)}
-    ${S.habits.length+tasks.length+S.exams.length+S.topics.length?'':'<div class="empty">Nothing to share yet.</div>'}</div>
-    <div class="row" style="margin-top:10px"><button type="button" class="chip" data-sh="all">Select all</button><button type="button" class="chip" data-sh="none">Clear</button></div>
+    <div style="max-height:46vh;overflow:auto">${shareRows('habit','Habits',habitsL,h=>(h.kind==='avoid'?'🚫 ':'')+h.name,h=>h.group,!!one)}
+    ${shareRows('task','Tasks and homework',tasks,t=>t.title,t=>t.due?fmtDate(t.due):'',!!one)}
+    ${shareRows('exam','Exams and quizzes',examsL,e=>(e.kind==='quiz'?'❓ ':'📝 ')+e.title,e=>e.subject?e.subject+' · '+fmtDate(e.date):fmtDate(e.date),!!one)}
+    ${shareRows('topic','Study topics',topicsL,t=>t.name,t=>t.subject,!!one)}
+    ${habitsL.length+tasks.length+examsL.length+topicsL.length?'':'<div class="empty">Nothing to share yet.</div>'}</div>
+    <div class="row" style="margin-top:10px">${one?'<button type="button" class="chip" data-sh="more">More items…</button>':'<button type="button" class="chip" data-sh="all">Select all</button><button type="button" class="chip" data-sh="none">Clear</button>'}</div>
     <div class="dlg-actions" style="flex-wrap:wrap"><button class="ghost" value="cancel" formnovalidate>Close</button>
       <button type="button" class="ghost" data-sh="file">Save file</button><button type="button" class="ghost" data-sh="copy">Copy text</button>${navigator.share?'<button type="button" class="btn" data-sh="send">Share…</button>':''}</div></form>`;
   dlg.showModal();
@@ -1641,6 +1646,7 @@ function sharePayload(){
 }
 const sharedCount=o=>o.habits.length+o.tasks.length+o.exams.length+o.topics.length;
 async function shareDo(a){
+  if(a==='more'){openShare();return}
   if(a==='all'||a==='none'){dlg.querySelectorAll('[data-sh-item]').forEach(c=>c.checked=a==='all');return}
   const o=sharePayload();if(!sharedCount(o)){toast('Tick at least one item first');return}
   const json=JSON.stringify(o);const name=`goal-tracker-share-${TODAY()}.json`;
