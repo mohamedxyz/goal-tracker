@@ -5,6 +5,7 @@
     PATCH = bug fix · MINOR = new feature · MAJOR = breaks old backups or data
 
   Changelog
+  0.29.0 Settings tab (was Data): sounds, theme, hide-done, compact, avoid-habit hiding, delete confirmations, dashboard sections, default task priority, completed-tasks section; backup tools moved under "Your data". Week-start option skipped (touches every week calculation)
   0.28.0 Negative habits ("Avoid" type): things to quit, e.g. no smoking. Every day counts as clean unless you tap it to mark a slip; streak = clean days in a row
   0.27.2 Archived tasks are only reachable from the Data tab (removed the archived-count link from the Tasks tab)
   0.27.1 Fix: goals no longer complete early. A goal at 99.6% used to round up to 100% and auto-complete; progress now only reaches 100% when the target is truly met
@@ -273,6 +274,8 @@ form[data-kind=number] .f-num,form[data-kind=rollup] .f-roll{display:flex;flex-w
 .backup-cta .grow{flex:1 1 220px}
 .backup-cta .btn{flex:none}
 .backup-cta .icon{position:absolute;top:8px;right:8px;min-width:32px;min-height:32px}
+.swrow{display:flex;justify-content:space-between;align-items:center;gap:12px;min-height:44px;padding:6px 0;border-bottom:1px dashed var(--line);cursor:pointer}.swrow:last-of-type{border-bottom:0}.swrow small{display:block;color:var(--muted);font-size:12px}.swrow select{max-width:48%;min-height:36px}
+input.sw{appearance:none;-webkit-appearance:none;flex:none;width:46px;height:28px;border-radius:999px;background:var(--line);position:relative;cursor:pointer;transition:background .2s;margin:0}input.sw::after{content:'';position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 1px 3px #0004;transition:transform .2s}input.sw:checked{background:var(--ok)}input.sw:checked::after{transform:translateX(18px)}
 .kstat{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:8px;font-size:13px}
 .kstat span{display:inline-flex;align-items:center;gap:6px}
 .dot{width:8px;height:8px;border-radius:50%;background:var(--muted);flex:none}
@@ -334,7 +337,7 @@ form[data-kind=number] .f-num,form[data-kind=rollup] .f-roll{display:flex;flex-w
     <button data-view="tasks">Tasks</button>
     <button data-view="goals">Goals</button>
     <button data-view="habits">Habits</button>
-    <button data-view="data">Data</button>
+    <button data-view="data">Settings</button>
   </nav>
 </div></header>
 <main class="wrap" id="app"></main>
@@ -343,7 +346,7 @@ form[data-kind=number] .f-num,form[data-kind=rollup] .f-roll{display:flex;flex-w
   <button type="button" data-view="tasks"><span class="ti"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M8.5 12l2.5 2.5 4.5-5"/></svg></span>Tasks</button>
   <button type="button" data-view="goals"><span class="ti"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1" fill="currentColor"/></svg></span>Goals</button>
   <button type="button" data-view="habits"><span class="ti"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.3-5.6"/><path d="M4 4v4h4"/><path d="M12 8v4l3 2"/></svg></span>Habits</button>
-  <button type="button" data-view="data"><span class="ti"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6v6c0 1.7 3.1 3 7 3s7-1.3 7-3V6"/><path d="M5 12v6c0 1.7 3.1 3 7 3s7-1.3 7-3v-6"/></svg></span>Data</button>
+  <button type="button" data-view="data"><span class="ti"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></span>Settings</button>
 </nav>
 <input type="file" id="importFile" accept="application/json" hidden>
 <div id="tip" role="tooltip"></div>
@@ -659,15 +662,15 @@ function viewDash(){
     <div class="card stat"><div class="n">${active}</div><div class="l">Active goals</div></div>
     <div class="card stat"><div class="n">🔥 ${best}</div><div class="l">Best current streak</div></div>
   </div>
-  ${heatmapCard()}
+  ${S.cfg.dCharts?`${heatmapCard()}
   <div class="split"><div>${tasksChartCard()}</div><div>${ringsCard()}</div></div>
-  ${consistencyCard()}
+  ${consistencyCard()}`:''}
   <div class="grid2" style="margin-top:6px"><div>
-    <h2>Today's tasks</h2>${todays.length?`<ul class="list">${todays.map(taskItem).join('')}</ul>`:`<div class="empty">Nothing due today.</div>`}
-    ${overdue?`<button class="chip" style="margin-top:10px" data-action="see-overdue">${overdue} overdue from earlier days →</button>`:''}
-    <div class="h2row"><h2>This week's goals</h2><span><button class="chip" data-action="open-report">Weekly report</button> <button class="chip" data-action="open-plan">Plan this week</button></span></div>${wk.length?`<div class="goals">${wk.map(goalCard).join('')}</div>`:`<div class="empty">No weekly goals for ${currentPeriod('weekly')}.</div>`}
+    ${S.cfg.dTasks?`<h2>Today's tasks</h2>${todays.length?`<ul class="list">${todays.map(taskItem).join('')}</ul>`:`<div class="empty">Nothing due today.</div>`}
+    ${overdue?`<button class="chip" style="margin-top:10px" data-action="see-overdue">${overdue} overdue from earlier days →</button>`:''}`:''}
+    ${S.cfg.dGoals?`<div class="h2row"><h2>This week's goals</h2><span><button class="chip" data-action="open-report">Weekly report</button> <button class="chip" data-action="open-plan">Plan this week</button></span></div>${wk.length?`<div class="goals">${wk.map(goalCard).join('')}</div>`:`<div class="empty">No weekly goals for ${currentPeriod('weekly')}.</div>`}`:''}
   </div><div>
-    <h2>Today's habits</h2>${habitList(false)}
+    ${S.cfg.dHabits?`<h2>Today's habits</h2>${habitList(false)}`:''}
   </div></div>`;
 }
 const tagOf=t=>(t.tag||'').trim();
@@ -687,6 +690,7 @@ function taskGroups(open){
   return out;
 }
 function viewTasks(){
+  const showDone=S.cfg.showDone||S.taskFilter==='done';
   const today=TODAY();const f=['all','today','overdue','done'].includes(S.taskFilter)?S.taskFilter:'all';
   const pr=t=>({high:0,med:1,low:2}[t.priority]??2);
   const live=S.tasks.filter(t=>!t.archived);
@@ -701,7 +705,7 @@ function viewTasks(){
   return `<form class="add" data-form="task">
     <input type="text" name="title" placeholder="New task…" required>
     <input type="date" name="due" value="${today}">
-    <select name="priority"><option value="low">Low</option><option value="med">Medium</option><option value="high">High</option></select>
+    <select name="priority">${[['low','Low'],['med','Medium'],['high','High']].map(([v,l])=>`<option value="${v}" ${S.cfg.prio===v?'selected':''}>${l}</option>`).join('')}</select>
     <select name="repeat" aria-label="Repeat">${REPEATS.map(([v,l])=>`<option value="${v}">${v?'🔁 ':''}${l}</option>`).join('')}</select>
     <select name="goalId">${goalOptions('')}</select>
     <input type="text" name="tag" list="tagListAdd" placeholder="Tag folder (optional)" autocomplete="off">${tagList('tagListAdd')}
@@ -709,8 +713,8 @@ function viewTasks(){
     <textarea name="items" placeholder="Checklist (optional, one item per line)" style="min-height:40px"></textarea>
     <button class="btn">Add</button></form>
   <div class="filters">${chip('all','All')}${chip('today','Due today')}${chip('overdue','Overdue'+(nOver?' · '+nOver:''))}${chip('done','Done')}</div>
-  ${open.length?taskGroups(open):(done.length?'':`<div class="empty">No tasks here.</div>`)}
-  ${done.length?`${f==='done'?'':`<div class="divider">Completed · ${done.length}</div>`}<ul class="list">${done.map(taskItem).join('')}</ul>`:''}`;
+  ${open.length?taskGroups(open):((done.length&&showDone)?'':`<div class="empty">No tasks here.</div>`)}
+  ${(done.length&&showDone)?`${f==='done'?'':`<div class="divider">Completed · ${done.length}</div>`}<ul class="list">${done.map(taskItem).join('')}</ul>`:''}`;
 }
 function viewGoals(){
   const h=S.horizon;const cur=currentPeriod(h);const ph=PARENT[h];
@@ -755,6 +759,7 @@ function habitToday(h){
       <div class="meta"><span>${isNeg(h)?'🛡 '+s+' day'+(s===1?'':'s')+' clean':'🔥 '+s+' day'+(s===1?'':'s')}</span><span>This week ${weekCount(h)}/${weekTarget(h)}</span></div></div></li>`;
 }
 function habitList(full){
+  const hideIt=h=>S.hideDone&&!(isNeg(h)&&!S.cfg.avoidHide)&&good(h,TODAY());
   if(!S.habits.length)return `<div class="empty">No habits yet.${full?' Tap a day to check it off.':''}</div>`;
   const today=TODAY(),dueAll=sortedHabits().filter(dueToday),doneToday=dueAll.filter(h=>good(h,today)).length;
   const pool=full?sortedHabits():dueAll,offToday=S.habits.length-dueAll.length;
@@ -769,7 +774,7 @@ function habitList(full){
   const gnames=[...groups.keys()].sort((a,b)=>{const x=S.forder.indexOf(a),y=S.forder.indexOf(b);return (x<0?1e6:x)-(y<0?1e6:y)});
   for(const name of gnames){const hs=groups.get(name);
     const due=hs.filter(dueToday),done=due.filter(h=>good(h,today)).length,all=due.length>0&&done===due.length,collapsed=S.collapsed.has(name);
-    const vis=S.hideDone?hs.filter(h=>!good(h,today)):hs;
+    const vis=hs.filter(h=>!hideIt(h));
     if(S.hideDone&&!vis.length)continue;
     out+=`<section class="hfolder ${all?'complete':''} ${collapsed||!vis.length?'collapsed':''}">
       <div class="hf-head"><button type="button" class="hf-toggle" data-action="toggle-folder" data-name="${esc(name)}" aria-expanded="${!collapsed}">
@@ -780,7 +785,7 @@ function habitList(full){
       <div class="hf-bar"><span style="width:${due.length?Math.round(done/due.length*100):0}%"></span></div>
       ${collapsed||!vis.length?'':wrap(vis)}</section>`;
   }
-  const looseVis=S.hideDone?loose.filter(h=>!good(h,today)):loose;
+  const looseVis=loose.filter(h=>!hideIt(h));
   if(looseVis.length)out+=wrap(looseVis);
   if(S.hideDone&&dueAll.length&&doneToday===dueAll.length)out+=`<div class="allclear">All habits done for today 🎉</div>`;
   return bar+out;
@@ -793,7 +798,7 @@ const folderList=id=>`<datalist id="${id}">${folderNames().map(f=>`<option value
 function viewArchive(){
   const list=S.tasks.filter(t=>t.archived).sort((a,b)=>(b.archivedAt||0)-(a.archivedAt||0));
   const nDone=list.filter(t=>t.done).length;
-  return `<div class="arch-head"><button class="ghost" data-action="back-data">← Data</button><h2 style="margin:0">Archived tasks</h2></div>
+  return `<div class="arch-head"><button class="ghost" data-action="back-data">← Settings</button><h2 style="margin:0">Archived tasks</h2></div>
     <div class="bar-row"><span class="meta" style="margin:0">${list.length} archived · ${nDone} completed</span>
       ${nDone?`<button class="ghost danger" data-action="purge-archived">Delete ${nDone} completed</button>`:''}</div>
     ${list.length?`<div class="goals">${list.map(archCard).join('')}</div>`:`<div class="empty">Nothing archived yet. Use the archive button on a task to move it here.</div>`}`;
@@ -811,10 +816,36 @@ function archCard(t){
     <div class="kvs">${kv('Due',fmtDay(t.due))}${kv('Priority',{high:'High',med:'Medium'}[t.priority]||'Low')}${kv('Goal',g?esc(g.title):'—')}${t.repeat?kv('Repeats',REPEAT_LABEL[t.repeat]):''}${t.tag?kv('Tag','#'+esc(t.tag)):''}
       ${kv('Created',fmtWhen(t.created)||'—')}${kv('Completed',t.done?(fmtWhen(t.doneAt)||'Yes'):'—')}${kv('Archived',fmtWhen(t.archivedAt)||'—')}</div></div>`;
 }
+const sw=(k,label,hint,on)=>`<label class="swrow"><span>${label}${hint?`<small>${hint}</small>`:''}</span><input type="checkbox" class="sw" data-action="set" data-k="${k}" ${on?'checked':''}></label>`;
+const sel=(k,label,opts,cur)=>`<label class="swrow"><span>${label}</span><select data-action="set" data-k="${k}">${opts.map(([v,l])=>`<option value="${v}" ${v===cur?'selected':''}>${l}</option>`).join('')}</select></label>`;
+function settingsCard(){
+  const c=S.cfg;
+  return `<h2>Settings</h2>
+  <div class="card settings"><div class="title">General</div>
+    ${sw('sound','Sound effects','Chimes when you finish or undo something',Sound.on)}
+    ${sel('theme','Theme',[['auto','Auto'],['light','Light'],['dark','Dark']],getTheme())}
+    ${sel('prio','Default priority for new tasks',[['low','Low'],['med','Medium'],['high','High']],c.prio)}
+    ${sw('showDone','Show completed tasks','The dimmed "Completed" list under your tasks',c.showDone)}
+  </div>
+  <div class="card settings" style="margin-top:12px"><div class="title">Habits</div>
+    ${sw('hideDone','Hide habits done today','Same as the chip in the Habits tab',S.hideDone)}
+    ${sw('compact','Compact habit list','One tight row per habit',S.compact)}
+    ${sw('avoidHide','Hide avoid habits while clean','Only matters when "Hide habits done today" is on',c.avoidHide)}
+  </div>
+  <div class="card settings" style="margin-top:12px"><div class="title">Ask before deleting</div>
+    ${sw('cTask','Tasks','',c.cTask)}${sw('cGoal','Goals','',c.cGoal)}${sw('cHabit','Habits','',c.cHabit)}
+    <p class="meta">You always get a 6-second Undo after deleting.</p>
+  </div>
+  <div class="card settings" style="margin-top:12px"><div class="title">Dashboard sections</div>
+    ${sw('dCharts','Heatmap and charts','',c.dCharts)}${sw('dTasks',"Today's tasks",'',c.dTasks)}${sw('dGoals',"This week's goals",'',c.dGoals)}${sw('dHabits',"Today's habits",'',c.dHabits)}
+  </div>`;
+}
 function viewData(){
   const lb=daysSince(lastBackup()),st=S.storage;
-  return `<div class="card settings">
-    <div class="title">Your data</div>
+  return `${settingsCard()}
+  <h2 style="margin-top:18px">Your data</h2>
+  <div class="card settings">
+    <div class="title">Storage &amp; backup</div>
     <div class="meta">${S.tasks.length} tasks · ${S.goals.length} goals · ${S.habits.length} habits · ${S.logs.size} check-ins</div>
     <p class="meta">Stored in this browser's IndexedDB. Export regularly to back up or move to another device.</p>
     <div class="kstat"><span><i class="dot ${lb===null?'bad':lb>BACKUP_STALE?'warn':'ok'}"></i>Last backup: <b>${agoText(lb)}</b></span>
@@ -832,11 +863,6 @@ function viewData(){
     <div class="title">Archived tasks</div>
     <div class="meta">${S.tasks.filter(t=>t.archived).length} archived · ${S.tasks.filter(t=>t.archived&&t.done).length} completed</div>
     <div class="row"><button class="ghost" data-action="open-archive">View archived tasks →</button></div>
-  </div>
-  <div class="card settings" style="margin-top:12px">
-    <div class="title">Sounds</div>
-    <div class="meta">A short chime when you complete a task or check off a habit.</div>
-    <div class="row"><button class="ghost" data-action="toggle-sound" aria-pressed="${Sound.on}">${Sound.on?'🔊 Sounds on':'🔇 Sounds off'}</button></div>
   </div>`;
 }
 
@@ -959,7 +985,7 @@ function drawHabit(){
 document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('[role=button][data-action]')){e.preventDefault();e.target.click()}});
 
 /* ---------- Version ---------- */
-const APP_VERSION='0.28.0';
+const APP_VERSION='0.29.0';
 
 /* ---------- Completion sounds (synthesised, no audio files) ---------- */
 const Sound={
@@ -989,6 +1015,9 @@ const Sound={
   }
 };
 Sound.load();
+const CFG_DEF={avoidHide:true,cTask:true,cGoal:true,cHabit:true,dCharts:true,dTasks:true,dGoals:true,dHabits:true,prio:'low',showDone:true};
+try{S.cfg={...CFG_DEF,...JSON.parse(localStorage.getItem('gt-settings')||'{}')}}catch(e){S.cfg={...CFG_DEF}}
+const saveCfg=()=>{try{localStorage.setItem('gt-settings',JSON.stringify(S.cfg))}catch(e){}};
 try{S.hideDone=localStorage.getItem('gt-hide-done')==='1'}catch(e){S.hideDone=false}
 try{S.compact=localStorage.getItem('gt-compact')==='1'}catch(e){S.compact=false}
 try{S.collapsed=new Set(JSON.parse(localStorage.getItem('gt-collapsed')||'[]'))}catch(e){S.collapsed=new Set()}
@@ -1153,10 +1182,16 @@ const actions={
     const i=names.indexOf(el.dataset.name),j=i+(+el.dataset.d);if(i<0||j<0||j>=names.length)return false;
     [names[i],names[j]]=[names[j],names[i]];S.forder=names;saveForder()},
   'toggle-compact'(){S.compact=!S.compact;try{localStorage.setItem('gt-compact',S.compact?'1':'0')}catch(e){}},
+  'set'(el){const k=el.dataset.k,v=el.type==='checkbox'?el.checked:el.value;
+    if(k==='sound'){Sound.set(v);if(v)Sound.play('task')}
+    else if(k==='hideDone'){S.hideDone=v;try{localStorage.setItem('gt-hide-done',v?'1':'0')}catch(e){}}
+    else if(k==='compact'){S.compact=v;try{localStorage.setItem('gt-compact',v?'1':'0')}catch(e){}}
+    else if(k==='theme')setTheme(v);
+    else if(k in CFG_DEF){S.cfg[k]=v;saveCfg()}},
   'toggle-sound'(){Sound.set(!Sound.on);if(Sound.on)Sound.play('task')},
   async 'del-task'(el){
     const t=S.tasks.find(x=>x.id===el.dataset.id);if(!t)return false;
-    if(!confirm(`Delete "${t.title}"?\n\nThis can't be undone.${t.archived?'':' Tip: archive it instead to keep its history.'}`))return false;
+    if(S.cfg.cTask&&!confirm(`Delete "${t.title}"?\n\nThis can't be undone.${t.archived?'':' Tip: archive it instead to keep its history.'}`))return false;
     S.tasks=S.tasks.filter(x=>x.id!==t.id);await DB.del('tasks',t.id);
     toastUndo('Task deleted.',async()=>{S.tasks.push(t);await DB.put('tasks',t)});
   },
@@ -1180,7 +1215,7 @@ const actions={
   async 'rv-carry'(el){const g=goalById(el.dataset.id);g.carried=(g.carried||[]).concat(g.period);g.period=currentPeriod(g.horizon);g.reviewedAt=Date.now();rvNote(g);await DB.put('goals',g);drawReview()},
   async 'goal-progress'(el){const g=goalById(el.dataset.id);g.progress=+el.value;await DB.put('goals',g)},
   async 'del-goal'(el){
-    const id=el.dataset.id;if(!confirm('Delete this goal? Linked tasks and sub-goals are kept but unlinked.'))return false;
+    const id=el.dataset.id;if(S.cfg.cGoal&&!confirm('Delete this goal? Linked tasks and sub-goals are kept but unlinked.'))return false;
     const gone=goalById(id);const lt=S.tasks.filter(t=>t.goalId===id),lc=S.goals.filter(c=>c.parentId===id);
     for(const t of lt){t.goalId=null;await DB.put('tasks',t)}
     for(const c of lc){c.parentId=null;await DB.put('goals',c)}
@@ -1190,7 +1225,7 @@ const actions={
   },
   async 'toggle-log'(el){await toggleLog(el.dataset.id,el.dataset.date)},
   async 'del-habit'(el){
-    const id=el.dataset.id;if(!confirm('Delete this habit and its history?'))return false;
+    const id=el.dataset.id;if(S.cfg.cHabit&&!confirm('Delete this habit and its history?'))return false;
     const gone=S.habits.find(h=>h.id===id);const keys=[...S.logs].filter(k=>k.startsWith(id+'|'));
     S.habits=S.habits.filter(h=>h.id!==id);await DB.del('habits',id);
     for(const k of keys){S.logs.delete(k);await DB.del('logs',k)}
@@ -1217,12 +1252,12 @@ const actions={
 
 document.addEventListener('click',async e=>{
   const nav=e.target.closest('#nav button,#tabbar button');if(nav){const same=S.view===nav.dataset.view;S.view=nav.dataset.view;render();if(!same||nav.closest('#tabbar'))scrollTo(0,0);return}
-  const el=e.target.closest('[data-action]');if(!el||el.type==='checkbox'||el.type==='range')return;
+  const el=e.target.closest('[data-action]');if(!el||el.type==='checkbox'||el.type==='range'||el.tagName==='SELECT')return;
   const fn=actions[el.dataset.action];if(fn&&(await fn(el))!==false)render();
 });
 document.addEventListener('change',async e=>{
   const el=e.target.closest('[data-action]');
-  if(el&&(el.type==='checkbox'||el.type==='range')){await actions[el.dataset.action](el);render()}
+  if(el&&(el.type==='checkbox'||el.type==='range'||el.tagName==='SELECT')){await actions[el.dataset.action](el);render()}
 });
 document.addEventListener('submit',async e=>{
   const f=e.target.closest('form[data-form]');if(!f)return;e.preventDefault();
@@ -1300,7 +1335,8 @@ $('#searchBtn').addEventListener('click',openSearch);
 function notify(m){typeof toast==='function'?toast(m):alert(m)}
 function backupData(){
   return{app:'goal-tracker',version:1,exported:new Date().toISOString(),tasks:S.tasks,goals:S.goals,habits:S.habits,
-    logs:[...S.logs].map(id=>{const i=id.lastIndexOf('|');return{id,habitId:id.slice(0,i),date:id.slice(i+1)}})};
+    logs:[...S.logs].map(id=>{const i=id.lastIndexOf('|');return{id,habitId:id.slice(0,i),date:id.slice(i+1)}}),
+    settings:{cfg:S.cfg,sound:Sound.on,hideDone:S.hideDone,compact:S.compact}};
 }
 async function restore(text,source){
   text=(text||'').replace(/^\uFEFF/,'').trim();
@@ -1311,6 +1347,11 @@ async function restore(text,source){
   const n=`${d.tasks.length} tasks, ${d.goals.length} goals, ${(d.habits||[]).length} habits, ${(d.logs||[]).length} check-ins`;
   if(!confirm(`Replace all current data with this backup?\n\n${n}`))return false;
   for(const s of STORES){await DB.clear(s);for(const row of (d[s]||[]))await DB.put(s,row)}
+  if(d.settings&&typeof d.settings==='object'){const st=d.settings;
+    if(st.cfg&&typeof st.cfg==='object'){S.cfg={...CFG_DEF,...st.cfg};saveCfg()}
+    if(typeof st.sound==='boolean')Sound.set(st.sound);
+    if(typeof st.hideDone==='boolean'){S.hideDone=st.hideDone;try{localStorage.setItem('gt-hide-done',st.hideDone?'1':'0')}catch(e){}}
+    if(typeof st.compact==='boolean'){S.compact=st.compact;try{localStorage.setItem('gt-compact',st.compact?'1':'0')}catch(e){}}}
   await load();render();return n;
 }
 function openBackup(mode){
