@@ -5,6 +5,7 @@
     PATCH = bug fix · MINOR = new feature · MAJOR = breaks old backups or data
 
   Changelog
+  0.33.0 Exam and quiz logger (Study tab): add exams and quizzes with date, time and subject, countdowns and Dashboard warnings, log scores afterwards, and picks favour subjects with an exam coming up
   0.32.0 Student mode (Settings → Student mode): a Study tab with a retrospective revision timetable. Subjects and topics, tap a day to log a study session with a Weak/OK/Strong colour, daily picks list (weakest and untouched topics first)
   0.31.0 Setting for avoid habits: a day counts as clean unless you log a slip (default) or as a slip unless you confirm it clean; can also be changed per habit (existing check-ins are flipped so history stays correct)
   0.30.0 More task settings: default due date, sort order, tag folders on/off, auto-archive finished tasks, default filter, show/hide notes and checklist on rows, overdue on the Dashboard
@@ -368,13 +369,13 @@ input.sw{appearance:none;-webkit-appearance:none;flex:none;width:46px;height:28p
 
 <script>
 /* ---------- Database (IndexedDB) ---------- */
-const STORES=['tasks','goals','habits','logs','topics'];
+const STORES=['tasks','goals','habits','logs','topics','exams'];
 const DB={
   db:null, mem:null,
   open(){
     return new Promise(res=>{
       try{
-        const r=indexedDB.open('goal-tracker-db',2);
+        const r=indexedDB.open('goal-tracker-db',3);
         r.onupgradeneeded=()=>{const d=r.result;STORES.forEach(s=>{if(!d.objectStoreNames.contains(s))d.createObjectStore(s,{keyPath:'id'})})};
         r.onsuccess=()=>{this.db=r.result;res(true)};
         r.onerror=()=>{this.useMemory();res(false)};
@@ -421,12 +422,12 @@ const fmt=(d,o)=>{const k=JSON.stringify(o);return(_fmts[k]||(_fmts[k]=new Intl.
 const fmtDate=s=>{if(!s)return'';const d=new Date(s+'T00:00');return fmt(d,{month:'short',day:'numeric'})};
 
 /* ---------- State ---------- */
-const S={tasks:[],goals:[],habits:[],topics:[],logs:new Set(),view:'dash',horizon:'weekly',goalScope:'current',taskFilter:'open',persistent:true};
+const S={tasks:[],goals:[],habits:[],topics:[],exams:[],logs:new Set(),view:'dash',horizon:'weekly',goalScope:'current',taskFilter:'open',persistent:true};
 
 async function load(){
   S.persistent=await DB.open();
-  const [t,g,h,l,tp]=await Promise.all(STORES.map(s=>DB.all(s)));
-  S.topics=tp;S.tasks=t;S.goals=g;S.habits=h;S.logs=new Set(l.map(x=>x.id));
+  const [t,g,h,l,tp,ex]=await Promise.all(STORES.map(s=>DB.all(s)));
+  S.exams=ex;S.topics=tp;S.tasks=t;S.goals=g;S.habits=h;S.logs=new Set(l.map(x=>x.id));
 }
 
 /* ---------- Logic ---------- */
@@ -956,6 +957,13 @@ function openEdit(kind,id){
       <label>Folder</label><input type="text" name="group" list="folderListEdit" value="${esc(h.group||'')}" placeholder="None. Type a name to create one" autocomplete="off">${folderList('folderListEdit')}
       <label>Schedule</label>${dayPicker(h.days||[])}`;
   }
+  if(kind==='exam'){const e=S.exams.find(x=>x.id===id)||{kind:'exam',date:TODAY()};title=id==='new'?'Add exam or quiz':'Edit '+(e.kind==='quiz'?'quiz':'exam');
+    body=`<label>Type</label><select name="ekind"><option value="exam" ${e.kind==='exam'?'selected':''}>📝 Exam</option><option value="quiz" ${e.kind==='quiz'?'selected':''}>❓ Quiz / test</option></select>
+      <label>Title</label><input type="text" name="title" value="${esc(e.title||'')}" placeholder="e.g. Biochemistry midterm" required>
+      <label>Subject</label><input type="text" name="subject" list="subjListEx" value="${esc(e.subject||'')}" autocomplete="off">${subjList('subjListEx')}
+      <div class="two"><div><label>Date</label><input type="date" name="date" value="${e.date||''}" required></div><div><label>Time (optional)</label><input type="time" name="time" value="${e.time||''}"></div></div>
+      <div class="two"><div><label>Score (after it)</label><input type="number" name="score" step="any" min="0" value="${e.score??''}"></div><div><label>Out of</label><input type="number" name="max" step="any" min="0" value="${e.max??''}"></div></div>
+      <label>Notes</label><textarea name="notes" placeholder="Room, syllabus, what to bring…">${esc(e.notes||'')}</textarea>`}
   if(kind==='topic'){const t=S.topics.find(x=>x.id===id);title='Edit topic';
     body=`<label>Topic</label><input type="text" name="name" value="${esc(t.name)}" required>
       <label>Subject</label><input type="text" name="subject" list="subjListEdit" value="${esc(t.subject)}" required autocomplete="off">${subjList('subjListEdit')}`}
@@ -988,6 +996,8 @@ dlg.addEventListener('submit',async e=>{
       for(const c of S.goals.filter(c=>c.parentId===g.id&&PARENT[c.horizon]!==g.horizon)){c.parentId=null;await DB.put('goals',c)}
     }
     await DB.put('goals',g)}
+  if(kind==='exam'){const o={kind:v.ekind==='quiz'?'quiz':'exam',title:v.title.trim(),subject:(v.subject||'').trim(),date:v.date,time:v.time||'',notes:(v.notes||'').trim(),score:v.score===''||v.score==null?null:+v.score,max:v.max===''||v.max==null?null:+v.max};
+    if(id==='new'){const e={id:uid(),created:Date.now(),...o};S.exams.push(e);await DB.put('exams',e)}else{const e=S.exams.find(x=>x.id===id);Object.assign(e,o);await DB.put('exams',e)}}
   if(kind==='topic'){const t=S.topics.find(x=>x.id===id);Object.assign(t,{name:v.name.trim(),subject:v.subject.trim()||t.subject});await DB.put('topics',t)}
   if(kind==='habit'){const h=S.habits.find(x=>x.id===id);const av=v.kind==='avoid'||v.kind==='avoid-confirm';const newMode=av&&v.kind==='avoid-confirm'?'confirm':'';
     if(isNeg(h)&&av&&(h.mode||'')!==newMode){ // meaning of a check-in flips, so invert every day since creation to keep history the same
@@ -1027,7 +1037,7 @@ function drawHabit(){
 document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('[role=button][data-action]')){e.preventDefault();e.target.click()}});
 
 /* ---------- Version ---------- */
-const APP_VERSION='0.32.0';
+const APP_VERSION='0.33.0';
 
 /* ---------- Completion sounds (synthesised, no audio files) ---------- */
 const Sound={
@@ -1227,6 +1237,11 @@ const actions={
   async 'topic-cell'(el){const t=S.topics.find(x=>x.id===el.dataset.id);if(!t)return false;t.sessions=t.sessions||[];const d=el.dataset.d;const i=t.sessions.findIndex(x=>x.d===d);
     if(i<0){t.sessions.push({d,c:1});Sound.play('habit')}else if(t.sessions[i].c<3){t.sessions[i].c++;Sound.play('habit')}else{t.sessions.splice(i,1);Sound.play('undo')}
     await DB.put('topics',t)},
+  'add-exam'(){openEdit('exam','new');return false},
+  'edit-exam'(el){openEdit('exam',el.dataset.id);return false},
+  'toggle-past-exams'(){S.examsPast=!S.examsPast},
+  async 'del-exam'(el){const e=S.exams.find(x=>x.id===el.dataset.id);if(!e||!confirm(`Delete "${e.title}"?`))return false;
+    S.exams=S.exams.filter(x=>x!==e);await DB.del('exams',e.id);toastUndo('Deleted.',async()=>{S.exams.push(e);await DB.put('exams',e)})},
   'goto-study'(){S.view='study';scrollTo(0,0)},
   'edit-topic'(el){openEdit('topic',el.dataset.id);return false},
   async 'del-topic'(el){const t=S.topics.find(x=>x.id===el.dataset.id);if(!t||!confirm(`Delete topic "${t.name}" and its study log?`))return false;
@@ -1297,7 +1312,7 @@ const actions={
   'backup-paste'(){openBackup('paste');return false},
   import(){$('#importFile').click();return false},
   async wipe(){if(!confirm('Erase all tasks, goals, habits and history? This cannot be undone.'))return false;
-    for(const s of STORES)await DB.clear(s);S.tasks=[];S.goals=[];S.habits=[];S.topics=[];S.logs=new Set();}
+    for(const s of STORES)await DB.clear(s);S.tasks=[];S.goals=[];S.habits=[];S.topics=[];S.exams=[];S.logs=new Set();}
 };
 
 document.addEventListener('click',async e=>{
@@ -1333,18 +1348,39 @@ const subjList=id=>`<datalist id="${id}">${[...new Set(S.topics.map(t=>t.subject
 const lastSess=t=>(t.sessions||[]).reduce((a,x)=>!a||x.d>a.d?x:a,null);
 const topicConf=t=>{const l=lastSess(t);return l?l.c:0};
 function agoDays(d){const n=Math.round((new Date(TODAY()+'T00:00')-new Date(d+'T00:00'))/864e5);return n<=0?'today':n===1?'yesterday':n+' days ago'}
+const daysTo=d=>Math.round((new Date(d+'T00:00')-new Date(TODAY()+'T00:00'))/864e5);
+const examIcon=e=>e.kind==='quiz'?'❓':'📝';
+const whenText=n=>n<0?Math.abs(n)+' day'+(Math.abs(n)>1?'s':'')+' ago':n===0?'Today':n===1?'Tomorrow':'in '+n+' days';
+const needsResult=e=>daysTo(e.date)<0&&e.score==null;
+const upcomingExams=()=>S.exams.filter(e=>daysTo(e.date)>=0).sort((a,b)=>(a.date+(a.time||'')).localeCompare(b.date+(b.time||'')));
+const urgentSubjects=()=>{const m=new Map();for(const e of upcomingExams()){const n=daysTo(e.date);if(n<=14&&e.subject&&!m.has(e.subject))m.set(e.subject,n)}return m};
+function examRow(e){const n=daysTo(e.date);const pct=e.score!=null&&e.max>0?Math.round(e.score/e.max*100):null;
+  return `<div class="trow"><div class="top"><div class="grow"><b>${examIcon(e)} ${esc(e.title)}</b><div class="meta">${e.subject?`<span>${esc(e.subject)}</span>`:''}<span>${fmtDate(e.date)}${e.time?' · '+esc(e.time):''}</span>
+    ${e.score!=null?`<span class="okc">${e.score}${e.max?'/'+e.max:''}${pct!=null?' · '+pct+'%':''}</span>`:n>=0?`<span class="${n<=3?'overdue':''}">${whenText(n)}</span>`:`<button type="button" class="chip" data-action="edit-exam" data-id="${e.id}">Log result</button>`}</div>
+    ${e.notes?`<div class="tnotes">${esc(e.notes)}</div>`:''}</div>
+    <button class="icon" data-action="edit-exam" data-id="${e.id}" aria-label="Edit ${esc(e.title)}">✎</button><button class="icon" data-action="del-exam" data-id="${e.id}" aria-label="Delete ${esc(e.title)}">✕</button></div></div>`}
+function examsCard(){
+  const up=upcomingExams(),past=S.exams.filter(e=>daysTo(e.date)<0).sort((a,b)=>b.date.localeCompare(a.date));
+  const open=S.examsPast;
+  return `<div class="card" style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;align-items:center"><div class="title">Exams &amp; quizzes</div><button class="chip" data-action="add-exam">+ Add</button></div>
+    ${up.length?up.map(examRow).join(''):'<div class="empty">Nothing coming up. Add your exams and quizzes so you never miss one.</div>'}
+    ${past.length?`<button class="chip" style="margin-top:8px" data-action="toggle-past-exams">${open?'Hide':'Show'} past (${past.length}${past.some(needsResult)?' · result missing':''})</button>${open?past.map(examRow).join(''):''}`:''}</div>`}
 function topicPicks(){
-  const rank=t=>({1:0,0:1,2:2,3:3}[topicConf(t)]);const today=TODAY();
-  return S.topics.filter(t=>!(t.sessions||[]).some(x=>x.d===today)).sort((a,b)=>(rank(a)-rank(b))||((lastSess(a)?.d||'').localeCompare(lastSess(b)?.d||'')))
+  const rank=t=>({1:0,0:1,2:2,3:3}[topicConf(t)]);const today=TODAY();const urg=urgentSubjects();
+  return S.topics.filter(t=>!(t.sessions||[]).some(x=>x.d===today)).sort((a,b)=>(rank(a)-rank(b))||((urg.get(a.subject)??99)-(urg.get(b.subject)??99))||((lastSess(a)?.d||'').localeCompare(lastSess(b)?.d||'')))
 }
 function studiedToday(){const t=TODAY();return S.topics.filter(x=>(x.sessions||[]).some(s=>s.d===t)).length}
 function topicCells(t,n=7){let out='';for(let i=n-1;i>=0;i--){const d=addDays(new Date(),-i),k=ds(d),se=(t.sessions||[]).find(x=>x.d===k);
   out+=`<button class="tc ${se?'c'+se.c:''} ${i===0?'today':''}" data-action="topic-cell" data-id="${t.id}" data-d="${k}" aria-label="${esc(t.name)} ${k}: ${se?CONF_LABEL[se.c]:'not studied'}" title="${k}">${fmt(d,{weekday:'narrow'})}<b>${d.getDate()}</b></button>`}
   return `<div class="tgrid">${out}</div>`}
 function studyCard(){
-  if(!S.cfg.student||!S.topics.length)return S.cfg.student?`<div class="card"><div class="title">📚 Study</div><div class="meta">Add your subjects and topics to start your revision timetable.</div><button class="chip" style="margin-top:8px" data-action="goto-study">Open Study →</button></div>`:'';
+  if(!S.cfg.student)return '';
   const weak=S.topics.filter(t=>topicConf(t)===1).length,fresh=S.topics.filter(t=>topicConf(t)===0).length;
-  return `<div class="card"><div class="title">📚 Study today</div><div class="meta"><span>${studiedToday()} studied today</span><span>${weak} weak</span><span>${fresh} not started</span></div>
+  const soon=upcomingExams().filter(e=>daysTo(e.date)<=14).slice(0,3),miss=S.exams.filter(needsResult).length;
+  return `<div class="card"><div class="title">📚 Study today</div>
+    ${S.topics.length?`<div class="meta"><span>${studiedToday()} studied today</span><span>${weak} weak</span><span>${fresh} not started</span></div>`:'<div class="meta">Add your subjects and topics to start your revision timetable.</div>'}
+    ${soon.map(e=>`<div class="meta" style="margin-top:6px"><span>${examIcon(e)} <b>${esc(e.title)}</b></span><span class="${daysTo(e.date)<=3?'overdue':''}">${whenText(daysTo(e.date))}</span></div>`).join('')}
+    ${miss?`<div class="meta" style="margin-top:6px"><span class="overdue">${miss} past exam${miss>1?'s':''}/quiz${miss>1?'zes':''} without a result</span></div>`:''}
     <button class="chip" style="margin-top:8px" data-action="goto-study">Open Study →</button></div>`;
 }
 function viewStudy(){
@@ -1361,6 +1397,7 @@ function viewStudy(){
       <div class="hf-bar"><span style="width:${Math.round(strong/ts.length*100)}%"></span></div>
       ${collapsed?'':ts.sort((a,b)=>a.name.localeCompare(b.name)).map(t=>row(t,true)).join('')}</section>`}
   return `<h2>Study</h2>
+  ${examsCard()}
   <div class="card"><div class="title">Today's picks</div><div class="meta"><span>${studiedToday()} studied today</span><span>Weak and untouched topics come first. Tap a day to log it.</span></div>
     ${picks.length?picks.map(t=>row(t,false)).join(''):`<div class="empty">${S.topics.length?'Everything has been studied today 🎉':'Add topics below to get daily picks.'}</div>`}</div>
   <form class="add" data-form="topics" style="margin-top:12px">
@@ -1415,7 +1452,8 @@ function searchResults(q){
   const habits=S.habits.filter(h=>has(h.name,h.group)).slice(0,30)
     .map(h=>row('habit',h.id,esc(h.name),'Habit'+(h.group?' · '+esc(h.group):'')));
   const topics=S.cfg.student?S.topics.filter(t=>has(t.name,t.subject)).slice(0,30).map(t=>row('topic',t.id,esc(t.name),'Topic · '+esc(t.subject))):[];
-  const all=[...tasks,...goals,...habits,...topics];
+  const exams=S.cfg.student?S.exams.filter(e=>has(e.title,e.subject,e.notes)).slice(0,20).map(e=>row('exam',e.id,esc(e.title),(e.kind==='quiz'?'Quiz':'Exam')+' · '+fmtDate(e.date))):[];
+  const all=[...tasks,...goals,...habits,...topics,...exams];
   return all.length?all.join(''):'<div class="empty">Nothing found.</div>';
 }
 function openSearch(){
@@ -1432,7 +1470,7 @@ $('#searchBtn').addEventListener('click',openSearch);
 /* ---------- Backup & restore ---------- */
 function notify(m){typeof toast==='function'?toast(m):alert(m)}
 function backupData(){
-  return{app:'goal-tracker',version:1,exported:new Date().toISOString(),tasks:S.tasks,goals:S.goals,habits:S.habits,topics:S.topics,
+  return{app:'goal-tracker',version:1,exported:new Date().toISOString(),tasks:S.tasks,goals:S.goals,habits:S.habits,topics:S.topics,exams:S.exams,
     logs:[...S.logs].map(id=>{const i=id.lastIndexOf('|');return{id,habitId:id.slice(0,i),date:id.slice(i+1)}}),
     settings:{cfg:S.cfg,sound:Sound.on,hideDone:S.hideDone,compact:S.compact}};
 }
