@@ -5,6 +5,7 @@
     PATCH = bug fix · MINOR = new feature · MAJOR = breaks old backups or data
 
   Changelog
+  0.44.0 Select mode for tasks and habits (bulk date, priority, tag, goal, folder, schedule, done, archive, delete); Trash in Settings keeps deleted tasks and habits for 30 days; Student compact mode (tighter layout everywhere)
   0.43.1 Habit consistency card lists Avoid habits in their own "Staying clean" group (% clean, 🛡 streak)
   0.43.0 Dashboard: Avoid habits get their own "Staying clean" section (clean/slipped state, Log slip button) and their own tiles; they no longer count in "Habits done today" or "Best current streak"
   0.42.0 Study: tap a day cell and pick Weak / OK / Strong / Clear from a small menu, so any rating takes two taps instead of cycling through colours
@@ -410,6 +411,23 @@ input.sw{appearance:none;-webkit-appearance:none;flex:none;width:46px;height:28p
 .avoidsec .item.slipped{border-left:3px solid #d64545}
 .avoidsec .item.clean .avstate{color:#2f9e6b}.avoidsec .item.slipped .avstate{color:#d64545}
 .avbtn{flex:none;min-height:36px}
+.selbar{position:sticky;bottom:calc(8px + env(safe-area-inset-bottom));z-index:15;margin-top:14px;background:var(--card);border:1px solid var(--accent);border-radius:14px;padding:8px 10px;box-shadow:0 6px 22px #0004;display:flex;flex-direction:column;gap:6px}
+.selrow{display:flex;flex-wrap:wrap;gap:6px;align-items:center}.selrow b{margin-inline-end:auto}
+.chip.act{color:var(--text)}.chip.act.danger{color:var(--bad);border-color:var(--bad)}.chip[disabled]{opacity:.45}
+.selbox{width:22px;height:22px;accent-color:var(--accent);flex:none}
+.item.selected,.card.selected{border-color:var(--accent);background:color-mix(in oklab,var(--accent) 10%,var(--card))}
+.selmode .item>.icon,.selmode .habit>.icon,.selmode .habit>.days,.selmode .habit>.mv{display:none}
+.trash-row{display:flex;align-items:center;gap:8px}
+body.cmp{font-size:14px}
+body.cmp .card{padding:10px}body.cmp .item{padding:6px 10px;gap:8px}
+body.cmp .stats{grid-template-columns:repeat(auto-fit,minmax(104px,1fr));gap:8px}
+body.cmp .stat .n{font-size:20px}body.cmp .stat .l{font-size:11.5px}
+body.cmp h2{margin:14px 0 8px;font-size:15px}
+body.cmp .tnotes,body.cmp .subs,body.cmp .legend,body.cmp .scard>p.meta,body.cmp .heat{display:none}
+body.cmp .pick{padding:6px 10px;margin-top:5px}body.cmp .trow{padding-block:3px}
+body.cmp .vcard{margin-top:10px}body.cmp .meta{font-size:11.5px;gap:2px 8px}
+body.cmp .stile{padding:6px 4px}body.cmp .hfolder{margin-bottom:6px}
+body.cmp .add{gap:6px}body.cmp .goals,body.cmp .list{gap:6px}
 </style>
 </head>
 <body>
@@ -440,13 +458,13 @@ input.sw{appearance:none;-webkit-appearance:none;flex:none;width:46px;height:28p
 
 <script>
 /* ---------- Database (IndexedDB) ---------- */
-const STORES=['tasks','goals','habits','logs','topics','exams'];
+const STORES=['tasks','goals','habits','logs','topics','exams','trash'];
 const DB={
   db:null, mem:null,
   open(){
     return new Promise(res=>{
       try{
-        const r=indexedDB.open('goal-tracker-db',3);
+        const r=indexedDB.open('goal-tracker-db',4);
         r.onupgradeneeded=()=>{const d=r.result;STORES.forEach(s=>{if(!d.objectStoreNames.contains(s))d.createObjectStore(s,{keyPath:'id'})})};
         r.onsuccess=()=>{this.db=r.result;res(true)};
         r.onerror=()=>{this.useMemory();res(false)};
@@ -494,11 +512,14 @@ const fmt=(d,o)=>{const k=LOCALE+JSON.stringify(o);return(_fmts[k]||(_fmts[k]=ne
 const fmtDate=s=>{if(!s)return'';const d=new Date(s+'T00:00');return fmt(d,{month:'short',day:'numeric'})};
 
 /* ---------- State ---------- */
-const S={tasks:[],goals:[],habits:[],topics:[],exams:[],logs:new Set(),view:'dash',horizon:'weekly',goalScope:'current',taskFilter:'open',persistent:true};
+const S={tasks:[],goals:[],habits:[],topics:[],exams:[],logs:new Set(),view:'dash',horizon:'weekly',goalScope:'current',taskFilter:'open',persistent:true,trash:[],sel:new Set(),selMode:null};
 
+const TRASH_DAYS=30;
 async function load(){
   S.persistent=await DB.open();
-  const [t,g,h,l,tp,ex]=await Promise.all(STORES.map(s=>DB.all(s)));
+  const [t,g,h,l,tp,ex,tr]=await Promise.all(STORES.map(s=>DB.all(s)));
+  const cut=Date.now()-TRASH_DAYS*864e5;S.trash=(tr||[]).filter(r=>r&&r.data&&(r.at||0)>=cut);
+  for(const r of (tr||[]))if(!S.trash.includes(r))DB.del('trash',r.id);
   S.exams=ex;S.topics=tp;S.tasks=t;S.goals=g;S.habits=h;S.logs=new Set(l.map(x=>x.id));
 }
 
@@ -589,8 +610,9 @@ function fmtDay(s){return s?fmt(new Date(s+'T00:00'),{weekday:'short',month:'sho
 function taskItem(t){
   const g=t.goalId&&goalById(t.goalId);const today=TODAY();
   const overdue=!t.done&&t.due&&t.due<today;
-  return `<li class="item ${t.done?'done dim':''}">
-    <input type="checkbox" data-action="toggle-task" data-id="${t.id}" ${t.done?'checked':''} aria-label="Complete">
+  const sm=selOn('tasks');
+  return `<li class="item ${t.done?'done dim':''} ${sm&&S.sel.has(t.id)?'selected':''}">
+    ${sm?selBox(t.id):`<input type="checkbox" data-action="toggle-task" data-id="${t.id}" ${t.done?'checked':''} aria-label="Complete">`}
     <div class="grow"><div class="title">${esc(t.title)}</div>
       ${t.notes&&S.cfg.showNotes?`<div class="tnotes">${esc(t.notes)}</div>`:''}
       ${(t.items||[]).length&&S.cfg.showSubs?`<ul class="subs">${t.items.map((it,i)=>`<li><label class="${it.done?'sdone':''}"><input type="checkbox" data-action="toggle-sub" data-id="${t.id}" data-i="${i}" ${it.done?'checked':''}><span>${esc(it.text)}</span></label></li>`).join('')}</ul>`:''}
@@ -616,13 +638,14 @@ function dayButtons(h,n=7){
 }
 function habitCard(h,full){
   const s=streak(h);
-  if(full&&S.compact)return `<div class="card hcompact"><div class="habit">
+  const sm=full&&selOn('habits'),cm=full&&(S.compact||(S.cfg.student&&S.cfg.stuCompact));
+  if(cm)return `<div class="card hcompact ${sm&&S.sel.has(h.id)?'selected':''}"><div class="habit">${sm?selBox(h.id):''}
     <div class="grow habit-open" data-action="open-habit" data-id="${h.id}" role="button" tabindex="0" title="Open history"><div class="title">${hname(h)}</div>
       <div class="meta"><span class="streak">${isNeg(h)?'🛡':'🔥'}${s}</span><span>${weekCount(h)}/${weekTarget(h)} this wk</span></div></div>
     ${dayButtons(h)}
     ${mvBtns('move-habit',h.id,`data-id="${h.id}"`)}<button class="icon" data-action="edit-habit" data-id="${h.id}" title="Edit" aria-label="Edit">✎</button></div></div>`;
   let heat='';if(full){for(let i=27;i>=0;i--){const k=ds(addDays(new Date(),-i));heat+=`<i class="${good(h,k)?'on':''}" title="${k}"></i>`}}
-  return `<div class="card"><div class="habit">
+  return `<div class="card ${sm&&S.sel.has(h.id)?'selected':''}"><div class="habit">${sm?selBox(h.id):''}
     <div class="grow habit-open" data-action="open-habit" data-id="${h.id}" role="button" tabindex="0" title="Open history"><div class="title">${hname(h)} <span class="chev">›</span></div>
       <div class="meta"><span class="streak">${isNeg(h)?'🛡 '+s+' day'+(s===1?'':'s')+' clean':'🔥 '+s+' day'+(s===1?'':'s')}</span>
         <span>This week ${weekCount(h)}/${weekTarget(h)}</span>${full?`<span>30-day ${rate30(h)}%</span>`:''}${hasSched(h)?`<span>${schedText(h)}</span>`:''}</div></div>
@@ -805,7 +828,7 @@ function viewTasks(){
     <textarea name="notes" placeholder="Notes (optional)" style="min-height:40px"></textarea>
     <textarea name="items" placeholder="Checklist (optional, one item per line)" style="min-height:40px"></textarea>
     <button class="btn">Add</button></form>
-  <div class="filters">${chip('all','All')}${chip('today','Due today')}${chip('overdue','Overdue'+(nOver?' · '+nOver:''))}${chip('done','Done')}</div>
+  <div class="filters">${chip('all','All')}${chip('today','Due today')}${chip('overdue','Overdue'+(nOver?' · '+nOver:''))}${chip('done','Done')}<button class="chip ${selOn('tasks')?'on':''}" data-action="sel-mode" data-k="tasks" aria-pressed="${selOn('tasks')}">${selOn('tasks')?'✓ Selecting':'☑ Select'}</button></div>
   ${open.length?taskGroups(open):((done.length&&showDone)?'':`<div class="empty">No tasks here.</div>`)}
   ${(done.length&&showDone)?`${f==='done'?'':`<div class="divider">Completed · ${done.length}</div>`}<ul class="list">${(S.doneAll?done:done.slice(0,40)).map(taskItem).join('')}</ul>${done.length>40?`<button class="chip" style="margin-top:8px" data-action="toggle-done-all">${S.doneAll?'Show fewer':'Show all '+done.length+' completed'}</button>`:''}`:''}`;
 }
@@ -860,7 +883,7 @@ function habitList(full){
   if(!pool.length&&avoids.length)return avoidSection(avoids);
   if(!pool.length)return `<div class="empty">Nothing due today. ${offToday} habit${offToday>1?'s':''} off.</div>`;
   const bar=`<div class="filters"><button class="chip ${S.hideDone?'on':''}" data-action="toggle-hide-done" aria-pressed="${S.hideDone}">${S.hideDone?'✓ Hiding done today':'Hide done today'}</button>
-    ${full?`<button class="chip ${S.compact?'on':''}" data-action="toggle-compact" aria-pressed="${S.compact}">${S.compact?'✓ Compact':'Compact'}</button><button class="chip ${S.reorder?'on':''}" data-action="toggle-reorder" aria-pressed="${!!S.reorder}">${S.reorder?'✓ Reordering':'↕ Reorder'}</button>`:''}
+    ${full?`<button class="chip ${selOn('habits')?'on':''}" data-action="sel-mode" data-k="habits" aria-pressed="${selOn('habits')}">${selOn('habits')?'✓ Selecting':'☑ Select'}</button><button class="chip ${S.compact?'on':''}" data-action="toggle-compact" aria-pressed="${S.compact}">${S.compact?'✓ Compact':'Compact'}</button><button class="chip ${S.reorder?'on':''}" data-action="toggle-reorder" aria-pressed="${!!S.reorder}">${S.reorder?'✓ Reordering':'↕ Reorder'}</button>`:''}
     <span class="meta" style="align-self:center">${doneToday}/${dueAll.length} due done${offToday?` · ${offToday} off today`:''}${S.hideDone&&doneToday?` · ${doneToday} hidden`:''}</span></div>`;
   const wrap=hs=>full?`<div class="goals">${hs.map(h=>habitCard(h,true)).join('')}</div>`:`<ul class="list">${hs.map(habitToday).join('')}</ul>`;
   const groups=new Map(),loose=[];
@@ -900,6 +923,80 @@ function avoidToday(h){
       <div class="title">${hname(h)} <span class="chev">›</span></div>
       <div class="meta"><span class="avstate">${on?'🛡':'⚠'} ${state}</span><span>${s} day${s===1?'':'s'} clean streak</span></div></div>
     <button class="chip avbtn ${on?'':'on'}" data-action="toggle-log" data-id="${h.id}" data-date="${k}" aria-label="${btn}: ${esc(h.name)}">${btn}</button></li>`;
+}
+/* ---------- Trash ---------- */
+async function trashAdd(kind,data,logs){const r={id:kind+':'+data.id,kind,at:Date.now(),data,logs:logs||[]};S.trash=S.trash.filter(x=>x.id!==r.id);S.trash.push(r);await DB.put('trash',r)}
+async function removeTasks(list){for(const t of list){S.tasks=S.tasks.filter(x=>x.id!==t.id);await DB.del('tasks',t.id);await trashAdd('task',t)}}
+async function removeHabits(list){for(const h of list){const keys=[...S.logs].filter(k=>k.startsWith(h.id+'|'));
+  S.habits=S.habits.filter(x=>x.id!==h.id);await DB.del('habits',h.id);for(const k of keys){S.logs.delete(k);await DB.del('logs',k)}await trashAdd('habit',h,keys)}}
+async function trashRestore(id){const r=S.trash.find(x=>x.id===id);if(!r)return;
+  if(r.kind==='task'){if(!S.tasks.some(x=>x.id===r.data.id)){S.tasks.push(r.data);await DB.put('tasks',r.data)}}
+  else{if(!S.habits.some(x=>x.id===r.data.id)){S.habits.push(r.data);await DB.put('habits',r.data)}
+    for(const k of r.logs||[]){const i=k.lastIndexOf('|');S.logs.add(k);await DB.put('logs',{id:k,habitId:k.slice(0,i),date:k.slice(i+1)})}}
+  S.trash=S.trash.filter(x=>x.id!==id);await DB.del('trash',id)}
+function viewTrash(){
+  const list=[...S.trash].sort((a,b)=>b.at-a.at);
+  const row=r=>{const left=Math.max(0,Math.ceil(TRASH_DAYS-(Date.now()-r.at)/864e5));const name=r.kind==='task'?r.data.title:r.data.name;
+    return `<div class="card trash-row"><div class="grow"><div class="title">${esc(name)}</div>
+      <div class="meta"><span>${r.kind==='task'?'Task':'Habit'}</span><span>Deleted ${fmtWhen(r.at)}</span><span>${left} day${left===1?'':'s'} left</span></div></div>
+      <button class="icon" data-action="trash-restore" data-id="${esc(r.id)}" title="Restore" aria-label="Restore">↩</button>
+      <button class="icon" data-action="trash-del" data-id="${esc(r.id)}" title="Delete forever" aria-label="Delete forever">✕</button></div>`};
+  return `<div class="arch-head"><button class="ghost" data-action="back-data">← Settings</button><h2 style="margin:0">Trash</h2></div>
+    <div class="bar-row"><span class="meta" style="margin:0">${list.length} item${list.length===1?'':'s'} · deleted tasks and habits are kept ${TRASH_DAYS} days</span>
+      ${list.length?`<button class="ghost danger" data-action="trash-empty">Empty trash</button>`:''}</div>
+    ${list.length?`<div class="goals">${list.map(row).join('')}</div>`:`<div class="empty">Trash is empty.</div>`}`;
+}
+/* ---------- Select mode (bulk edit) ---------- */
+const selOn=k=>S.selMode===k&&S.view===k;
+const selBox=id=>`<input type="checkbox" class="selbox" data-action="sel-toggle" data-id="${id}" ${S.sel.has(id)?'checked':''} aria-label="Select">`;
+function selBar(){
+  const k=S.selMode;if(!k||S.view!==k)return'';
+  const n=S.sel.size,dis=n?'':'disabled';
+  return `<div class="selbar" role="toolbar" aria-label="Bulk actions"><div class="selrow"><b>${n} selected</b>
+    <button class="chip" data-action="sel-all">All</button><button class="chip" data-action="sel-none">None</button><button class="chip" data-action="sel-exit">Cancel</button></div>
+    <div class="selrow">${k==='tasks'?`<button class="chip act" data-action="bulk-done" ${dis}>✓ Done</button>`:''}<button class="chip act" data-action="bulk-edit" ${dis}>✎ Edit…</button>${k==='tasks'?`<button class="chip act" data-action="bulk-archive" ${dis}>Archive</button>`:''}<button class="chip act danger" data-action="bulk-del" ${dis}>🗑 Delete</button></div></div>`;
+}
+function openBulk(){
+  const k=S.selMode,n=S.sel.size;if(!k||!n)return;
+  let body='';
+  if(k==='tasks'){
+    const goals=`<option value="">Don't change</option><option value="-">— No goal —</option>`+S.goals.filter(g=>!g.done).map(g=>`<option value="${g.id}">${HORIZONS[g.horizon]} · ${esc(g.title)}</option>`).join('');
+    body=`<label>Due date</label><select name="dmode"><option value="">Don't change</option><option value="today">Today</option><option value="tomorrow">Tomorrow</option><option value="week">In 7 days</option><option value="plus1">Push back 1 day</option><option value="pick">Pick a date…</option><option value="none">No date</option></select>
+      <input type="date" name="due" style="margin-top:6px">
+      <label>Priority</label><select name="priority"><option value="">Don't change</option><option value="low">Low</option><option value="med">Medium</option><option value="high">High</option></select>
+      <label>Tag folder</label><input type="text" name="tag" list="tagListBulk" placeholder="Don't change" autocomplete="off">${tagList('tagListBulk')}
+      <label class="check"><input type="checkbox" name="notag"> Remove tag</label>
+      <label>Linked goal</label><select name="goalId">${goals}</select>`;
+  }else{
+    body=`<label>Folder</label><input type="text" name="group" list="folderListBulk" placeholder="Don't change" autocomplete="off">${folderList('folderListBulk')}
+      <label class="check"><input type="checkbox" name="nogroup"> Remove from folder</label>
+      <label>Target per week (build habits)</label><select name="target"><option value="">Don't change</option>${[7,6,5,4,3,2,1].map(x=>`<option value="${x}">${x}× per week</option>`).join('')}</select>
+      <label class="check"><input type="checkbox" name="setdays"> Change schedule (build habits)</label>${dayPicker([])}`;
+  }
+  dlg.innerHTML=`<form method="dialog" data-edit="bulk${k}" data-id=""><h3>Edit ${n} ${k==='tasks'?'task':'habit'}${n===1?'':'s'}</h3>${body}
+    <div class="dlg-actions"><button class="ghost" value="cancel" formnovalidate>Cancel</button><button class="btn" value="save">Apply</button></div></form>`;
+  dlg.showModal();
+}
+async function applyBulk(kind,f){
+  const v=Object.fromEntries(new FormData(f)),ids=[...S.sel];let n=0;
+  if(kind==='bulktasks'){
+    for(const id of ids){const t=S.tasks.find(x=>x.id===id);if(!t)continue;
+      const m=v.dmode;
+      if(m==='today')t.due=TODAY();else if(m==='tomorrow')t.due=ds(addDays(new Date(),1));else if(m==='week')t.due=ds(addDays(new Date(),7));
+      else if(m==='plus1')t.due=ds(addDays(new Date((t.due||TODAY())+'T00:00'),1));
+      else if(m==='pick'&&v.due)t.due=v.due;else if(m==='none')t.due=null;
+      if(v.priority)t.priority=v.priority;
+      if(v.notag)t.tag='';else if((v.tag||'').trim())t.tag=v.tag.trim();
+      if(v.goalId==='-')t.goalId=null;else if(v.goalId)t.goalId=v.goalId;
+      await DB.put('tasks',t);n++}
+  }else{
+    const days=v.setdays?readDays(f):null;
+    for(const id of ids){const h=S.habits.find(x=>x.id===id);if(!h)continue;
+      if(v.nogroup)h.group='';else if((v.group||'').trim())h.group=v.group.trim();
+      if(!isNeg(h)){if(v.target)h.target=+v.target;if(days)h.days=days}
+      await DB.put('habits',h);n++}
+  }
+  S.selMode=null;S.sel.clear();toast(`Updated ${n} ${kind==='bulktasks'?'task':'habit'}${n===1?'':'s'}.`);
 }
 const folderOf=h=>(h.group||'').trim();
 const dayPicker=(sel=[])=>`<div class="daypick" role="group" aria-label="Days it's due (none = every day)"><span class="dp-lbl">Days</span>${DOW_ORDER.map(n=>`<label title="${fmt(new Date(2024,0,n||7),{weekday:'long'})}"><input type="checkbox" name="days" value="${n}" ${sel.includes(n)?'checked':''}><span>${fmt(new Date(2024,0,n||7),{weekday:'narrow'})}</span></label>`).join('')}<span class="dp-hint">none = every day</span></div>`;
@@ -944,6 +1041,7 @@ function settingsCard(){
     ${sel('srWeak','Review Weak topics after',[['1','1 day'],['2','2 days']],c.srWeak)}
     ${sel('srOk','Review OK topics after',[['2','2 days'],['3','3 days'],['4','4 days'],['5','5 days']],c.srOk)}
     ${sel('srLadder','Review Strong topics after',[['1,3,7,14,30','1, 3, 7, 14, 30 days'],['1,2,4,7,14','1, 2, 4, 7, 14 days (tight)'],['2,5,10,21,45','2, 5, 10, 21, 45 days (relaxed)']],c.srLadder)}
+    ${sw('stuCompact','Compact layout','Student mode only: tighter spacing, smaller text, fewer extras, so more fits on a small screen',c.stuCompact)}
     ${sw('student','Student mode','Adds a Study tab: revision timetable, today\'s picks, and exams',c.student)}
   </div>
   <div class="card settings" style="margin-top:12px"><div class="title">Tasks</div>
@@ -996,6 +1094,11 @@ function viewData(){
     <div class="title">Archived tasks</div>
     <div class="meta">${S.tasks.filter(t=>t.archived).length} archived · ${S.tasks.filter(t=>t.archived&&t.done).length} completed</div>
     <div class="row"><button class="ghost" data-action="open-archive">View archived tasks →</button></div>
+  </div>
+  <div class="card settings" style="margin-top:12px">
+    <div class="title">Trash</div>
+    <div class="meta">${S.trash.length} deleted task${S.trash.length===1?'':'s'} and habits, kept ${TRASH_DAYS} days</div>
+    <div class="row"><button class="ghost" data-action="open-trash">Open trash →</button></div>
   </div>`;
 }
 
@@ -1006,13 +1109,15 @@ function render(){
   S.booted=true;
   if(S.view==='study'&&!S.cfg.student)S.view='dash';
   document.querySelectorAll('[data-view=study]').forEach(b=>b.hidden=!S.cfg.student);
-  const v={dash:viewDash,tasks:viewTasks,goals:viewGoals,habits:viewHabits,data:viewData,archive:viewArchive,study:viewStudy}[S.view]||viewDash;
-  $('#app').innerHTML=(S.persistent?'':`<div class="banner">This browser blocked storage — data will be lost on reload. Use Export to save it.</div>`)+v();
+  if(S.selMode&&S.selMode!==S.view){S.selMode=null;S.sel.clear()}
+  document.body.classList.toggle('selmode',!!S.selMode);document.body.classList.toggle('cmp',!!(S.cfg.student&&S.cfg.stuCompact));
+  const v={dash:viewDash,tasks:viewTasks,goals:viewGoals,habits:viewHabits,data:viewData,archive:viewArchive,trash:viewTrash,study:viewStudy}[S.view]||viewDash;
+  $('#app').innerHTML=(S.persistent?'':`<div class="banner">This browser blocked storage — data will be lost on reload. Use Export to save it.</div>`)+v()+selBar();
   const app=$('#app'),changed=S._lv!==S.view;S._lv=S.view;
   if(changed&&!matchMedia('(prefers-reduced-motion: reduce)').matches){app.classList.remove('enter');[...app.children].forEach((c,i)=>c.style.setProperty('--i',Math.min(i,9)));void app.offsetWidth;app.classList.add('enter');clearTimeout(S._enterT);S._enterT=setTimeout(()=>app.classList.remove('enter'),1100)}
   else if(!changed){clearTimeout(S._enterT);app.classList.remove('enter')}
   if(S.popKey){const q=S.popKey;S.popKey=null;let el=null;try{el=app.querySelector(q)}catch(_){}if(el){el.classList.add('pop');setTimeout(()=>el.classList.remove('pop'),450)}}
-  const nv=S.view==='archive'?'data':S.view;
+  const nv=(S.view==='archive'||S.view==='trash')?'data':S.view;
   document.querySelectorAll('#nav button,#tabbar button').forEach(b=>{const on=b.dataset.view===nv;b.classList.toggle('on',on);on?b.setAttribute('aria-current','page'):b.removeAttribute('aria-current')});
 }
 
@@ -1085,7 +1190,9 @@ dlg.addEventListener('change',e=>{
 dlg.addEventListener('submit',async e=>{
   const f=e.target.closest('form[data-edit]');if(!f)return;e.preventDefault();
   if(e.submitter&&e.submitter.value==='cancel'){dlg.close();return}
-  const v=Object.fromEntries(new FormData(f));const id=f.dataset.id;const kind=f.dataset.edit;
+  const kind=f.dataset.edit;
+  if(kind==='bulktasks'||kind==='bulkhabits'){await applyBulk(kind,f);dlg.close();render();return}
+  const v=Object.fromEntries(new FormData(f));const id=f.dataset.id;
   if(kind==='task'){const t=S.tasks.find(x=>x.id===id);const done=!!v.done;
     Object.assign(t,{title:v.title.trim(),due:v.due||null,priority:v.priority,goalId:v.goalId||null,notes:(v.notes||'').trim(),repeat:v.repeat||'',tag:(v.tag||'').trim(),items:parseItems(v.items,t.items)});
     if(done!==t.done){t.done=done;t.doneAt=done?Date.now():null;Sound.play(done?'task':'undo');await onTaskDone(t)}
@@ -1142,7 +1249,7 @@ function drawHabit(){
 document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('[role=button][data-action]')){e.preventDefault();e.target.click()}});
 
 /* ---------- Version ---------- */
-const APP_VERSION='0.43.1';
+const APP_VERSION='0.44.0';
 
 /* ---------- Completion sounds (synthesised, no audio files) ---------- */
 const Sound={
@@ -1172,7 +1279,7 @@ const Sound={
   }
 };
 Sound.load();
-const CFG_DEF={avoidHide:true,cTask:true,cGoal:true,cHabit:true,dCharts:true,dTasks:true,dGoals:true,dHabits:true,prio:'low',showDone:true,dueDef:'today',sortBy:'due',groupTags:true,autoArch:'0',defFilter:'all',showSubs:true,showNotes:true,dOverdue:false,avoidMode:'clean',student:false,lang:'en',srOn:true,srWeak:'1',srOk:'3',srLadder:'1,3,7,14,30'};
+const CFG_DEF={stuCompact:false,avoidHide:true,cTask:true,cGoal:true,cHabit:true,dCharts:true,dTasks:true,dGoals:true,dHabits:true,prio:'low',showDone:true,dueDef:'today',sortBy:'due',groupTags:true,autoArch:'0',defFilter:'all',showSubs:true,showNotes:true,dOverdue:false,avoidMode:'clean',student:false,lang:'en',srOn:true,srWeak:'1',srOk:'3',srLadder:'1,3,7,14,30'};
 try{S.cfg={...CFG_DEF,...JSON.parse(localStorage.getItem('gt-settings')||'{}')}}catch(e){S.cfg={...CFG_DEF}}
 S.taskFilter=S.cfg.defFilter;
 const saveCfg=()=>{try{localStorage.setItem('gt-settings',JSON.stringify(S.cfg))}catch(e){}};
@@ -1185,7 +1292,7 @@ const AR={
 'Theme: auto (tap to change)':'السمة: تلقائي (اضغط للتغيير)','Theme: light (tap to change)':'السمة: فاتح (اضغط للتغيير)','Theme: dark (tap to change)':'السمة: داكن (اضغط للتغيير)','Theme':'السمة',
 // dashboard
 'Today':'اليوم','Tomorrow':'غدًا','yesterday':'أمس','Overdue':'متأخرة','Today\'s tasks':'مهام اليوم','Today\'s habits':'عادات اليوم','This week\'s goals':'أهداف هذا الأسبوع','Today\'s picks':'اختيارات اليوم','Today\'s tasks done':'مهام اليوم المنجزة','Habits done today':'العادات المنجزة اليوم',
-'Nothing due today.':'لا شيء مستحق اليوم.','Staying clean':'البقاء بعيداً','Staying clean today':'بعيد عنها اليوم','Longest clean streak':'أطول سلسلة امتناع','Clean so far today':'ملتزم حتى الآن اليوم','Slipped today':'زلّ اليوم','Held today':'امتنعت اليوم','Not confirmed yet':'لم يؤكَّد بعد','Log slip':'سجّل زلّة','Undo slip':'تراجع عن الزلّة','Mark avoided':'تم الامتناع','Plan this week':'خطّط هذا الأسبوع','Weekly report':'التقرير الأسبوعي','Activity':'النشاط','Activity heatmap':'خريطة النشاط','Less':'أقل','More':'أكثر','actions':'إجراءات','active days':'أيام نشطة','Last 26 weeks':'آخر 26 أسبوعًا','Last 30 days':'آخر 30 يومًا','Last 30':'آخر 30','Total days':'إجمالي الأيام','Best current streak':'أفضل سلسلة حالية','Best streak':'أفضل سلسلة','Habit consistency':'انتظام العادات','Tasks completed':'المهام المنجزة','Goal progress':'تقدم الأهداف','Active goals':'الأهداف النشطة','none yet':'لا شيء بعد','Current':'الحالية','Current periods':'الفترات الحالية','Sections':'الأقسام',
+'Nothing due today.':'لا شيء مستحق اليوم.','Staying clean':'البقاء بعيداً','☑ Select':'☑ تحديد','✓ Selecting':'✓ جارٍ التحديد','All':'الكل','None':'لا شيء','Cancel':'إلغاء','✓ Done':'✓ تم','✎ Edit…':'✎ تعديل…','Archive':'أرشفة','🗑 Delete':'🗑 حذف','Trash':'سلة المحذوفات','Open trash →':'فتح السلة ←','Trash is empty.':'السلة فارغة.','Empty trash':'إفراغ السلة','Compact layout':'تخطيط مضغوط','Apply':'تطبيق','Staying clean today':'بعيد عنها اليوم','Longest clean streak':'أطول سلسلة امتناع','Clean so far today':'ملتزم حتى الآن اليوم','Slipped today':'زلّ اليوم','Held today':'امتنعت اليوم','Not confirmed yet':'لم يؤكَّد بعد','Log slip':'سجّل زلّة','Undo slip':'تراجع عن الزلّة','Mark avoided':'تم الامتناع','Plan this week':'خطّط هذا الأسبوع','Weekly report':'التقرير الأسبوعي','Activity':'النشاط','Activity heatmap':'خريطة النشاط','Less':'أقل','More':'أكثر','actions':'إجراءات','active days':'أيام نشطة','Last 26 weeks':'آخر 26 أسبوعًا','Last 30 days':'آخر 30 يومًا','Last 30':'آخر 30','Total days':'إجمالي الأيام','Best current streak':'أفضل سلسلة حالية','Best streak':'أفضل سلسلة','Habit consistency':'انتظام العادات','Tasks completed':'المهام المنجزة','Goal progress':'تقدم الأهداف','Active goals':'الأهداف النشطة','none yet':'لا شيء بعد','Current':'الحالية','Current periods':'الفترات الحالية','Sections':'الأقسام',
 'Review':'مراجعة','Hit it, missed, or carry over. About a minute.':'حققته أو فاتني أو أرحّله. دقيقة تقريبًا.','These periods have ended. Be honest. This is where the system gets smarter.':'انتهت هذه الفترات. كن صادقًا، هنا يصبح النظام أذكى.','All caught up. Reviews done ✓':'لا شيء متأخر. اكتملت المراجعات ✓','✓ Hit it':'✓ حققته','✗ Missed':'✗ فاتني','Hit it':'حققته','Missed':'فاتني','Review note (what got in the way / what worked)':'ملاحظة المراجعة (ما الذي أعاق / ما الذي نجح)','What got in the way / what worked? (optional)':'ما الذي أعاق / ما الذي نجح؟ (اختياري)',
 'No backup yet':'لا توجد نسخة احتياطية بعد','Your data lives only in this browser. Copy a backup and keep it somewhere safe.':'بياناتك محفوظة في هذا المتصفح فقط. انسخ نسخة احتياطية واحتفظ بها في مكان آمن.','Copy backup':'نسخ احتياطي','Remind me later':'ذكّرني لاحقًا','Dismiss backup reminder':'إخفاء تذكير النسخ الاحتياطي','OK →':'حسنًا →',
 // tasks
@@ -1463,11 +1570,34 @@ const actions={
   'toggle-sound'(){Sound.set(!Sound.on);if(Sound.on)Sound.play('task')},
   async 'del-task'(el){
     const t=S.tasks.find(x=>x.id===el.dataset.id);if(!t)return false;
-    if(S.cfg.cTask&&!confirm(`Delete "${t.title}"?\n\nThis can't be undone.${t.archived?'':' Tip: archive it instead to keep its history.'}`))return false;
-    S.tasks=S.tasks.filter(x=>x.id!==t.id);await DB.del('tasks',t.id);
-    toastUndo('Task deleted.',async()=>{S.tasks.push(t);await DB.put('tasks',t)});
+    if(S.cfg.cTask&&!confirm(`Delete "${t.title}"?\n\nIt stays in Trash (Settings) for ${TRASH_DAYS} days.${t.archived?'':' Tip: archive it instead to keep it with your tasks.'}`))return false;
+    await removeTasks([t]);
+    toastUndo('Task moved to Trash.',async()=>{await trashRestore('task:'+t.id)});
   },
   'task-filter'(el){S.taskFilter=el.dataset.v},
+  'sel-mode'(el){if(S.selMode===el.dataset.k){S.selMode=null}else{S.selMode=el.dataset.k}S.sel.clear()},
+  'sel-toggle'(el){const id=el.dataset.id;S.sel.has(id)?S.sel.delete(id):S.sel.add(id)},
+  'sel-all'(){document.querySelectorAll('#app [data-action=sel-toggle]').forEach(e=>S.sel.add(e.dataset.id))},
+  'sel-none'(){S.sel.clear()},
+  'sel-exit'(){S.selMode=null;S.sel.clear()},
+  'bulk-edit'(){openBulk();return false},
+  async 'bulk-done'(){const list=S.tasks.filter(t=>S.sel.has(t.id)&&!t.done);
+    for(const t of list){t.done=true;t.doneAt=Date.now();await DB.put('tasks',t);await onTaskDone(t)}
+    Sound.play('task');toast(`Marked ${list.length} done.`);S.selMode=null;S.sel.clear()},
+  async 'bulk-archive'(){const list=S.tasks.filter(t=>S.sel.has(t.id));
+    for(const t of list){t.archived=true;t.archivedAt=Date.now();await DB.put('tasks',t)}
+    toast(`Archived ${list.length} task${list.length===1?'':'s'}.`);S.selMode=null;S.sel.clear()},
+  async 'bulk-del'(){const k=S.selMode,n=S.sel.size;if(!n)return false;
+    if(!confirm(`Delete ${n} ${k==='tasks'?'task':'habit'}${n===1?'':'s'}?\n\nThey stay in Trash (Settings) for ${TRASH_DAYS} days.`))return false;
+    const ids=[...S.sel];
+    if(k==='tasks')await removeTasks(S.tasks.filter(t=>S.sel.has(t.id)));else await removeHabits(S.habits.filter(h=>S.sel.has(h.id)));
+    S.selMode=null;S.sel.clear();
+    toastUndo(`${n} moved to Trash.`,async()=>{for(const id of ids)await trashRestore((k==='tasks'?'task:':'habit:')+id)})},
+  'open-trash'(){S.view='trash';scrollTo(0,0)},
+  async 'trash-restore'(el){const r=S.trash.find(x=>x.id===el.dataset.id);await trashRestore(el.dataset.id);if(r)toast('Restored '+(r.kind==='task'?r.data.title:r.data.name)+'.')},
+  async 'trash-del'(el){if(!confirm('Delete this forever? This can\'t be undone.'))return false;S.trash=S.trash.filter(x=>x.id!==el.dataset.id);await DB.del('trash',el.dataset.id)},
+  async 'trash-empty'(){if(!S.trash.length||!confirm(`Delete ${S.trash.length} item${S.trash.length===1?'':'s'} in Trash forever? This can't be undone.`))return false;
+    for(const r of S.trash)await DB.del('trash',r.id);S.trash=[]},
   horizon(el){S.horizon=el.dataset.v},
   'goal-scope'(el){S.goalScope=el.dataset.v},
   async 'done-goal'(el){const g=goalById(el.dataset.id);
@@ -1497,12 +1627,10 @@ const actions={
   },
   async 'toggle-log'(el){await toggleLog(el.dataset.id,el.dataset.date)},
   async 'del-habit'(el){
-    const id=el.dataset.id;if(S.cfg.cHabit&&!confirm('Delete this habit and its history?'))return false;
-    const gone=S.habits.find(h=>h.id===id);const keys=[...S.logs].filter(k=>k.startsWith(id+'|'));
-    S.habits=S.habits.filter(h=>h.id!==id);await DB.del('habits',id);
-    for(const k of keys){S.logs.delete(k);await DB.del('logs',k)}
-    toastUndo('Habit deleted.',async()=>{S.habits.push(gone);await DB.put('habits',gone);
-      for(const k of keys){const i=k.lastIndexOf('|');S.logs.add(k);await DB.put('logs',{id:k,habitId:k.slice(0,i),date:k.slice(i+1)})}});
+    const gone=S.habits.find(h=>h.id===el.dataset.id);if(!gone)return false;
+    if(S.cfg.cHabit&&!confirm(`Delete "${gone.name}" and its history?\n\nIt stays in Trash (Settings) for ${TRASH_DAYS} days.`))return false;
+    await removeHabits([gone]);
+    toastUndo('Habit moved to Trash.',async()=>{await trashRestore('habit:'+gone.id)});
   },
   export(){
     const json=JSON.stringify(backupData());const name=`goal-tracker-${TODAY()}.json`;
@@ -1519,7 +1647,7 @@ const actions={
   'backup-paste'(){openBackup('paste');return false},
   import(){$('#importFile').click();return false},
   async wipe(){if(!confirm('Erase all tasks, goals, habits and history? This cannot be undone.'))return false;
-    for(const s of STORES)await DB.clear(s);S.tasks=[];S.goals=[];S.habits=[];S.topics=[];S.exams=[];S.logs=new Set();}
+    for(const s of STORES)await DB.clear(s);S.tasks=[];S.goals=[];S.habits=[];S.topics=[];S.exams=[];S.trash=[];S.logs=new Set();}
 };
 
 const POP=new Set(['toggle-task','toggle-log','topic-cell','toggle-sub','done-goal','goal-inc','goal-dec']);
@@ -1831,7 +1959,7 @@ dlg.addEventListener('change',async e=>{if(e.target.id!=='shFile')return;const f
 /* ---------- Backup & restore ---------- */
 function notify(m){typeof toast==='function'?toast(m):alert(m)}
 function backupData(){
-  return{app:'goal-tracker',version:1,exported:new Date().toISOString(),tasks:S.tasks,goals:S.goals,habits:S.habits,topics:S.topics,exams:S.exams,
+  return{app:'goal-tracker',version:1,exported:new Date().toISOString(),tasks:S.tasks,goals:S.goals,habits:S.habits,topics:S.topics,exams:S.exams,trash:S.trash,
     logs:[...S.logs].map(id=>{const i=id.lastIndexOf('|');return{id,habitId:id.slice(0,i),date:id.slice(i+1)}}),
     settings:{cfg:S.cfg,sound:Sound.on,hideDone:S.hideDone,compact:S.compact}};
 }
