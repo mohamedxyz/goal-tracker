@@ -5,6 +5,7 @@
     PATCH = bug fix · MINOR = new feature · MAJOR = breaks old backups or data
 
   Changelog
+  0.43.1 Habit consistency card lists Avoid habits in their own "Staying clean" group (% clean, 🛡 streak)
   0.43.0 Dashboard: Avoid habits get their own "Staying clean" section (clean/slipped state, Log slip button) and their own tiles; they no longer count in "Habits done today" or "Best current streak"
   0.42.0 Study: tap a day cell and pick Weak / OK / Strong / Clear from a small menu, so any rating takes two taps instead of cycling through colours
   0.41.1 Fix: screen flashed for a moment after pressing a button (the page-enter animation replayed on every redraw; it now plays only when you change tabs)
@@ -256,6 +257,8 @@ button.danger{color:var(--bad)}
 .hbar .top span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .hbar .top span:last-child{color:var(--muted);flex:none}
 .hbar .track{height:8px;border-radius:99px;background:var(--line);margin-top:4px;overflow:hidden}
+.hsub{margin:14px 0 8px;font-size:12px;font-weight:600;color:var(--muted)}
+.hbar.neg .fill{background:#2f9e6b}
 .hbar .fill{height:100%;border-radius:99px;background:var(--ok)}
 .split{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 @media (max-width:720px){.split{grid-template-columns:1fr}}
@@ -719,13 +722,12 @@ function tasksChartCard(){
 }
 function consistencyCard(){
   if(!S.habits.length)return `<div class="card vcard"><div class="vhead"><div class="title">Habit consistency</div><div class="sub">Last 30 days</div></div><div class="empty">Add habits to see consistency.</div></div>`;
-  const rows=[...S.habits].map(h=>({h,r:rate30(h),s:streak(h)})).sort((a,b)=>b.r-a.r).map(({h,r,s})=>
-    `<div class="hbar" data-tip="${esc(h.name)}: ${r}% of the last 30 days, current streak ${s}"><div class="top"><span>${esc(h.name)}</span><span>${r}% · 🔥${s}</span></div>
+  const mk=(hs,neg)=>hs.map(h=>({h,r:rate30(h),s:streak(h)})).sort((a,b)=>b.r-a.r).map(({h,r,s})=>
+    `<div class="hbar ${neg?'neg':''}" data-tip="${esc(h.name)}: ${r}% ${neg?'clean':'done'} over the last 30 days, ${neg?'clean streak':'current streak'} ${s}"><div class="top"><span>${esc(h.name)}</span><span>${r}% ${neg?'clean · 🛡':'· 🔥'}${s}</span></div>
      <div class="track"><div class="fill" style="width:${r}%"></div></div></div>`).join('');
-  return `<div class="card vcard"><div class="vhead"><div class="title">Habit consistency</div><div class="sub">Last 30 days</div></div><div class="hbars">${rows}</div></div>`;
+  const bl=S.habits.filter(h=>!isNeg(h)),av=S.habits.filter(isNeg);
+  return `<div class="card vcard"><div class="vhead"><div class="title">Habit consistency</div><div class="sub">Last 30 days</div></div>${bl.length?`<div class="hbars">${mk(bl,false)}</div>`:''}${av.length?`<div class="hsub">🛡 Staying clean</div><div class="hbars">${mk(av,true)}</div>`:''}</div>`;
 }
-
-/* ---------- Views ---------- */
 function viewDash(){
   const today=TODAY();
   const open=S.tasks.filter(t=>!t.done&&!t.archived);
@@ -1140,7 +1142,7 @@ function drawHabit(){
 document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('[role=button][data-action]')){e.preventDefault();e.target.click()}});
 
 /* ---------- Version ---------- */
-const APP_VERSION='0.43.0';
+const APP_VERSION='0.43.1';
 
 /* ---------- Completion sounds (synthesised, no audio files) ---------- */
 const Sound={
