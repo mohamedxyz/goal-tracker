@@ -5,6 +5,7 @@
     PATCH = bug fix · MINOR = new feature · MAJOR = breaks old backups or data
 
   Changelog
+  0.41.0 Polish: redesigned Study tab (stat tiles, agenda-style exams, one-tap Weak/OK/Strong ratings on today's picks, tidier insights); smooth animations across the app (page transitions, staggered cards, press feedback, pop on tick, animated bars, dialog open); respects reduced-motion
   0.40.0 Final quality pass: Study tab 12x faster with hundreds of topics and exams (cached exam lookups and review dates), Tasks tab shows the 40 newest completed tasks with a Show all button (lighter on big lists), Arabic dictionary updated
   0.39.0 Safer restore: rows are validated first (bad rows skipped and reported), settings are filtered, language/student mode apply immediately, and if a restore fails midway your previous data is put back; share dialog keyboard-friendly; dialogs announce their title to screen readers
   0.38.0 Share button on every task, habit, exam and topic: opens the share dialog with just that item ready to send (Settings entry still shares several at once)
@@ -125,6 +126,49 @@ ul.list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;ga
 [dir=rtl] input[type=date],[dir=rtl] input[type=time],[dir=rtl] input[type=number]{text-align:right}
 .stack{display:flex;height:10px;border-radius:99px;overflow:hidden;background:var(--line);margin-top:6px}.stack .s3{background:var(--ok)}.stack .s2{background:#d9a13b}.stack .s1{background:#b4442f}.stack .s0{background:var(--line)}
 .sbars{display:flex;align-items:flex-end;gap:4px;height:84px;margin-top:8px}.sbar{flex:1;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:3px;min-width:0}.sbar i{display:block;width:100%;border-radius:4px 4px 0 0;background:var(--line)}.sbar i.on{background:var(--accent)}.sbar span{font-size:10px;color:var(--muted);line-height:1}
+/* ---- Study polish ---- */
+.stiles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.stile{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 8px;text-align:center;display:flex;flex-direction:column;gap:2px}
+.stile b{font-size:26px;line-height:1.1;font-variant-numeric:tabular-nums}.stile span{font-size:11.5px;color:var(--muted);line-height:1.25}
+.stile.hot b{color:#b4442f}.stile.ok b{color:var(--ok)}
+.scard{margin-bottom:12px}.shead{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px}
+.pill{display:inline-flex;align-items:center;border-radius:999px;padding:3px 10px;font:600 12px/1.3 inherit;background:var(--line);color:var(--text);border:0;white-space:nowrap}
+.pill.hot{background:#b4442f;color:#fff}.pill.warm{background:#d9a13b;color:#2e2520}.pill.ok{background:color-mix(in oklab,var(--ok) 22%,transparent);color:var(--ok)}.pill.warn{background:var(--soft);color:var(--accent);cursor:pointer}
+.exrow{display:flex;gap:10px;align-items:center;padding:10px 0;border-top:1px dashed var(--line)}.exrow:first-of-type{border-top:0}
+.datebox{flex:none;width:46px;border-radius:12px;background:var(--soft);display:flex;flex-direction:column;align-items:center;padding:4px 0;line-height:1.1}
+.datebox small{font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}.datebox b{font-size:19px}
+.exrow.hot .datebox{background:#b4442f}.exrow.hot .datebox small,.exrow.hot .datebox b{color:#fff}
+.exrow.warm .datebox{background:color-mix(in oklab,#d9a13b 45%,var(--card))}
+.exr{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex:none}.mini{display:flex}.mini .icon{min-width:30px;min-height:30px;opacity:.75}
+.pick{border:1px solid var(--line);border-inline-start:4px solid var(--line);border-radius:12px;padding:10px 12px;margin-top:8px;background:var(--card);overflow:hidden;max-height:160px;transition:max-height .26s ease,opacity .22s ease,margin .26s ease,padding .26s ease,transform .26s ease}
+.pick.c1{border-inline-start-color:#b4442f}.pick.c2{border-inline-start-color:#d9a13b}.pick.c3{border-inline-start-color:var(--ok)}.pick.due{border-inline-start-color:#b4442f;background:color-mix(in oklab,#b4442f 6%,var(--card))}
+.pick.leaving{max-height:0;opacity:0;margin-top:0;padding-top:0;padding-bottom:0;transform:translateX(24px)}[dir=rtl] .pick.leaving{transform:translateX(-24px)}
+.chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:5px}.chip2{display:inline-flex;align-items:center;font-size:12px;padding:2px 8px;border-radius:999px;background:var(--line);color:var(--text)}.chip2.mute{background:transparent;color:var(--muted);padding-inline:2px}.chip2.due{background:#b4442f;color:#fff}
+.rate{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:9px}.rb{border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:10px;min-height:38px;font:600 13px inherit;cursor:pointer;transition:background .15s,color .15s,border-color .15s,transform .12s}
+.rb.c1:hover,.rb.c1:focus-visible{background:#b4442f;border-color:#b4442f;color:#fff}.rb.c2:hover,.rb.c2:focus-visible{background:#d9a13b;border-color:#d9a13b;color:#2e2520}.rb.c3:hover,.rb.c3:focus-visible{background:var(--ok);border-color:var(--ok);color:var(--on-ok)}
+.stack.thin{height:6px;margin:2px 2px 8px}.hfolder.collapsed .stack.thin{margin-bottom:2px}
+.addtopics summary{cursor:pointer;font-weight:650;list-style:none;display:flex;justify-content:space-between;align-items:center}.addtopics summary::after{content:'+';font-size:20px;line-height:1;color:var(--accent);transition:transform .2s}.addtopics[open] summary::after{transform:rotate(45deg)}.addtopics summary::-webkit-details-marker{display:none}
+.legend{margin:2px 0 12px;line-height:1.7}.celebrate .party{display:inline-block;font-size:26px;animation:bob 1.4s ease-in-out infinite}
+/* ---- Motion ---- */
+@keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes popk{0%{transform:scale(.82)}55%{transform:scale(1.14)}100%{transform:scale(1)}}
+@keyframes growx{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+@keyframes growy{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+@keyframes dlgin{from{opacity:0;transform:translateY(14px) scale(.97)}to{opacity:1;transform:none}}
+@keyframes fadek{from{opacity:0}to{opacity:1}}
+@keyframes bob{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-5px) rotate(8deg)}}
+@keyframes tabpop{0%{transform:scale(.8)}60%{transform:scale(1.15)}100%{transform:scale(1)}}
+#app.enter>*{animation:rise .38s cubic-bezier(.2,.7,.2,1) both;animation-delay:calc(var(--i,0)*45ms)}
+.pop{animation:popk .4s cubic-bezier(.3,1.5,.5,1)}
+#app.enter .hf-bar>span,#app.enter .stack>span,#app.enter .bar>i,#app.enter .bar>span{transform-origin:left center;animation:growx .7s cubic-bezier(.2,.7,.2,1) both;animation-delay:.12s}
+[dir=rtl] #app.enter .hf-bar>span,[dir=rtl] #app.enter .stack>span,[dir=rtl] #app.enter .bar>i,[dir=rtl] #app.enter .bar>span{transform-origin:right center}
+#app.enter .sbar>i{transform-origin:bottom;animation:growy .6s cubic-bezier(.2,.7,.2,1) both;animation-delay:.15s}
+dialog#editDlg[open]{animation:dlgin .24s cubic-bezier(.2,.8,.2,1)}dialog#editDlg[open]::backdrop{animation:fadek .24s ease}
+button,.chip,.tc,.day,.tcheck,.icon,.rb,.pill{transition:transform .12s ease,background-color .15s ease,border-color .15s ease,color .15s ease,opacity .15s ease}
+button:active:not(:disabled),.tc:active,.day:active,.rb:active{transform:scale(.94)}
+.item,.card,.hfolder{transition:background-color .25s ease,border-color .25s ease,opacity .25s ease}
+#tabbar button.on .ti svg{animation:tabpop .35s cubic-bezier(.3,1.5,.5,1)}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
 .tnotes{color:var(--muted);font-size:13px;margin-top:3px;white-space:pre-wrap;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .divider{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:12.5px;font-weight:600;margin:18px 0 8px}
 .divider::after{content:'';flex:1;height:1px;background:var(--line)}
@@ -931,6 +975,9 @@ function render(){
   document.querySelectorAll('[data-view=study]').forEach(b=>b.hidden=!S.cfg.student);
   const v={dash:viewDash,tasks:viewTasks,goals:viewGoals,habits:viewHabits,data:viewData,archive:viewArchive,study:viewStudy}[S.view]||viewDash;
   $('#app').innerHTML=(S.persistent?'':`<div class="banner">This browser blocked storage — data will be lost on reload. Use Export to save it.</div>`)+v();
+  const app=$('#app'),changed=S._lv!==S.view;S._lv=S.view;
+  if(changed&&!matchMedia('(prefers-reduced-motion: reduce)').matches){app.classList.remove('enter');[...app.children].forEach((c,i)=>c.style.setProperty('--i',Math.min(i,9)));void app.offsetWidth;app.classList.add('enter')}
+  if(S.popKey){const q=S.popKey;S.popKey=null;let el=null;try{el=app.querySelector(q)}catch(_){}if(el){el.classList.add('pop');setTimeout(()=>el.classList.remove('pop'),450)}}
   const nv=S.view==='archive'?'data':S.view;
   document.querySelectorAll('#nav button,#tabbar button').forEach(b=>{const on=b.dataset.view===nv;b.classList.toggle('on',on);on?b.setAttribute('aria-current','page'):b.removeAttribute('aria-current')});
 }
@@ -1061,7 +1108,7 @@ function drawHabit(){
 document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('[role=button][data-action]')){e.preventDefault();e.target.click()}});
 
 /* ---------- Version ---------- */
-const APP_VERSION='0.40.0';
+const APP_VERSION='0.41.0';
 
 /* ---------- Completion sounds (synthesised, no audio files) ---------- */
 const Sound={
@@ -1128,7 +1175,7 @@ const AR={
 // toasts / dialogs
 'Task deleted.':'تم حذف المهمة.','Goal deleted.':'تم حذف الهدف.','Habit deleted.':'تم حذف العادة.','Topic deleted.':'تم حذف الموضوع.','Deleted.':'تم الحذف.','Under a minute, so nothing was logged':'أقل من دقيقة، لم يُسجَّل شيء','Those topics already exist':'هذه المواضيع موجودة بالفعل',
 'Delete this goal? Linked tasks and sub-goals are kept but unlinked.':'حذف هذا الهدف؟ تبقى المهام والأهداف الفرعية المرتبطة لكن دون ارتباط.','Delete this habit and its history?':'حذف هذه العادة وسجلها؟','Erase all tasks, goals, habits and history? This cannot be undone.':'مسح كل المهام والأهداف والعادات والسجل؟ لا يمكن التراجع.','This can\'t be undone.':'لا يمكن التراجع عن هذا.','This can\'t be undone. Tip: archive it instead to keep its history.':'لا يمكن التراجع عن هذا. نصيحة: أرشفها بدلًا من ذلك للاحتفاظ بسجلها.','Set a target number for this goal (for example 10).':'حدد رقمًا مستهدفًا لهذا الهدف (مثال: 10).','Set a target number for this goal (for example 40).':'حدد رقمًا مستهدفًا لهذا الهدف (مثال: 40).','(Leave empty to remove the folder. Its habits are kept.)':'(اتركه فارغًا لإزالة المجلد. تبقى عاداته.)','This can\'t be undone. Not-completed archived tasks are kept.':'لا يمكن التراجع. تبقى المهام المؤرشفة غير المكتملة.','Replace all current data with this backup?':'استبدال كل البيانات الحالية بهذه النسخة الاحتياطية؟',
-'None':'لا شيء','Show fewer':'عرض أقل','Share':'مشاركة','More items…':'عناصر أخرى…','today':'اليوم','Insights':'الإحصاءات','Topics studied per day':'المواضيع المدروسة يوميًا','Not studied yet':'لم تُدرس بعد','Study sessions':'جلسات الدراسة','Topics studied':'المواضيع المدروسة','Exams and quizzes this week':'اختبارات هذا الأسبوع','Spaced repetition':'التكرار المتباعد','Topics come back for review when their date arrives':'تعود المواضيع للمراجعة عند حلول موعدها','Review Weak topics after':'مراجعة المواضيع الضعيفة بعد','Review OK topics after':'مراجعة المواضيع المقبولة بعد','Review Strong topics after':'مراجعة المواضيع القوية بعد','1, 3, 7, 14, 30 days':'1، 3، 7، 14، 30 يومًا','1, 2, 4, 7, 14 days (tight)':'1، 2، 4، 7، 14 يومًا (مكثف)','2, 5, 10, 21, 45 days (relaxed)':'2، 5، 10، 21، 45 يومًا (مريح)','Due for review':'حان وقت المراجعة','Share with friends':'المشاركة مع الأصدقاء','Send habits, tasks or homework, exams and quizzes, and study topics to a friend as a small JSON file or text. Your history, check-ins and scores are never included.':'أرسل العادات أو المهام والواجبات أو الاختبارات أو مواضيع الدراسة إلى صديق كملف JSON صغير أو كنص. لا يتم إرسال سجلك أو تسجيلاتك أو درجاتك أبدًا.','Share items…':'مشاركة عناصر…','Import shared items…':'استيراد عناصر مشاركة…','Share items':'مشاركة عناصر','Tick what to send. Only titles, dates, notes and settings are shared.':'حدد ما تريد إرساله. تُشارَك العناوين والتواريخ والملاحظات والإعدادات فقط.','Tasks and homework':'المهام والواجبات','Exams and quizzes':'الاختبارات والاختبارات القصيرة','Study topics':'مواضيع الدراسة','Nothing to share yet.':'لا شيء للمشاركة بعد.','Select all':'تحديد الكل','Clear':'مسح','Save file':'حفظ ملف','Copy text':'نسخ النص','Share…':'مشاركة…','Import shared items':'استيراد عناصر مشاركة','Paste what your friend sent, or choose their .json file. You will see a preview before anything is added.':'الصق ما أرسله صديقك أو اختر ملف .json الخاص به. سترى معاينة قبل إضافة أي شيء.','Paste shared text here…':'الصق النص المشارَك هنا…','Choose file':'اختيار ملف','Preview':'معاينة','Add shared items?':'إضافة العناصر المشاركة؟','Add selected':'إضافة المحدد','Nothing usable in that file.':'لا يوجد شيء صالح في هذا الملف.','Tick at least one item first':'حدد عنصرًا واحدًا على الأقل أولًا','Could not copy on this browser. Use Save file instead.':'تعذر النسخ في هذا المتصفح. استخدم حفظ ملف بدلًا من ذلك.','Sharing is not available here. Use Copy text.':'المشاركة غير متاحة هنا. استخدم نسخ النص.','That isn\'t valid shared text. Ask your friend to share it again.':'هذا ليس نصًا مشاركًا صالحًا. اطلب من صديقك مشاركته مجددًا.','That isn\'t a shared Goal Tracker file.':'هذا ليس ملف مشاركة من متتبع الأهداف.','habits':'العادات','tasks done':'مهام منجزة','tasks missed':'مهام فائتة','Item one\nItem two':'عنصر أول\nعنصر ثانٍ'
+'None':'لا شيء','To review':'للمراجعة','Studied today':'درست اليوم','Days to next exam':'أيام للاختبار القادم','How did each topic feel today? Weak and untouched topics come first.':'كيف كان كل موضوع اليوم؟ المواضيع الضعيفة وغير المدروسة أولًا.','Add subject or topics':'إضافة مادة أو مواضيع','Everything has been studied today':'تمت دراسة كل شيء اليوم','Due for review':'مستحق للمراجعة','Show fewer':'عرض أقل','Share':'مشاركة','More items…':'عناصر أخرى…','today':'اليوم','Insights':'الإحصاءات','Topics studied per day':'المواضيع المدروسة يوميًا','Not studied yet':'لم تُدرس بعد','Study sessions':'جلسات الدراسة','Topics studied':'المواضيع المدروسة','Exams and quizzes this week':'اختبارات هذا الأسبوع','Spaced repetition':'التكرار المتباعد','Topics come back for review when their date arrives':'تعود المواضيع للمراجعة عند حلول موعدها','Review Weak topics after':'مراجعة المواضيع الضعيفة بعد','Review OK topics after':'مراجعة المواضيع المقبولة بعد','Review Strong topics after':'مراجعة المواضيع القوية بعد','1, 3, 7, 14, 30 days':'1، 3، 7، 14، 30 يومًا','1, 2, 4, 7, 14 days (tight)':'1، 2، 4، 7، 14 يومًا (مكثف)','2, 5, 10, 21, 45 days (relaxed)':'2، 5، 10، 21، 45 يومًا (مريح)','Due for review':'حان وقت المراجعة','Share with friends':'المشاركة مع الأصدقاء','Send habits, tasks or homework, exams and quizzes, and study topics to a friend as a small JSON file or text. Your history, check-ins and scores are never included.':'أرسل العادات أو المهام والواجبات أو الاختبارات أو مواضيع الدراسة إلى صديق كملف JSON صغير أو كنص. لا يتم إرسال سجلك أو تسجيلاتك أو درجاتك أبدًا.','Share items…':'مشاركة عناصر…','Import shared items…':'استيراد عناصر مشاركة…','Share items':'مشاركة عناصر','Tick what to send. Only titles, dates, notes and settings are shared.':'حدد ما تريد إرساله. تُشارَك العناوين والتواريخ والملاحظات والإعدادات فقط.','Tasks and homework':'المهام والواجبات','Exams and quizzes':'الاختبارات والاختبارات القصيرة','Study topics':'مواضيع الدراسة','Nothing to share yet.':'لا شيء للمشاركة بعد.','Select all':'تحديد الكل','Clear':'مسح','Save file':'حفظ ملف','Copy text':'نسخ النص','Share…':'مشاركة…','Import shared items':'استيراد عناصر مشاركة','Paste what your friend sent, or choose their .json file. You will see a preview before anything is added.':'الصق ما أرسله صديقك أو اختر ملف .json الخاص به. سترى معاينة قبل إضافة أي شيء.','Paste shared text here…':'الصق النص المشارَك هنا…','Choose file':'اختيار ملف','Preview':'معاينة','Add shared items?':'إضافة العناصر المشاركة؟','Add selected':'إضافة المحدد','Nothing usable in that file.':'لا يوجد شيء صالح في هذا الملف.','Tick at least one item first':'حدد عنصرًا واحدًا على الأقل أولًا','Could not copy on this browser. Use Save file instead.':'تعذر النسخ في هذا المتصفح. استخدم حفظ ملف بدلًا من ذلك.','Sharing is not available here. Use Copy text.':'المشاركة غير متاحة هنا. استخدم نسخ النص.','That isn\'t valid shared text. Ask your friend to share it again.':'هذا ليس نصًا مشاركًا صالحًا. اطلب من صديقك مشاركته مجددًا.','That isn\'t a shared Goal Tracker file.':'هذا ليس ملف مشاركة من متتبع الأهداف.','habits':'العادات','tasks done':'مهام منجزة','tasks missed':'مهام فائتة','Item one\nItem two':'عنصر أول\nعنصر ثانٍ'
 };
 const PAT=[
 [/^(\d+) days? this month$/,m=>`${m[1]} يومًا هذا الشهر`],[/^(\d+) studied today$/,m=>`${m[1]} تمت دراستها اليوم`],[/^(\d+) weak$/,m=>`${m[1]} ضعيفة`],[/^(\d+) not started$/,m=>`${m[1]} لم تبدأ`],
@@ -1150,7 +1197,7 @@ const PAT=[
 [/^(.+): all done for today$/,m=>`${m[1]}: اكتمل كل شيء اليوم`],[/^Deleted (\d+) archived tasks?\.$/,m=>`تم حذف ${m[1]} مهمة مؤرشفة.`],
 [/^Permanently delete (\d+) completed archived tasks?\?$/,m=>`حذف ${m[1]} مهمة مؤرشفة مكتملة نهائيًا؟`],[/^Restored (.+)\.$/,m=>`تمت الاستعادة: ${m[1]}.`],[/^Imported (.+)\.$/,m=>`تم الاستيراد: ${m[1]}.`],
 [/^Saved (.+) \((.+) KB\) to Downloads\.$/,m=>`تم حفظ ${m[1]} (${m[2]} ك.ب) في التنزيلات.`],[/^Rename folder "(.+)"$/,m=>`إعادة تسمية المجلد "${m[1]}"`],
-[/^Last backup (.+)$/,m=>`آخر نسخة احتياطية ${m[1]}`],[/^Copied (\d+) items?\. Paste it to your friend\.$/,m=>`تم نسخ ${m[1]} عنصر. الصقه لصديقك.`],[/^Saved (goal-tracker-share-.+)$/,m=>`تم حفظ ${m[1]}`],[/^Added (\d+) items?(?:, skipped (\d+) you already have)?(\. Student mode is on)?$/,m=>`تمت إضافة ${m[1]} عنصر${m[2]?`، وتخطي ${m[2]} موجود لديك`:''}${m[3]?'. وضع الطالب مفعّل':''}`],[/^(\d+) strong$/,m=>`${m[1]} قوية`],[/^(\d+) OK$/,m=>`${m[1]} مقبولة`],[/^Last studied: (.+)$/,m=>`آخر دراسة: ${trText(m[1])}`],[/^Exam (.+)$/,m=>`الاختبار ${trText(m[1])}`],[/^(\d+) in 14 days$/,m=>`${m[1]} خلال 14 يومًا`],[/^Topics studied per day, last 14 days, (\d+) total$/,m=>`المواضيع المدروسة يوميًا، آخر 14 يومًا، المجموع ${m[1]}`],[/^Show all (\d+) completed$/,m=>`عرض كل المكتملة (${m[1]})`],[/^Next review: (.+)$/,m=>`المراجعة التالية: ${m[1]}`],[/^(\d+) due for review$/,m=>`${m[1]} بانتظار المراجعة`],[/^(\d+) tasks? done$/,m=>`${m[1]} مهمة منجزة`],[/^(\d+) tasks? missed$/,m=>`${m[1]} مهمة فائتة`],[/^· (\d+) of (\d+) weekly goals done · (\d+) still to plan$/,m=>`· ${m[1]} من ${m[2]} أهداف أسبوعية منجزة · ${m[3]} بانتظار التخطيط`]
+[/^Last backup (.+)$/,m=>`آخر نسخة احتياطية ${m[1]}`],[/^Copied (\d+) items?\. Paste it to your friend\.$/,m=>`تم نسخ ${m[1]} عنصر. الصقه لصديقك.`],[/^Saved (goal-tracker-share-.+)$/,m=>`تم حفظ ${m[1]}`],[/^Added (\d+) items?(?:, skipped (\d+) you already have)?(\. Student mode is on)?$/,m=>`تمت إضافة ${m[1]} عنصر${m[2]?`، وتخطي ${m[2]} موجود لديك`:''}${m[3]?'. وضع الطالب مفعّل':''}`],[/^(\d+) strong$/,m=>`${m[1]} قوية`],[/^(\d+) OK$/,m=>`${m[1]} مقبولة`],[/^Last studied: (.+)$/,m=>`آخر دراسة: ${trText(m[1])}`],[/^Exam (.+)$/,m=>`الاختبار ${trText(m[1])}`],[/^(\d+) in 14 days$/,m=>`${m[1]} خلال 14 يومًا`],[/^Topics studied per day, last 14 days, (\d+) total$/,m=>`المواضيع المدروسة يوميًا، آخر 14 يومًا، المجموع ${m[1]}`],[/^Show all (\d+) completed$/,m=>`عرض كل المكتملة (${m[1]})`],[/^Next review: (.+)$/,m=>`المراجعة التالية: ${m[1]}`],[/^(\d+) due for review$/,m=>`${m[1]} بانتظار المراجعة`],[/^(\d+) to go$/,m=>`باقي ${m[1]}`],[/^(\d+) tasks? done$/,m=>`${m[1]} مهمة منجزة`],[/^(\d+) tasks? missed$/,m=>`${m[1]} مهمة فائتة`],[/^· (\d+) of (\d+) weekly goals done · (\d+) still to plan$/,m=>`· ${m[1]} من ${m[2]} أهداف أسبوعية منجزة · ${m[3]} بانتظار التخطيط`]
 ];
 const ARROW={'→':'←','←':'→'};
 function trCore(s){if(Object.prototype.hasOwnProperty.call(AR,s))return AR[s];for(const[re,fn]of PAT){const m=s.match(re);if(m)return fn(m)}return null}
@@ -1363,6 +1410,10 @@ const actions={
   'toggle-past-exams'(){S.examsPast=!S.examsPast},
   async 'del-exam'(el){const e=S.exams.find(x=>x.id===el.dataset.id);if(!e||!confirm(`Delete "${e.title}"?`))return false;
     S.exams=S.exams.filter(x=>x!==e);await DB.del('exams',e.id);toastUndo('Deleted.',async()=>{S.exams.push(e);await DB.put('exams',e)})},
+  async 'topic-rate'(el){const t=S.topics.find(x=>x.id===el.dataset.id);if(!t)return false;const c=+el.dataset.c,d=TODAY();
+    const row=el.closest('.pick');if(row){row.classList.add('leaving');if(!matchMedia('(prefers-reduced-motion: reduce)').matches)await new Promise(r=>setTimeout(r,260))}
+    t.sessions=t.sessions||[];const i=t.sessions.findIndex(x=>x.d===d);if(i<0)t.sessions.push({d,c});else t.sessions[i].c=c;
+    Sound.play(c===3?'task':'habit');await DB.put('topics',t)},
   'goto-study'(){S.view='study';scrollTo(0,0)},
   'edit-topic'(el){openEdit('topic',el.dataset.id);return false},
   async 'del-topic'(el){const t=S.topics.find(x=>x.id===el.dataset.id);if(!t||!confirm(`Delete topic "${t.name}" and its study log?`))return false;
@@ -1436,14 +1487,16 @@ const actions={
     for(const s of STORES)await DB.clear(s);S.tasks=[];S.goals=[];S.habits=[];S.topics=[];S.exams=[];S.logs=new Set();}
 };
 
+const POP=new Set(['toggle-task','toggle-log','topic-cell','toggle-sub','done-goal','goal-inc','goal-dec']);
+function markPop(el){const d=el.dataset;if(!POP.has(d.action))return;S.popKey=`[data-action="${d.action}"]`+(d.id?`[data-id="${CSS.escape(d.id)}"]`:'')+(d.date?`[data-date="${d.date}"]`:'')+(d.i!==undefined?`[data-i="${d.i}"]`:'')}
 document.addEventListener('click',async e=>{
   const nav=e.target.closest('#nav button,#tabbar button');if(nav){const same=S.view===nav.dataset.view;S.view=nav.dataset.view;render();if(!same||nav.closest('#tabbar'))scrollTo(0,0);return}
   const el=e.target.closest('[data-action]');if(!el||el.type==='checkbox'||el.type==='range'||el.tagName==='SELECT')return;
-  const fn=actions[el.dataset.action];if(fn&&(await fn(el))!==false)render();
+  markPop(el);const fn=actions[el.dataset.action];if(fn&&(await fn(el))!==false)render();
 });
 document.addEventListener('change',async e=>{
   const el=e.target.closest('[data-action]');
-  if(el&&(el.type==='checkbox'||el.type==='range'||el.tagName==='SELECT')){await actions[el.dataset.action](el);render()}
+  if(el&&(el.type==='checkbox'||el.type==='range'||el.tagName==='SELECT')){markPop(el);await actions[el.dataset.action](el);render()}
 });
 document.addEventListener('submit',async e=>{
   const f=e.target.closest('form[data-form]');if(!f)return;e.preventDefault();
@@ -1475,15 +1528,15 @@ const whenText=n=>n<0?Math.abs(n)+' day'+(Math.abs(n)>1?'s':'')+' ago':n===0?'To
 const needsResult=e=>daysTo(e.date)<0&&e.score==null;
 const upcomingExams=()=>S.exams.filter(e=>daysTo(e.date)>=0).sort((a,b)=>(a.date+(a.time||'')).localeCompare(b.date+(b.time||'')));
 const urgentSubjects=()=>{const m=new Map();for(const e of upcomingExams()){const n=daysTo(e.date);if(n<=14&&e.subject&&!m.has(e.subject))m.set(e.subject,n)}return m};
-function examRow(e){const n=daysTo(e.date);const pct=e.score!=null&&e.max>0?Math.round(e.score/e.max*100):null;
-  return `<div class="trow"><div class="top"><div class="grow"><b>${examIcon(e)} ${esc(e.title)}</b><div class="meta">${e.subject?`<span>${esc(e.subject)}</span>`:''}<span>${fmtDate(e.date)}${e.time?' · '+esc(e.time):''}</span>
-    ${e.score!=null?`<span class="okc">${e.score}${e.max?'/'+e.max:''}${pct!=null?' · '+pct+'%':''}</span>`:n>=0?`<span class="${n<=3?'overdue':''}">${whenText(n)}</span>`:`<button type="button" class="chip" data-action="edit-exam" data-id="${e.id}">Log result</button>`}</div>
-    ${e.notes?`<div class="tnotes">${esc(e.notes)}</div>`:''}</div>
-    ${shareBtn('exam',e.id)}<button class="icon" data-action="edit-exam" data-id="${e.id}" aria-label="Edit ${esc(e.title)}">✎</button><button class="icon" data-action="del-exam" data-id="${e.id}" aria-label="Delete ${esc(e.title)}">✕</button></div></div>`}
+function examRow(e){const n=daysTo(e.date);const pct=e.score!=null&&e.max>0?Math.round(e.score/e.max*100):null;const tone=e.score!=null||n<0?'':n<=3?'hot':n<=7?'warm':'';const d=new Date(e.date+'T00:00');
+  const pill=e.score!=null?`<span class="pill ok">${e.score}${e.max?'/'+e.max:''}${pct!=null?' · '+pct+'%':''}</span>`:n>=0?`<span class="pill ${tone}">${whenText(n)}</span>`:`<button type="button" class="pill warn" data-action="edit-exam" data-id="${e.id}">Log result</button>`;
+  return `<div class="exrow ${tone}"><div class="datebox"><small>${fmt(d,{month:'short'})}</small><b>${d.getDate()}</b></div>
+    <div class="grow"><b>${examIcon(e)} ${esc(e.title)}</b><div class="meta">${e.subject?`<span>${esc(e.subject)}</span>`:''}${e.time?`<span>${esc(e.time)}</span>`:''}</div>${e.notes?`<div class="tnotes">${esc(e.notes)}</div>`:''}</div>
+    <div class="exr">${pill}<div class="mini">${shareBtn('exam',e.id)}<button class="icon" data-action="edit-exam" data-id="${e.id}" aria-label="Edit ${esc(e.title)}">✎</button><button class="icon" data-action="del-exam" data-id="${e.id}" aria-label="Delete ${esc(e.title)}">✕</button></div></div></div>`}
 function examsCard(){
   const up=upcomingExams(),past=S.exams.filter(e=>daysTo(e.date)<0).sort((a,b)=>b.date.localeCompare(a.date));
   const open=S.examsPast;
-  return `<div class="card" style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;align-items:center"><div class="title">Exams &amp; quizzes</div><button class="chip" data-action="add-exam">+ Add</button></div>
+  return `<div class="card scard"><div class="shead"><div class="title">Exams &amp; quizzes</div><button class="chip" data-action="add-exam">+ Add</button></div>
     ${up.length?up.map(examRow).join(''):'<div class="empty">Nothing coming up. Add your exams and quizzes so you never miss one.</div>'}
     ${past.length?`<button class="chip" style="margin-top:8px" data-action="toggle-past-exams">${open?'Hide':'Show'} past (${past.length}${past.some(needsResult)?' · result missing':''})</button>${open?past.map(examRow).join(''):''}`:''}</div>`}
 let _exMap=null,_srMemo=new Map();
@@ -1537,29 +1590,36 @@ function insightsCard(){
     <div class="h2row" style="margin-top:12px"><h2 style="margin:0;font-size:14px">Topics studied per day</h2><span class="meta">${tot} in 14 days</span></div>
     <div class="sbars" role="img" aria-label="Topics studied per day, last 14 days, ${tot} total">${days.map(x=>`<div class="sbar"><i style="height:${x.n?Math.max(6,x.n/mx*100):2}%" class="${x.n?'on':''}"></i><span>${fmt(x.d,{weekday:'narrow'})}</span></div>`).join('')}</div></div>`;
 }
+function pickRow(t){const c=topicConf(t),l=lastSess(t),due=srDue(t);
+  return `<div class="pick ${due?'due':'c'+c}"><div class="pk-main"><b>${esc(t.name)}</b><div class="chips"><span class="chip2">${esc(t.subject)}</span>
+    ${due?'<span class="chip2 due">Due for review</span>':`<span class="chip2"><i class="cdot c${c}"></i>${CONF_LABEL[c]}</span>`}${l?`<span class="chip2 mute">Last: ${agoDays(l.d)}</span>`:''}</div></div>
+    <div class="rate" role="group" aria-label="${esc(t.name)}"><button type="button" class="rb c1" data-action="topic-rate" data-id="${t.id}" data-c="1">Weak</button><button type="button" class="rb c2" data-action="topic-rate" data-id="${t.id}" data-c="2">OK</button><button type="button" class="rb c3" data-action="topic-rate" data-id="${t.id}" data-c="3">Strong</button></div></div>`}
 function viewStudy(){
-  const picks=topicPicks().slice(0,10);const bySub=new Map();
+  const picksAll=topicPicks(),picks=picksAll.slice(0,10);const bySub=new Map();
   for(const t of S.topics){if(!bySub.has(t.subject))bySub.set(t.subject,[]);bySub.get(t.subject).push(t)}
-  const row=(t,full)=>`<div class="trow"><div class="top"><div class="grow"><b>${esc(t.name)}</b><div class="meta"><span><i class="cdot c${topicConf(t)}"></i>${CONF_LABEL[topicConf(t)]}</span><span>${lastSess(t)?'Last: '+agoDays(lastSess(t).d):'Never studied'}</span>${srBadge(t)}${full?'':`<span>${esc(t.subject)}</span>`}</div></div>
-    ${full?`${shareBtn('topic',t.id)}<button class="icon" data-action="edit-topic" data-id="${t.id}" aria-label="Edit ${esc(t.name)}">✎</button><button class="icon" data-action="del-topic" data-id="${t.id}" aria-label="Delete ${esc(t.name)}">✕</button>`:''}</div>
-    ${full?topicCells(t):`<div class="tgrid" style="grid-template-columns:1fr">${topicCells(t,1).replace('class="tgrid"','class="tgrid" style="grid-template-columns:1fr"')}</div>`}</div>`;
+  const row=t=>`<div class="trow"><div class="top"><div class="grow"><b>${esc(t.name)}</b><div class="meta"><span><i class="cdot c${topicConf(t)}"></i>${CONF_LABEL[topicConf(t)]}</span><span>${lastSess(t)?'Last: '+agoDays(lastSess(t).d):'Never studied'}</span>${srBadge(t)}</div></div>
+    <div class="mini">${shareBtn('topic',t.id)}<button class="icon" data-action="edit-topic" data-id="${t.id}" aria-label="Edit ${esc(t.name)}">✎</button><button class="icon" data-action="del-topic" data-id="${t.id}" aria-label="Delete ${esc(t.name)}">✕</button></div></div>${topicCells(t)}</div>`;
   let sections='';
   for(const name of [...bySub.keys()].sort()){const ts=bySub.get(name),key='sub:'+name,collapsed=S.collapsed.has(key);
-    const strong=ts.filter(t=>topicConf(t)===3).length;
+    const c=[0,0,0,0];ts.forEach(t=>c[topicConf(t)]++);const seg=(k,cls)=>c[k]?`<span class="${cls}" style="width:${c[k]/ts.length*100}%"></span>`:'';
     sections+=`<section class="hfolder ${collapsed?'collapsed':''}"><div class="hf-head"><button type="button" class="hf-toggle" data-action="toggle-folder" data-name="${esc(key)}" aria-expanded="${!collapsed}">
-      <span class="hf-chev">${collapsed?'▶':'▼'}</span><span class="hf-name">${esc(name)}</span></button><span class="hf-count">${strong}/${ts.length} strong</span></div>
-      <div class="hf-bar"><span style="width:${Math.round(strong/ts.length*100)}%"></span></div>
-      ${collapsed?'':ts.sort((a,b)=>a.name.localeCompare(b.name)).map(t=>row(t,true)).join('')}</section>`}
+      <span class="hf-chev">${collapsed?'▶':'▼'}</span><span class="hf-name">${esc(name)}</span></button><span class="hf-count">${c[3]}/${ts.length} strong</span></div>
+      <div class="stack thin">${seg(3,'s3')}${seg(2,'s2')}${seg(1,'s1')}${seg(0,'s0')}</div>
+      ${collapsed?'':ts.sort((a,b)=>a.name.localeCompare(b.name)).map(row).join('')}</section>`}
+  const dueN=S.topics.filter(srDue).length,nx=upcomingExams()[0],nd=nx?daysTo(nx.date):null;
+  const tile=(n,l,cls)=>`<div class="stile ${cls||''}"><b>${n}</b><span>${l}</span></div>`;
   return `<h2>Study</h2>
+  <div class="stiles">${tile(dueN,'To review',dueN?'hot':'')}${tile(studiedToday(),'Studied today','ok')}${tile(nd===null?'—':nd,'Days to next exam',nd!==null&&nd<=3?'hot':'')}</div>
   ${examsCard()}
-  <div class="card"><div class="title">Today's picks</div><div class="meta"><span>${studiedToday()} studied today</span><span>Weak and untouched topics come first. Tap a day to log it.</span></div>
-    ${picks.length?picks.map(t=>row(t,false)).join(''):`<div class="empty">${S.topics.length?'Everything has been studied today 🎉':'Add topics below to get daily picks.'}</div>`}</div>
+  <div class="card scard"><div class="shead"><div class="title">Today's picks</div>${picksAll.length?`<span class="pill">${picksAll.length} to go</span>`:''}</div>
+    ${picks.length?`<p class="meta" style="margin:0 0 6px">How did each topic feel today? Weak and untouched topics come first.</p>${picks.map(pickRow).join('')}`:`<div class="empty celebrate">${S.topics.length?'<span class="party">🎉</span> Everything has been studied today':'Add topics below to get daily picks.'}</div>`}</div>
   ${(()=>{const ins=insightsCard();return ins?`<div style="margin-top:12px">${ins}</div>`:''})()}
-  <form class="add" data-form="topics" style="margin-top:12px">
+  <details class="card scard addtopics" ${S.topics.length?'':'open'}><summary>Add subject or topics</summary>
+  <form class="add" data-form="topics" style="margin-top:10px;border:0;padding:0;background:none">
     <input type="text" name="subject" list="subjListAdd" placeholder="Subject (e.g. Biochemistry)" required autocomplete="off">${subjList('subjListAdd')}
     <textarea name="names" placeholder="Topics, one per line" required style="min-height:70px"></textarea>
-    <button class="btn">Add topics</button></form>
-  <p class="meta" style="margin:10px 0">Tap a day: <i class="cdot c1"></i>Weak → <i class="cdot c2"></i>OK → <i class="cdot c3"></i>Strong → clear. Backfill past days to build your retrospective timetable.</p>
+    <button class="btn">Add topics</button></form></details>
+  <p class="meta legend">Tap a day: <i class="cdot c1"></i>Weak → <i class="cdot c2"></i>OK → <i class="cdot c3"></i>Strong → clear. Backfill past days to build your retrospective timetable.</p>
   ${sections||`<div class="empty">No subjects yet.</div>`}`;
 }
 /* ---------- Weekly report ---------- */
