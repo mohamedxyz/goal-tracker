@@ -5,6 +5,7 @@
     PATCH = bug fix · MINOR = new feature · MAJOR = breaks old backups or data
 
   Changelog
+  0.31.0 Setting for avoid habits: a day counts as clean unless you log a slip (default) or as a slip unless you confirm it clean; can also be changed per habit (existing check-ins are flipped so history stays correct)
   0.30.0 More task settings: default due date, sort order, tag folders on/off, auto-archive finished tasks, default filter, show/hide notes and checklist on rows, overdue on the Dashboard
   0.29.0 Settings tab (was Data): sounds, theme, hide-done, compact, avoid-habit hiding, delete confirmations, dashboard sections, default task priority, completed-tasks section; backup tools moved under "Your data". Week-start option skipped (touches every week calculation)
   0.28.0 Negative habits ("Avoid" type): things to quit, e.g. no smoking. Every day counts as clean unless you tap it to mark a slip; streak = clean days in a row
@@ -474,7 +475,8 @@ const logged=(hid,date)=>S.logs.has(hid+'|'+date);
 // "Avoid" habits: a logged day is a SLIP; every day from creation until today is clean unless slipped.
 const isNeg=h=>h.kind==='avoid';
 const bornK=h=>ds(new Date(h.created||Date.now()));
-const good=(h,k)=>isNeg(h)?(k>=bornK(h)&&k<=TODAY()&&!S.logs.has(h.id+'|'+k)):S.logs.has(h.id+'|'+k);
+const slipMode=h=>isNeg(h)&&h.mode!=='confirm';
+const good=(h,k)=>slipMode(h)?(k>=bornK(h)&&k<=TODAY()&&!S.logs.has(h.id+'|'+k)):S.logs.has(h.id+'|'+k);
 const hname=h=>(isNeg(h)?'🚫 ':'')+esc(h.name);
 // Schedules: h.days = weekdays it's due (0=Sun…6=Sat); empty/missing = every day.
 const hasSched=h=>Array.isArray(h.days)&&h.days.length>0&&h.days.length<7;
@@ -485,7 +487,7 @@ const DOW_ORDER=[1,2,3,4,5,6,0];
 const schedText=h=>hasSched(h)?DOW_ORDER.filter(n=>h.days.includes(n)).map(n=>fmt(new Date(2024,0,n||7),{weekday:'short'})).join(' · '):'';
 // Streak = consecutive DUE days done; days off neither break nor add to it (a check-in on a day off still counts).
 function streak(h){
-  if(isNeg(h)){let n=0,d=new Date();while(n<3650&&good(h,ds(d))){n++;d=addDays(d,-1)}return n}
+  if(slipMode(h)){let n=0,d=new Date();while(n<3650&&good(h,ds(d))){n++;d=addDays(d,-1)}return n}
   let d=new Date();if(!good(h,ds(d)))d=addDays(d,-1);
   let n=0;for(let i=0;i<1100;i++){if(good(h,ds(d)))n++;else if(isDue(h,d))break;d=addDays(d,-1)}return n;
 }
@@ -524,7 +526,7 @@ function taskItem(t){
 function dayButtons(h,n=7){
   const today=TODAY();let out='';
   for(let i=n-1;i>=0;i--){const d=addDays(new Date(),-i);const k=ds(d);
-    out+=`<button class="day ${good(h,k)?'on':''} ${isNeg(h)&&logged(h.id,k)?'slip':''} ${k===today?'today':''} ${isDue(h,d)?'':'off'}" data-action="toggle-log" data-id="${h.id}" data-date="${k}" title="${k}">
+    out+=`<button class="day ${good(h,k)?'on':''} ${isNeg(h)&&(slipMode(h)?logged(h.id,k):(k>=bornK(h)&&k<today&&!logged(h.id,k)))?'slip':''} ${k===today?'today':''} ${isDue(h,d)?'':'off'}" data-action="toggle-log" data-id="${h.id}" data-date="${k}" title="${k}">
       ${fmt(d,{weekday:'narrow'})}<b>${d.getDate()}</b></button>`}
   return `<div class="days">${out}</div>`;
 }
@@ -745,7 +747,7 @@ function viewGoals(){
 function viewHabits(){
   return `<form class="add" data-form="habit">
     <input type="text" name="name" placeholder="New habit (e.g. Code 1 hour, or No smoking)…" required>
-    <select name="kind" aria-label="Habit type"><option value="">✅ Build: tick it when done</option><option value="avoid">🚫 Avoid: clean unless you slip</option></select>
+    <select name="kind" aria-label="Habit type"><option value="">✅ Build: tick it when done</option><option value="avoid">${S.cfg.avoidMode==='confirm'?'🚫 Avoid: tick each clean day':'🚫 Avoid: clean unless you slip'}</option></select>
     <select name="target" title="Target days per week">${[7,6,5,4,3,2,1].map(n=>`<option value="${n}">${n}×/week</option>`).join('')}</select>
     <input type="text" name="group" list="folderListAdd" placeholder="Folder (optional), e.g. Morning routine" style="flex:1 1 200px" autocomplete="off">${folderList('folderListAdd')}
     ${dayPicker()}
@@ -757,7 +759,7 @@ function viewHabits(){
 function habitToday(h){
   const k=TODAY(),on=good(h,k),s=streak(h);
   return `<li class="item ${on?'done':''}">
-    <button class="tcheck ${on?'on':''}" data-action="toggle-log" data-id="${h.id}" data-date="${k}" aria-pressed="${on}" aria-label="${isNeg(h)?(on?'Clean today. Tap to log a slip':'Slipped today. Tap to undo'):(on?'Undo':'Check off')+' '+esc(h.name)+' for today'}">${isNeg(h)&&!on?'✗':'✓'}</button>
+    <button class="tcheck ${on?'on':''}" data-action="toggle-log" data-id="${h.id}" data-date="${k}" aria-pressed="${on}" aria-label="${slipMode(h)?(on?'Clean today. Tap to log a slip':'Slipped today. Tap to undo'):(on?'Undo':'Check off')+' '+esc(h.name)+' for today'}">${slipMode(h)&&!on?'✗':'✓'}</button>
     <div class="grow habit-open" data-action="open-habit" data-id="${h.id}" role="button" tabindex="0" title="Open history">
       <div class="title">${hname(h)} <span class="chev">›</span></div>
       <div class="meta"><span>${isNeg(h)?'🛡 '+s+' day'+(s===1?'':'s')+' clean':'🔥 '+s+' day'+(s===1?'':'s')}</span><span>This week ${weekCount(h)}/${weekTarget(h)}</span></div></div></li>`;
@@ -844,6 +846,7 @@ function settingsCard(){
   <div class="card settings" style="margin-top:12px"><div class="title">Habits</div>
     ${sw('hideDone','Hide habits done today','Same as the chip in the Habits tab',S.hideDone)}
     ${sw('compact','Compact habit list','One tight row per habit',S.compact)}
+    ${sel('avoidMode','New avoid habits: a day counts as',[['clean','Clean unless I log a slip'],['confirm','A slip unless I tick it clean']],c.avoidMode)}
     ${sw('avoidHide','Hide avoid habits while clean','Only matters when "Hide habits done today" is on',c.avoidHide)}
   </div>
   <div class="card settings" style="margin-top:12px"><div class="title">Ask before deleting</div>
@@ -931,7 +934,7 @@ function openEdit(kind,id){
   }
   if(kind==='habit'){const h=S.habits.find(x=>x.id===id);title='Edit habit';
     body=`<label>Name</label><input type="text" name="name" value="${esc(h.name)}" required>
-      <label>Type</label><select name="kind"><option value="">✅ Build: tick it when done</option><option value="avoid" ${isNeg(h)?'selected':''}>🚫 Avoid: clean unless you slip</option></select>
+      <label>Type</label><select name="kind"><option value="">✅ Build: tick it when done</option><option value="avoid" ${slipMode(h)?'selected':''}>🚫 Avoid: clean unless you slip</option><option value="avoid-confirm" ${isNeg(h)&&!slipMode(h)?'selected':''}>🚫 Avoid: tick each clean day</option></select>
       <label>Target</label><select name="target">${[7,6,5,4,3,2,1].map(n=>`<option value="${n}" ${(h.target||7)===n?'selected':''}>${n}× per week</option>`).join('')}</select>
       <label>Folder</label><input type="text" name="group" list="folderListEdit" value="${esc(h.group||'')}" placeholder="None. Type a name to create one" autocomplete="off">${folderList('folderListEdit')}
       <label>Schedule</label>${dayPicker(h.days||[])}`;
@@ -965,7 +968,11 @@ dlg.addEventListener('submit',async e=>{
       for(const c of S.goals.filter(c=>c.parentId===g.id&&PARENT[c.horizon]!==g.horizon)){c.parentId=null;await DB.put('goals',c)}
     }
     await DB.put('goals',g)}
-  if(kind==='habit'){const h=S.habits.find(x=>x.id===id);const av=v.kind==='avoid';Object.assign(h,{name:v.name.trim(),kind:av?'avoid':'',target:av?7:+v.target,group:(v.group||'').trim(),days:av?[]:readDays(f)});await DB.put('habits',h)}
+  if(kind==='habit'){const h=S.habits.find(x=>x.id===id);const av=v.kind==='avoid'||v.kind==='avoid-confirm';const newMode=av&&v.kind==='avoid-confirm'?'confirm':'';
+    if(isNeg(h)&&av&&(h.mode||'')!==newMode){ // meaning of a check-in flips, so invert every day since creation to keep history the same
+      for(let d=new Date(bornK(h)+'T00:00');ds(d)<=TODAY();d=addDays(d,1)){const k=ds(d),id=h.id+'|'+k;
+        if(S.logs.has(id)){S.logs.delete(id);await DB.del('logs',id)}else{S.logs.add(id);await DB.put('logs',{id,habitId:h.id,date:k})}}}
+    Object.assign(h,{mode:newMode,name:v.name.trim(),kind:av?'avoid':'',target:av?7:+v.target,group:(v.group||'').trim(),days:av?[]:readDays(f)});await DB.put('habits',h)}
   dlg.close();render();
 });
 
@@ -974,7 +981,7 @@ let cal={id:null,y:0,m:0};
 function habitDates(h){return[...S.logs].filter(k=>k.startsWith(h.id+'|')).map(k=>k.slice(k.lastIndexOf('|')+1)).sort()}
 function bestStreak(h){const dates=isNeg(h)?[bornK(h)]:habitDates(h);if(!dates.length)return 0;let best=0,run=0;const today=TODAY();
   for(let d=new Date(dates[0]+'T00:00');ds(d)<=today;d=addDays(d,1)){const k=ds(d);
-    if(good(h,k)){run++;best=Math.max(best,run)}else if(isDue(h,d)&&(k!==today||isNeg(h)))run=0}return best}
+    if(good(h,k)){run++;best=Math.max(best,run)}else if(isDue(h,d)&&(k!==today||slipMode(h)))run=0}return best}
 function openHabit(id){const d=new Date();cal={id,y:d.getFullYear(),m:d.getMonth()};drawHabit();dlg.showModal();}
 function drawHabit(){
   const h=S.habits.find(x=>x.id===cal.id);if(!h){dlg.close();return}
@@ -999,7 +1006,7 @@ function drawHabit(){
 document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('[role=button][data-action]')){e.preventDefault();e.target.click()}});
 
 /* ---------- Version ---------- */
-const APP_VERSION='0.30.0';
+const APP_VERSION='0.31.0';
 
 /* ---------- Completion sounds (synthesised, no audio files) ---------- */
 const Sound={
@@ -1029,7 +1036,7 @@ const Sound={
   }
 };
 Sound.load();
-const CFG_DEF={avoidHide:true,cTask:true,cGoal:true,cHabit:true,dCharts:true,dTasks:true,dGoals:true,dHabits:true,prio:'low',showDone:true,dueDef:'today',sortBy:'due',groupTags:true,autoArch:'0',defFilter:'all',showSubs:true,showNotes:true,dOverdue:false};
+const CFG_DEF={avoidHide:true,cTask:true,cGoal:true,cHabit:true,dCharts:true,dTasks:true,dGoals:true,dHabits:true,prio:'low',showDone:true,dueDef:'today',sortBy:'due',groupTags:true,autoArch:'0',defFilter:'all',showSubs:true,showNotes:true,dOverdue:false,avoidMode:'clean'};
 try{S.cfg={...CFG_DEF,...JSON.parse(localStorage.getItem('gt-settings')||'{}')}}catch(e){S.cfg={...CFG_DEF}}
 S.taskFilter=S.cfg.defFilter;
 const saveCfg=()=>{try{localStorage.setItem('gt-settings',JSON.stringify(S.cfg))}catch(e){}};
@@ -1149,7 +1156,7 @@ async function onTaskDone(t){
 /* ---------- Actions ---------- */
 async function toggleLog(hid,date){
   const id=hid+'|'+date;
-  const hh=S.habits.find(x=>x.id===hid),neg=hh&&isNeg(hh);
+  const hh=S.habits.find(x=>x.id===hid),neg=hh&&slipMode(hh);
   if(S.logs.has(id)){S.logs.delete(id);await DB.del('logs',id);Sound.play(neg?'habit':'undo')}
   else if(neg){S.logs.add(id);await DB.put('logs',{id,habitId:hid,date});Sound.play('undo');toast(`Slip logged for "${hh.name}". Tap the day again to undo.`)}
   else{S.logs.add(id);await DB.put('logs',{id,habitId:hid,date});
@@ -1284,7 +1291,7 @@ document.addEventListener('submit',async e=>{
     const g={id:uid(),title:v.title.trim(),horizon:S.horizon,period:(v.period||currentPeriod(S.horizon)).trim(),parentId:v.parentId||null,notes:(v.notes||'').trim(),
       kind:gk,target:+v.target||0,unit:(v.unit||'').trim(),value:0,expected:v.expected?Math.max(1,Math.round(+v.expected)):null,done:false,created:Date.now()};
     S.goals.push(g);await DB.put('goals',g)}
-  if(kind==='habit'){const av=v.kind==='avoid';const h={id:uid(),name:v.name.trim(),kind:av?'avoid':'',target:av?7:+v.target,group:(v.group||'').trim(),days:av?[]:readDays(f),created:Date.now()};S.habits.push(h);await DB.put('habits',h)}
+  if(kind==='habit'){const av=v.kind==='avoid';const h={id:uid(),name:v.name.trim(),kind:av?'avoid':'',mode:av&&S.cfg.avoidMode==='confirm'?'confirm':'',target:av?7:+v.target,group:(v.group||'').trim(),days:av?[]:readDays(f),created:Date.now()};S.habits.push(h);await DB.put('habits',h)}
   render();
   const first=$('#app form input[type=text]');if(first)first.focus();
 });
