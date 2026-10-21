@@ -5,6 +5,7 @@
     PATCH = bug fix · MINOR = new feature · MAJOR = breaks old backups or data
 
   Changelog
+  0.43.0 Dashboard: Avoid habits get their own "Staying clean" section (clean/slipped state, Log slip button) and their own tiles; they no longer count in "Habits done today" or "Best current streak"
   0.42.0 Study: tap a day cell and pick Weak / OK / Strong / Clear from a small menu, so any rating takes two taps instead of cycling through colours
   0.41.1 Fix: screen flashed for a moment after pressing a button (the page-enter animation replayed on every redraw; it now plays only when you change tabs)
   0.41.0 Polish: redesigned Study tab (stat tiles, agenda-style exams, one-tap Weak/OK/Strong ratings on today's picks, tidier insights); smooth animations across the app (page transitions, staggered cards, press feedback, pop on tick, animated bars, dialog open); respects reduced-motion
@@ -401,6 +402,11 @@ input.sw{appearance:none;-webkit-appearance:none;flex:none;width:46px;height:28p
 .day.off:not(.on),.cd.off:not(.on){opacity:.4;border-style:dashed}
 #tip{position:fixed;z-index:50;pointer-events:none;background:var(--text);color:var(--bg);font-size:12px;line-height:1.35;padding:6px 9px;border-radius:8px;white-space:nowrap;opacity:0;transition:opacity .1s;transform:translate(-50%,calc(-100% - 10px))}
 #tip.show{opacity:1}
+.avoidsec{margin-top:14px;padding:10px 12px;border:1px solid var(--line,#8884);border-left:4px solid #2f9e6b;border-radius:12px}
+.av-head{display:flex;justify-content:space-between;align-items:center;font-weight:600;margin-bottom:6px}
+.avoidsec .item.slipped{border-left:3px solid #d64545}
+.avoidsec .item.clean .avstate{color:#2f9e6b}.avoidsec .item.slipped .avstate{color:#d64545}
+.avbtn{flex:none;min-height:36px}
 </style>
 </head>
 <body>
@@ -726,10 +732,12 @@ function viewDash(){
   const todays=S.tasks.filter(t=>!t.archived&&(t.due===today||(S.cfg.dOverdue&&!t.done&&t.due&&t.due<today))).sort((a,b)=>(a.done-b.done)||(({high:0,med:1,low:2}[a.priority]??2)-({high:0,med:1,low:2}[b.priority]??2)));
   const todaysDone=todays.filter(t=>t.done).length;
   const overdue=open.filter(t=>t.due&&t.due<today).length;
-  const dueHabits=S.habits.filter(dueToday),hd=dueHabits.filter(h=>good(h,today)).length;
+  const dueHabits=S.habits.filter(h=>!isNeg(h)&&dueToday(h)),hd=dueHabits.filter(h=>good(h,today)).length;
+  const dueAvoid=S.habits.filter(h=>isNeg(h)&&dueToday(h)),avOk=dueAvoid.filter(h=>good(h,today)).length;
   const active=S.goals.filter(g=>!g.done&&g.status!=='missed').length;
   const nRv=S.goals.filter(needsReview).length;
-  const best=S.habits.length?Math.max(...S.habits.map(streak)):0;
+  const bld=S.habits.filter(h=>!isNeg(h)),avd=S.habits.filter(isNeg);
+  const best=bld.length?Math.max(...bld.map(streak)):0,bestClean=avd.length?Math.max(...avd.map(streak)):0;
   const wk=S.goals.filter(g=>g.horizon==='weekly'&&g.period===currentPeriod('weekly'));
   const lb=daysSince(lastBackup());
   const openSlots=planTargets().reduce((a,g)=>a+planLeft(g),0),dow=new Date().getDay();
@@ -739,6 +747,7 @@ function viewDash(){
     <div class="card stat"><div class="n">${hd}/${dueHabits.length}</div><div class="l">Habits done today</div></div>
     <div class="card stat"><div class="n">${active}</div><div class="l">Active goals</div></div>
     <div class="card stat"><div class="n">🔥 ${best}</div><div class="l">Best current streak</div></div>
+    ${avd.length?`<div class="card stat avoidstat"><div class="n">🛡 ${avOk}/${dueAvoid.length}</div><div class="l">Staying clean today</div></div><div class="card stat avoidstat"><div class="n">🛡 ${bestClean}</div><div class="l">Longest clean streak</div></div>`:''}
   </div>
   ${studyCard()}
   ${S.cfg.dCharts?`${heatmapCard()}
@@ -843,8 +852,10 @@ function habitToday(h){
 function habitList(full){
   const hideIt=h=>S.hideDone&&!(isNeg(h)&&!S.cfg.avoidHide)&&good(h,TODAY());
   if(!S.habits.length)return `<div class="empty">No habits yet.${full?' Tap a day to check it off.':''}</div>`;
-  const today=TODAY(),dueAll=sortedHabits().filter(dueToday),doneToday=dueAll.filter(h=>good(h,today)).length;
-  const pool=full?sortedHabits():dueAll,offToday=S.habits.length-dueAll.length;
+  const today=TODAY(),dueAll0=sortedHabits().filter(dueToday),dueAll=full?dueAll0:dueAll0.filter(h=>!isNeg(h)),doneToday=dueAll.filter(h=>good(h,today)).length;
+  const avoids=full?[]:dueAll0.filter(isNeg);
+  const pool=full?sortedHabits():dueAll,offToday=S.habits.length-dueAll0.length;
+  if(!pool.length&&avoids.length)return avoidSection(avoids);
   if(!pool.length)return `<div class="empty">Nothing due today. ${offToday} habit${offToday>1?'s':''} off.</div>`;
   const bar=`<div class="filters"><button class="chip ${S.hideDone?'on':''}" data-action="toggle-hide-done" aria-pressed="${S.hideDone}">${S.hideDone?'✓ Hiding done today':'Hide done today'}</button>
     ${full?`<button class="chip ${S.compact?'on':''}" data-action="toggle-compact" aria-pressed="${S.compact}">${S.compact?'✓ Compact':'Compact'}</button><button class="chip ${S.reorder?'on':''}" data-action="toggle-reorder" aria-pressed="${!!S.reorder}">${S.reorder?'✓ Reordering':'↕ Reorder'}</button>`:''}
@@ -870,7 +881,23 @@ function habitList(full){
   const looseVis=loose.filter(h=>!hideIt(h));
   if(looseVis.length)out+=wrap(looseVis);
   if(S.hideDone&&dueAll.length&&doneToday===dueAll.length)out+=`<div class="allclear">All habits done for today 🎉</div>`;
-  return bar+out;
+  return bar+out+(avoids.length?avoidSection(avoids):'');
+}
+function avoidSection(hs){
+  const t=TODAY(),vis=hs.filter(h=>!(S.hideDone&&S.cfg.avoidHide&&good(h,t)));
+  const ok=hs.filter(h=>good(h,t)).length;
+  return `<section class="avoidsec"><div class="av-head"><span>🛡 Staying clean</span><span class="meta">${ok}/${hs.length} clean today</span></div>
+    <ul class="list">${vis.map(avoidToday).join('')}</ul></section>`;
+}
+function avoidToday(h){
+  const k=TODAY(),on=good(h,k),s=streak(h),slip=slipMode(h);
+  const state=slip?(on?'Clean so far today':'Slipped today'):(on?'Held today':'Not confirmed yet');
+  const btn=slip?(on?'Log slip':'Undo slip'):(on?'Undo':'Mark avoided');
+  return `<li class="item avoid ${on?'clean':'slipped'}">
+    <div class="grow habit-open" data-action="open-habit" data-id="${h.id}" role="button" tabindex="0" title="Open history">
+      <div class="title">${hname(h)} <span class="chev">›</span></div>
+      <div class="meta"><span class="avstate">${on?'🛡':'⚠'} ${state}</span><span>${s} day${s===1?'':'s'} clean streak</span></div></div>
+    <button class="chip avbtn ${on?'':'on'}" data-action="toggle-log" data-id="${h.id}" data-date="${k}" aria-label="${btn}: ${esc(h.name)}">${btn}</button></li>`;
 }
 const folderOf=h=>(h.group||'').trim();
 const dayPicker=(sel=[])=>`<div class="daypick" role="group" aria-label="Days it's due (none = every day)"><span class="dp-lbl">Days</span>${DOW_ORDER.map(n=>`<label title="${fmt(new Date(2024,0,n||7),{weekday:'long'})}"><input type="checkbox" name="days" value="${n}" ${sel.includes(n)?'checked':''}><span>${fmt(new Date(2024,0,n||7),{weekday:'narrow'})}</span></label>`).join('')}<span class="dp-hint">none = every day</span></div>`;
@@ -1113,7 +1140,7 @@ function drawHabit(){
 document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('[role=button][data-action]')){e.preventDefault();e.target.click()}});
 
 /* ---------- Version ---------- */
-const APP_VERSION='0.42.0';
+const APP_VERSION='0.43.0';
 
 /* ---------- Completion sounds (synthesised, no audio files) ---------- */
 const Sound={
@@ -1156,7 +1183,7 @@ const AR={
 'Theme: auto (tap to change)':'السمة: تلقائي (اضغط للتغيير)','Theme: light (tap to change)':'السمة: فاتح (اضغط للتغيير)','Theme: dark (tap to change)':'السمة: داكن (اضغط للتغيير)','Theme':'السمة',
 // dashboard
 'Today':'اليوم','Tomorrow':'غدًا','yesterday':'أمس','Overdue':'متأخرة','Today\'s tasks':'مهام اليوم','Today\'s habits':'عادات اليوم','This week\'s goals':'أهداف هذا الأسبوع','Today\'s picks':'اختيارات اليوم','Today\'s tasks done':'مهام اليوم المنجزة','Habits done today':'العادات المنجزة اليوم',
-'Nothing due today.':'لا شيء مستحق اليوم.','Plan this week':'خطّط هذا الأسبوع','Weekly report':'التقرير الأسبوعي','Activity':'النشاط','Activity heatmap':'خريطة النشاط','Less':'أقل','More':'أكثر','actions':'إجراءات','active days':'أيام نشطة','Last 26 weeks':'آخر 26 أسبوعًا','Last 30 days':'آخر 30 يومًا','Last 30':'آخر 30','Total days':'إجمالي الأيام','Best current streak':'أفضل سلسلة حالية','Best streak':'أفضل سلسلة','Habit consistency':'انتظام العادات','Tasks completed':'المهام المنجزة','Goal progress':'تقدم الأهداف','Active goals':'الأهداف النشطة','none yet':'لا شيء بعد','Current':'الحالية','Current periods':'الفترات الحالية','Sections':'الأقسام',
+'Nothing due today.':'لا شيء مستحق اليوم.','Staying clean':'البقاء بعيداً','Staying clean today':'بعيد عنها اليوم','Longest clean streak':'أطول سلسلة امتناع','Clean so far today':'ملتزم حتى الآن اليوم','Slipped today':'زلّ اليوم','Held today':'امتنعت اليوم','Not confirmed yet':'لم يؤكَّد بعد','Log slip':'سجّل زلّة','Undo slip':'تراجع عن الزلّة','Mark avoided':'تم الامتناع','Plan this week':'خطّط هذا الأسبوع','Weekly report':'التقرير الأسبوعي','Activity':'النشاط','Activity heatmap':'خريطة النشاط','Less':'أقل','More':'أكثر','actions':'إجراءات','active days':'أيام نشطة','Last 26 weeks':'آخر 26 أسبوعًا','Last 30 days':'آخر 30 يومًا','Last 30':'آخر 30','Total days':'إجمالي الأيام','Best current streak':'أفضل سلسلة حالية','Best streak':'أفضل سلسلة','Habit consistency':'انتظام العادات','Tasks completed':'المهام المنجزة','Goal progress':'تقدم الأهداف','Active goals':'الأهداف النشطة','none yet':'لا شيء بعد','Current':'الحالية','Current periods':'الفترات الحالية','Sections':'الأقسام',
 'Review':'مراجعة','Hit it, missed, or carry over. About a minute.':'حققته أو فاتني أو أرحّله. دقيقة تقريبًا.','These periods have ended. Be honest. This is where the system gets smarter.':'انتهت هذه الفترات. كن صادقًا، هنا يصبح النظام أذكى.','All caught up. Reviews done ✓':'لا شيء متأخر. اكتملت المراجعات ✓','✓ Hit it':'✓ حققته','✗ Missed':'✗ فاتني','Hit it':'حققته','Missed':'فاتني','Review note (what got in the way / what worked)':'ملاحظة المراجعة (ما الذي أعاق / ما الذي نجح)','What got in the way / what worked? (optional)':'ما الذي أعاق / ما الذي نجح؟ (اختياري)',
 'No backup yet':'لا توجد نسخة احتياطية بعد','Your data lives only in this browser. Copy a backup and keep it somewhere safe.':'بياناتك محفوظة في هذا المتصفح فقط. انسخ نسخة احتياطية واحتفظ بها في مكان آمن.','Copy backup':'نسخ احتياطي','Remind me later':'ذكّرني لاحقًا','Dismiss backup reminder':'إخفاء تذكير النسخ الاحتياطي','OK →':'حسنًا →',
 // tasks
