@@ -5,6 +5,7 @@
     PATCH = bug fix · MINOR = new feature · MAJOR = breaks old backups or data
 
   Changelog
+  0.41.1 Fix: screen flashed for a moment after pressing a button (the page-enter animation replayed on every redraw; it now plays only when you change tabs)
   0.41.0 Polish: redesigned Study tab (stat tiles, agenda-style exams, one-tap Weak/OK/Strong ratings on today's picks, tidier insights); smooth animations across the app (page transitions, staggered cards, press feedback, pop on tick, animated bars, dialog open); respects reduced-motion
   0.40.0 Final quality pass: Study tab 12x faster with hundreds of topics and exams (cached exam lookups and review dates), Tasks tab shows the 40 newest completed tasks with a Show all button (lighter on big lists), Arabic dictionary updated
   0.39.0 Safer restore: rows are validated first (bad rows skipped and reported), settings are filtered, language/student mode apply immediately, and if a restore fails midway your previous data is put back; share dialog keyboard-friendly; dialogs announce their title to screen readers
@@ -976,7 +977,8 @@ function render(){
   const v={dash:viewDash,tasks:viewTasks,goals:viewGoals,habits:viewHabits,data:viewData,archive:viewArchive,study:viewStudy}[S.view]||viewDash;
   $('#app').innerHTML=(S.persistent?'':`<div class="banner">This browser blocked storage — data will be lost on reload. Use Export to save it.</div>`)+v();
   const app=$('#app'),changed=S._lv!==S.view;S._lv=S.view;
-  if(changed&&!matchMedia('(prefers-reduced-motion: reduce)').matches){app.classList.remove('enter');[...app.children].forEach((c,i)=>c.style.setProperty('--i',Math.min(i,9)));void app.offsetWidth;app.classList.add('enter')}
+  if(changed&&!matchMedia('(prefers-reduced-motion: reduce)').matches){app.classList.remove('enter');[...app.children].forEach((c,i)=>c.style.setProperty('--i',Math.min(i,9)));void app.offsetWidth;app.classList.add('enter');clearTimeout(S._enterT);S._enterT=setTimeout(()=>app.classList.remove('enter'),1100)}
+  else if(!changed){clearTimeout(S._enterT);app.classList.remove('enter')}
   if(S.popKey){const q=S.popKey;S.popKey=null;let el=null;try{el=app.querySelector(q)}catch(_){}if(el){el.classList.add('pop');setTimeout(()=>el.classList.remove('pop'),450)}}
   const nv=S.view==='archive'?'data':S.view;
   document.querySelectorAll('#nav button,#tabbar button').forEach(b=>{const on=b.dataset.view===nv;b.classList.toggle('on',on);on?b.setAttribute('aria-current','page'):b.removeAttribute('aria-current')});
@@ -1108,7 +1110,7 @@ function drawHabit(){
 document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('[role=button][data-action]')){e.preventDefault();e.target.click()}});
 
 /* ---------- Version ---------- */
-const APP_VERSION='0.41.0';
+const APP_VERSION='0.41.1';
 
 /* ---------- Completion sounds (synthesised, no audio files) ---------- */
 const Sound={
