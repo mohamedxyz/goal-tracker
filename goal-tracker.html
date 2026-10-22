@@ -5,6 +5,8 @@
     PATCH = bug fix · MINOR = new feature · MAJOR = breaks old backups or data
 
   Changelog
+  0.45.1 Dashboard is much shorter: one compact row of tiles, today's tasks/goals/habits first, charts and consistency tucked into a collapsed Insights card
+  0.45.0 Tasks tab redesign to match Exams: one-line quick add with a More options drawer, due date as a pill, priority as a coloured edge, and a single ⋯ menu per task (edit, share, archive, delete)
   0.44.0 Select mode for tasks and habits (bulk date, priority, tag, goal, folder, schedule, done, archive, delete); Trash in Settings keeps deleted tasks and habits for 30 days; Student compact mode (tighter layout everywhere)
   0.43.1 Habit consistency card lists Avoid habits in their own "Staying clean" group (% clean, 🛡 streak)
   0.43.0 Dashboard: Avoid habits get their own "Staying clean" section (clean/slipped state, Log slip button) and their own tiles; they no longer count in "Habits done today" or "Best current streak"
@@ -428,6 +430,18 @@ body.cmp .pick{padding:6px 10px;margin-top:5px}body.cmp .trow{padding-block:3px}
 body.cmp .vcard{margin-top:10px}body.cmp .meta{font-size:11.5px;gap:2px 8px}
 body.cmp .stile{padding:6px 4px}body.cmp .hfolder{margin-bottom:6px}
 body.cmp .add{gap:6px}body.cmp .goals,body.cmp .list{gap:6px}
+.taskadd{display:block;padding:10px 12px}
+.qa{display:flex;gap:8px}.qa input{flex:1;min-width:0}
+.more{margin-top:8px}.more summary{cursor:pointer;color:var(--muted);font-size:13px;padding:4px 0;list-style:none}
+.more summary::before{content:'▸ '}.more[open] summary::before{content:'▾ '}
+.moreg{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+.trow2{border-inline-start:4px solid transparent}.trow2.pr-high{border-inline-start-color:#b4442f}.trow2.pr-med{border-inline-start-color:#d9a13b}
+.trow2>.grow{cursor:pointer;min-width:0}
+.tmenu{display:flex;flex-direction:column;gap:8px}.tmenu h3{margin:0 0 4px;overflow-wrap:anywhere}.tmenu .ghost{text-align:start;min-height:44px}
+.dstats{grid-template-columns:repeat(auto-fit,minmax(62px,1fr));gap:8px}
+.dstats .stat{padding:8px 6px;text-align:center}.dstats .stat .n{font-size:19px}.dstats .stat .l{font-size:11px;line-height:1.25}
+.insbtn{display:flex;justify-content:space-between;align-items:center;width:100%;margin-top:14px;font:inherit;color:var(--text);cursor:pointer;text-align:start}
+.insbtn small{color:var(--muted);margin-inline-start:6px}
 </style>
 </head>
 <body>
@@ -611,23 +625,21 @@ function taskItem(t){
   const g=t.goalId&&goalById(t.goalId);const today=TODAY();
   const overdue=!t.done&&t.due&&t.due<today;
   const sm=selOn('tasks');
-  return `<li class="item ${t.done?'done dim':''} ${sm&&S.sel.has(t.id)?'selected':''}">
+  const dp=t.done?'':t.due?`<span class="pill ${overdue?'hot':t.due===today?'warm':''}">${overdue?'Overdue · ':''}${t.due===today?'Today':fmtDate(t.due)}</span>`:'';
+  return `<li class="item trow2 pr-${t.priority||'low'} ${t.done?'done dim':''} ${sm&&S.sel.has(t.id)?'selected':''}">
     ${sm?selBox(t.id):`<input type="checkbox" data-action="toggle-task" data-id="${t.id}" ${t.done?'checked':''} aria-label="Complete">`}
-    <div class="grow"><div class="title">${esc(t.title)}</div>
+    <div class="grow" ${sm?'':`data-action="edit-task" data-id="${t.id}" role="button" tabindex="0"`}><div class="title">${esc(t.title)}</div>
       ${t.notes&&S.cfg.showNotes?`<div class="tnotes">${esc(t.notes)}</div>`:''}
       ${(t.items||[]).length&&S.cfg.showSubs?`<ul class="subs">${t.items.map((it,i)=>`<li><label class="${it.done?'sdone':''}"><input type="checkbox" data-action="toggle-sub" data-id="${t.id}" data-i="${i}" ${it.done?'checked':''}><span>${esc(it.text)}</span></label></li>`).join('')}</ul>`:''}
       <div class="meta">
         ${(t.items||[]).length?`<span title="Checklist">☑ ${t.items.filter(i=>i.done).length}/${t.items.length}</span>`:''}
         ${t.done&&t.doneAt?`<span>Done ${fmtWhen(t.doneAt)}</span>`:''}
-        ${t.due?`<span class="${overdue?'overdue':''}">${overdue?'Overdue · ':''}${t.due===today?'Today':fmtDate(t.due)}</span>`:''}
+        ${t.done&&t.due?`<span>${fmtDate(t.due)}</span>`:''}
         ${t.tag?`<span class="tag">#${esc(t.tag)}</span>`:''}
         ${t.repeat?`<span title="Repeats">🔁 ${REPEAT_LABEL[t.repeat]||''}</span>`:''}
-        ${t.priority&&t.priority!=='low'?`<span class="p-${t.priority}">${t.priority==='high'?'High':'Medium'} priority</span>`:''}
         ${g?`<span class="tag">${esc(g.title)}</span>`:''}
       </div></div>
-    <button class="icon" data-action="edit-task" data-id="${t.id}" title="Edit" aria-label="Edit">✎</button>
-    ${shareBtn('task',t.id)}<button class="icon" data-action="archive-task" data-id="${t.id}" title="Archive" aria-label="Archive">${ARCHIVE_ICON}</button>
-    <button class="icon" data-action="del-task" data-id="${t.id}" title="Delete" aria-label="Delete">✕</button></li>`;
+    ${dp}<button class="icon" data-action="task-menu" data-id="${t.id}" title="More" aria-label="More actions">⋯</button></li>`;
 }
 function dayButtons(h,n=7){
   const today=TODAY();let out='';
@@ -767,24 +779,25 @@ function viewDash(){
   const lb=daysSince(lastBackup());
   const openSlots=planTargets().reduce((a,g)=>a+planLeft(g),0),dow=new Date().getDay();
   const planCta=!wk.length||((dow===0||dow===1)&&openSlots>0);
-  return `${backupNudge()?`<div class="card backup-cta"><div class="grow"><div class="title">${lb===null?'No backup yet':'Last backup '+agoText(lb)}</div><div class="meta">Your data lives only in this browser. Copy a backup and keep it somewhere safe.</div></div><button class="btn" data-action="backup-copy">Copy backup</button><button class="icon" data-action="backup-snooze" title="Remind me later" aria-label="Dismiss backup reminder">✕</button></div>`:''}${nRv?`<div class="card review-cta"><div class="grow"><div class="title">${nRv} goal${nRv>1?'s':''} from past periods need${nRv>1?'':'s'} a review</div><div class="meta">Hit it, missed, or carry over. About a minute.</div></div><button class="btn" data-action="open-review">Review</button></div>`:''}${planCta?`<div class="card plan-cta"><div class="grow"><div class="title">${wk.length?`${openSlots} weekly slot${openSlots>1?'s':''} still to plan`:`Plan ${currentPeriod('weekly')}`}</div><div class="meta">${wk.length?'Fill in this week\'s steps toward your monthly goals.':'No weekly goals yet. Pick this week\'s steps.'}</div></div><button class="btn" data-action="open-plan">Plan week</button></div>`:''}<div class="stats">
+  return `${backupNudge()?`<div class="card backup-cta"><div class="grow"><div class="title">${lb===null?'No backup yet':'Last backup '+agoText(lb)}</div><div class="meta">Your data lives only in this browser. Copy a backup and keep it somewhere safe.</div></div><button class="btn" data-action="backup-copy">Copy backup</button><button class="icon" data-action="backup-snooze" title="Remind me later" aria-label="Dismiss backup reminder">✕</button></div>`:''}${nRv?`<div class="card review-cta"><div class="grow"><div class="title">${nRv} goal${nRv>1?'s':''} from past periods need${nRv>1?'':'s'} a review</div><div class="meta">Hit it, missed, or carry over. About a minute.</div></div><button class="btn" data-action="open-review">Review</button></div>`:''}${planCta?`<div class="card plan-cta"><div class="grow"><div class="title">${wk.length?`${openSlots} weekly slot${openSlots>1?'s':''} still to plan`:`Plan ${currentPeriod('weekly')}`}</div><div class="meta">${wk.length?'Fill in this week\'s steps toward your monthly goals.':'No weekly goals yet. Pick this week\'s steps.'}</div></div><button class="btn" data-action="open-plan">Plan week</button></div>`:''}<div class="stats dstats">
     <div class="card stat"><div class="n">${todaysDone}/${todays.length}</div><div class="l">Today's tasks done</div></div>
     <div class="card stat"><div class="n">${hd}/${dueHabits.length}</div><div class="l">Habits done today</div></div>
     <div class="card stat"><div class="n">${active}</div><div class="l">Active goals</div></div>
     <div class="card stat"><div class="n">🔥 ${best}</div><div class="l">Best current streak</div></div>
-    ${avd.length?`<div class="card stat avoidstat"><div class="n">🛡 ${avOk}/${dueAvoid.length}</div><div class="l">Staying clean today</div></div><div class="card stat avoidstat"><div class="n">🛡 ${bestClean}</div><div class="l">Longest clean streak</div></div>`:''}
+    ${avd.length?`<div class="card stat avoidstat"><div class="n">🛡 ${avOk}/${dueAvoid.length}</div><div class="l">Staying clean</div></div>`:''}
   </div>
-  ${studyCard()}
-  ${S.cfg.dCharts?`${heatmapCard()}
-  <div class="split"><div>${tasksChartCard()}</div><div>${ringsCard()}</div></div>
-  ${consistencyCard()}`:''}
   <div class="grid2" style="margin-top:6px"><div>
     ${S.cfg.dTasks?`<h2>Today's tasks</h2>${todays.length?`<ul class="list">${todays.map(taskItem).join('')}</ul>`:`<div class="empty">Nothing due today.</div>`}
     ${overdue&&!S.cfg.dOverdue?`<button class="chip" style="margin-top:10px" data-action="see-overdue">${overdue} overdue from earlier days →</button>`:''}`:''}
     ${S.cfg.dGoals?`<div class="h2row"><h2>This week's goals</h2><span><button class="chip" data-action="open-report">Weekly report</button> <button class="chip" data-action="open-plan">Plan this week</button></span></div>${wk.length?`<div class="goals">${wk.map(goalCard).join('')}</div>`:`<div class="empty">No weekly goals for ${currentPeriod('weekly')}.</div>`}`:''}
   </div><div>
     ${S.cfg.dHabits?`<h2>Today's habits</h2>${habitList(false)}`:''}
-  </div></div>`;
+  </div></div>
+  ${studyCard()}
+  ${S.cfg.dCharts?`<button class="card insbtn" data-action="toggle-ins" aria-expanded="${!!S.insOpen}"><span>📊 Insights <small>activity, charts, habit consistency</small></span><span>${S.insOpen?'▾':'▸'}</span></button>
+  ${S.insOpen?`${heatmapCard()}
+  <div class="split"><div>${tasksChartCard()}</div><div>${ringsCard()}</div></div>
+  ${consistencyCard()}`:''}`:''}`;
 }
 const tagOf=t=>(t.tag||'').trim();
 function tagList(id){return `<datalist id="${id}">${[...new Set(S.tasks.map(tagOf).filter(Boolean))].sort().map(n=>`<option value="${esc(n)}">`).join('')}</datalist>`}
@@ -818,8 +831,9 @@ function viewTasks(){
   const done=list.filter(t=>t.done).sort((a,b)=>(b.doneAt||0)-(a.doneAt||0));
   const nOver=live.filter(t=>!t.done&&t.due&&t.due<today).length;
   const chip=(k,l)=>`<button class="chip ${f===k?'on':''}" data-action="task-filter" data-v="${k}">${l}</button>`;
-  return `<form class="add" data-form="task">
-    <input type="text" name="title" placeholder="New task…" required>
+  return `<form class="add taskadd card" data-form="task">
+    <div class="qa"><input type="text" name="title" placeholder="New task…" required><button class="btn">Add</button></div>
+    <details class="more"><summary>More options</summary><div class="moreg">
     <input type="date" name="due" value="${S.cfg.dueDef==="none"?"":S.cfg.dueDef==="tomorrow"?ds(addDays(new Date(),1)):today}">
     <select name="priority">${[['low','Low'],['med','Medium'],['high','High']].map(([v,l])=>`<option value="${v}" ${S.cfg.prio===v?'selected':''}>${l}</option>`).join('')}</select>
     <select name="repeat" aria-label="Repeat">${REPEATS.map(([v,l])=>`<option value="${v}">${v?'🔁 ':''}${l}</option>`).join('')}</select>
@@ -827,7 +841,7 @@ function viewTasks(){
     <input type="text" name="tag" list="tagListAdd" placeholder="Tag folder (optional)" autocomplete="off">${tagList('tagListAdd')}
     <textarea name="notes" placeholder="Notes (optional)" style="min-height:40px"></textarea>
     <textarea name="items" placeholder="Checklist (optional, one item per line)" style="min-height:40px"></textarea>
-    <button class="btn">Add</button></form>
+    </div></details></form>
   <div class="filters">${chip('all','All')}${chip('today','Due today')}${chip('overdue','Overdue'+(nOver?' · '+nOver:''))}${chip('done','Done')}<button class="chip ${selOn('tasks')?'on':''}" data-action="sel-mode" data-k="tasks" aria-pressed="${selOn('tasks')}">${selOn('tasks')?'✓ Selecting':'☑ Select'}</button></div>
   ${open.length?taskGroups(open):((done.length&&showDone)?'':`<div class="empty">No tasks here.</div>`)}
   ${(done.length&&showDone)?`${f==='done'?'':`<div class="divider">Completed · ${done.length}</div>`}<ul class="list">${(S.doneAll?done:done.slice(0,40)).map(taskItem).join('')}</ul>${done.length>40?`<button class="chip" style="margin-top:8px" data-action="toggle-done-all">${S.doneAll?'Show fewer':'Show all '+done.length+' completed'}</button>`:''}`:''}`;
@@ -1249,7 +1263,7 @@ function drawHabit(){
 document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('[role=button][data-action]')){e.preventDefault();e.target.click()}});
 
 /* ---------- Version ---------- */
-const APP_VERSION='0.44.0';
+const APP_VERSION='0.45.1';
 
 /* ---------- Completion sounds (synthesised, no audio files) ---------- */
 const Sound={
@@ -1292,7 +1306,7 @@ const AR={
 'Theme: auto (tap to change)':'السمة: تلقائي (اضغط للتغيير)','Theme: light (tap to change)':'السمة: فاتح (اضغط للتغيير)','Theme: dark (tap to change)':'السمة: داكن (اضغط للتغيير)','Theme':'السمة',
 // dashboard
 'Today':'اليوم','Tomorrow':'غدًا','yesterday':'أمس','Overdue':'متأخرة','Today\'s tasks':'مهام اليوم','Today\'s habits':'عادات اليوم','This week\'s goals':'أهداف هذا الأسبوع','Today\'s picks':'اختيارات اليوم','Today\'s tasks done':'مهام اليوم المنجزة','Habits done today':'العادات المنجزة اليوم',
-'Nothing due today.':'لا شيء مستحق اليوم.','Staying clean':'البقاء بعيداً','☑ Select':'☑ تحديد','✓ Selecting':'✓ جارٍ التحديد','All':'الكل','None':'لا شيء','Cancel':'إلغاء','✓ Done':'✓ تم','✎ Edit…':'✎ تعديل…','Archive':'أرشفة','🗑 Delete':'🗑 حذف','Trash':'سلة المحذوفات','Open trash →':'فتح السلة ←','Trash is empty.':'السلة فارغة.','Empty trash':'إفراغ السلة','Compact layout':'تخطيط مضغوط','Apply':'تطبيق','Staying clean today':'بعيد عنها اليوم','Longest clean streak':'أطول سلسلة امتناع','Clean so far today':'ملتزم حتى الآن اليوم','Slipped today':'زلّ اليوم','Held today':'امتنعت اليوم','Not confirmed yet':'لم يؤكَّد بعد','Log slip':'سجّل زلّة','Undo slip':'تراجع عن الزلّة','Mark avoided':'تم الامتناع','Plan this week':'خطّط هذا الأسبوع','Weekly report':'التقرير الأسبوعي','Activity':'النشاط','Activity heatmap':'خريطة النشاط','Less':'أقل','More':'أكثر','actions':'إجراءات','active days':'أيام نشطة','Last 26 weeks':'آخر 26 أسبوعًا','Last 30 days':'آخر 30 يومًا','Last 30':'آخر 30','Total days':'إجمالي الأيام','Best current streak':'أفضل سلسلة حالية','Best streak':'أفضل سلسلة','Habit consistency':'انتظام العادات','Tasks completed':'المهام المنجزة','Goal progress':'تقدم الأهداف','Active goals':'الأهداف النشطة','none yet':'لا شيء بعد','Current':'الحالية','Current periods':'الفترات الحالية','Sections':'الأقسام',
+'Nothing due today.':'لا شيء مستحق اليوم.','Staying clean':'البقاء بعيداً','☑ Select':'☑ تحديد','More options':'خيارات إضافية','Insights':'الإحصائيات','⋯':'⋯','✎ Edit':'✎ تعديل','Share':'مشاركة','✓ Selecting':'✓ جارٍ التحديد','All':'الكل','None':'لا شيء','Cancel':'إلغاء','✓ Done':'✓ تم','✎ Edit…':'✎ تعديل…','Archive':'أرشفة','🗑 Delete':'🗑 حذف','Trash':'سلة المحذوفات','Open trash →':'فتح السلة ←','Trash is empty.':'السلة فارغة.','Empty trash':'إفراغ السلة','Compact layout':'تخطيط مضغوط','Apply':'تطبيق','Staying clean today':'بعيد عنها اليوم','Longest clean streak':'أطول سلسلة امتناع','Clean so far today':'ملتزم حتى الآن اليوم','Slipped today':'زلّ اليوم','Held today':'امتنعت اليوم','Not confirmed yet':'لم يؤكَّد بعد','Log slip':'سجّل زلّة','Undo slip':'تراجع عن الزلّة','Mark avoided':'تم الامتناع','Plan this week':'خطّط هذا الأسبوع','Weekly report':'التقرير الأسبوعي','Activity':'النشاط','Activity heatmap':'خريطة النشاط','Less':'أقل','More':'أكثر','actions':'إجراءات','active days':'أيام نشطة','Last 26 weeks':'آخر 26 أسبوعًا','Last 30 days':'آخر 30 يومًا','Last 30':'آخر 30','Total days':'إجمالي الأيام','Best current streak':'أفضل سلسلة حالية','Best streak':'أفضل سلسلة','Habit consistency':'انتظام العادات','Tasks completed':'المهام المنجزة','Goal progress':'تقدم الأهداف','Active goals':'الأهداف النشطة','none yet':'لا شيء بعد','Current':'الحالية','Current periods':'الفترات الحالية','Sections':'الأقسام',
 'Review':'مراجعة','Hit it, missed, or carry over. About a minute.':'حققته أو فاتني أو أرحّله. دقيقة تقريبًا.','These periods have ended. Be honest. This is where the system gets smarter.':'انتهت هذه الفترات. كن صادقًا، هنا يصبح النظام أذكى.','All caught up. Reviews done ✓':'لا شيء متأخر. اكتملت المراجعات ✓','✓ Hit it':'✓ حققته','✗ Missed':'✗ فاتني','Hit it':'حققته','Missed':'فاتني','Review note (what got in the way / what worked)':'ملاحظة المراجعة (ما الذي أعاق / ما الذي نجح)','What got in the way / what worked? (optional)':'ما الذي أعاق / ما الذي نجح؟ (اختياري)',
 'No backup yet':'لا توجد نسخة احتياطية بعد','Your data lives only in this browser. Copy a backup and keep it somewhere safe.':'بياناتك محفوظة في هذا المتصفح فقط. انسخ نسخة احتياطية واحتفظ بها في مكان آمن.','Copy backup':'نسخ احتياطي','Remind me later':'ذكّرني لاحقًا','Dismiss backup reminder':'إخفاء تذكير النسخ الاحتياطي','OK →':'حسنًا →',
 // tasks
@@ -1575,6 +1589,15 @@ const actions={
     toastUndo('Task moved to Trash.',async()=>{await trashRestore('task:'+t.id)});
   },
   'task-filter'(el){S.taskFilter=el.dataset.v},
+  'toggle-ins'(){S.insOpen=!S.insOpen},
+  'task-menu'(el){const t=S.tasks.find(x=>x.id===el.dataset.id);if(!t)return false;const id=t.id;
+    dlg.innerHTML=`<div class="tmenu"><h3>${esc(t.title)}</h3>
+      <button class="ghost" data-action="tm" data-do="edit-task" data-id="${id}">✎ Edit</button>
+      <button class="ghost" data-action="tm" data-do="share-item" data-k="task" data-id="${id}">${SHARE_ICON} Share</button>
+      <button class="ghost" data-action="tm" data-do="archive-task" data-id="${id}">${ARCHIVE_ICON} Archive</button>
+      <button class="ghost danger" data-action="tm" data-do="del-task" data-id="${id}">✕ Delete</button>
+      <button class="ghost" data-action="dlg-close">Cancel</button></div>`;dlg.showModal();return false},
+  async 'tm'(el){dlg.close();const r=await actions[el.dataset.do](el);return r},
   'sel-mode'(el){if(S.selMode===el.dataset.k){S.selMode=null}else{S.selMode=el.dataset.k}S.sel.clear()},
   'sel-toggle'(el){const id=el.dataset.id;S.sel.has(id)?S.sel.delete(id):S.sel.add(id)},
   'sel-all'(){document.querySelectorAll('#app [data-action=sel-toggle]').forEach(e=>S.sel.add(e.dataset.id))},
