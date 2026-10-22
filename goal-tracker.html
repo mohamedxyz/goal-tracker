@@ -5,6 +5,7 @@
     PATCH = bug fix · MINOR = new feature · MAJOR = breaks old backups or data
 
   Changelog
+  0.51.0 Level calendar: tap the day banner or the coach message to see a month calendar where every day shows its level (⚡ Spark, 🔥 Blaze, ⚔️ Titan), with monthly counts and the tasks you finished on any day you tap. New first-run intro walks through the goal ladder, day levels, habits, student mode and language; replay it from Settings
   0.50.0 Day levels replace the coach modes: how many tasks you finish today sets your level (Spark, Blaze, Titan). A banner on top of the Dashboard shows today's level and your streak, the coach message gets tougher as you level up, and Titan days switch on the quota and push-back friction. Thresholds are adjustable in Settings
   0.49.0 Monk is now Beast mode and it changes behaviour: a daily quota (your 7-day average + 1) with one-tap fill from future tasks, and a typed reason is required to push back, reschedule or delete work that is due; pushed tasks show ↻ N×
   0.48.0 Coach personalities: Friend (easy), Coach (medium), Monk (hard), or Off; pick in Settings
@@ -471,6 +472,24 @@ body.cmp .add{gap:6px}body.cmp .goals,body.cmp .list{gap:6px}
 .dm-top{display:flex;align-items:center;gap:10px}.dm-ico{font-size:26px}.dm-top b{display:block;font-size:15.5px}.dm-top small{color:var(--muted);font-size:12.5px}
 .dm-streak{font-size:12.5px;font-weight:600;white-space:nowrap}
 .daymode .bar{margin-top:8px}
+.daymode[role=button],.coach .cmsg[role=button]{cursor:pointer}
+.dm-hint{display:block;margin-top:6px;font-size:11.5px;color:var(--muted)}
+.cd.lc{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;font-size:11px}
+.cd.lc .lvi{font-size:14px;line-height:1;font-style:normal}
+.cd.lv1{background:color-mix(in oklab,var(--ok) 18%,var(--card));border-color:color-mix(in oklab,var(--ok) 60%,var(--line))}
+.cd.lv2{background:color-mix(in oklab,var(--warn) 22%,var(--card));border-color:var(--warn)}
+.cd.lv3{background:color-mix(in oklab,var(--bad) 22%,var(--card));border-color:var(--bad)}
+.cd.lc.sel{box-shadow:0 0 0 2px var(--text) inset}
+.lv-legend{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:10px;font-size:12px;color:var(--muted)}
+.lv-day{margin-top:10px;padding:10px 12px;border-radius:10px;background:var(--bg);font-size:13.5px}
+.lv-day ul{margin:6px 0 0;padding-inline-start:18px}.lv-day li{overflow-wrap:anywhere}
+.intro{text-align:center}.intro .ii{font-size:44px;line-height:1.1;margin:8px 0 4px}
+.intro h3{margin:4px 0 8px}.intro p{margin:0 auto 12px;max-width:340px;line-height:1.5;color:var(--muted)}
+.intro-dots{display:flex;justify-content:center;gap:6px;margin:14px 0}
+.intro-dots i{width:7px;height:7px;border-radius:50%;background:var(--line)}.intro-dots i.on{background:var(--accent);width:18px;border-radius:4px}
+.intro-row{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.intro-nav{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.intro-nav .grow{flex:1}
 </style>
 </head>
 <body>
@@ -707,7 +726,7 @@ function dayBanner(){
   const st=coachStats(),T=tierOf(st.today),L=lvlAt(),d=st.today,tr=TIERS[T],nx=TIERS[T+1];
   const pct=nx?Math.min(100,Math.round(d/L[T+1]*100)):100;
   const sub=nx?`${d} done · ${L[T+1]-d} more to reach ${nx.n}`:`${d} done · top level, defend it`;
-  return `<div class="card daymode t${T}"><div class="dm-top"><span class="dm-ico">${tr.i}</span><div class="grow"><b>Today you're in ${tr.n} mode</b><small>${sub}</small></div><span class="dm-streak">${st.streak?'🔥 '+st.streak+'-day streak':'Start a streak'}</span></div><div class="bar"><span style="width:${pct}%"></span></div></div>`;
+  return `<div class="card daymode t${T}" data-action="open-levels" role="button" tabindex="0" aria-label="Open level calendar"><div class="dm-top"><span class="dm-ico">${tr.i}</span><div class="grow"><b>Today you're in ${tr.n} mode</b><small>${sub}</small></div><span class="dm-streak">${st.streak?'🔥 '+st.streak+'-day streak':'Start a streak'}</span></div><div class="bar"><span style="width:${pct}%"></span></div><small class="dm-hint">📅 Tap for your level calendar</small></div>`;
 }
 function askWhy(what){const r=prompt(`Beast mode: why are you ${what}? Type a reason.`);return r&&r.trim()?r.trim():null}
 function coachStats(){
@@ -771,7 +790,7 @@ function coachCard(){
     else if(d>=quota&&left===0)msg=`Quota met: ${d}/${quota}. A beast raises it.`+(next?' Pull one more in.':'')}
   if(overdue>0&&tone!=='friend')msg+=' '+M.over;else if(overdue>0&&d>0)msg+=' '+M.over;
   const stat=(n,l)=>`<div><b>${n}</b><span>${l}</span></div>`;
-  return `<div class="card coach"><div class="cmsg">${esc(msg)}</div>
+  return `<div class="card coach"><div class="cmsg" data-action="open-levels" role="button" tabindex="0" title="Open level calendar">${esc(msg)}</div>
     <div class="cstats">${tone==='beast'?stat(d+'/'+quota,'Quota'):stat(d+'/'+lvlAt()[tier+1],'to '+TIERS[tier+1].n)}${stat(avg,'7-day avg')}${stat(st.best,'Best day')}${stat('🔥 '+st.streak,'Day streak')}</div>
  ${pullN?`<button class="btn" data-action="coach-pull-n" data-n="${pullN}">⚡ Fill quota: pull in ${pullN} task${pullN===1?'':'s'}</button>`:pull?`<button class="btn" data-action="coach-pull" data-id="${next.id}">⚡ Pull in: ${esc(next.title.length>34?next.title.slice(0,33)+'…':next.title)} <small>(${fmtDate(next.due)})</small></button>`:''}</div>`;
 }
@@ -1252,7 +1271,7 @@ function viewData(){
     <div class="kstat"><span><i class="dot ${lb===null?'bad':lb>BACKUP_STALE?'warn':'ok'}"></i>Last backup: <b>${agoText(lb)}</b></span>
       <span><i class="dot ${st==='protected'?'ok':st==='unprotected'?'warn':''}"></i>Storage: <b>${st==='protected'?'protected':st==='unprotected'?'not protected':st==='unsupported'?'unknown':'checking…'}</b></span></div>
     ${st==='unprotected'?`<p class="meta">The browser may clear this data if the phone runs low on space. Bookmarking the page or adding it to the home screen often lets it be protected. <button class="chip" data-action="storage-persist">Ask again</button></p>`:''}
-    <p class="meta"><span>Version <b>${APP_VERSION}</b></span></p>
+    <p class="meta"><span>Version <b>${APP_VERSION}</b></span> <button class="chip" data-action="open-intro">Show intro again</button></p>
     <div class="row">
       <button class="ghost" data-action="export">Export JSON</button>
       <button class="ghost" data-action="import">Import JSON</button>
@@ -1397,6 +1416,64 @@ function habitDates(h){return[...S.logs].filter(k=>k.startsWith(h.id+'|')).map(k
 function bestStreak(h){const dates=isNeg(h)?[bornK(h)]:habitDates(h);if(!dates.length)return 0;let best=0,run=0;const today=TODAY();
   for(let d=new Date(dates[0]+'T00:00');ds(d)<=today;d=addDays(d,1)){const k=ds(d);
     if(good(h,k)){run++;best=Math.max(best,run)}else if(isDue(h,d)&&(k!==today||slipMode(h)))run=0}return best}
+/* ---------- Level calendar ---------- */
+const L2=(en,ar)=>S.cfg.lang==='ar'?ar:en;
+let lcal={y:0,m:0,sel:null};
+function doneByDay(){const c={};for(const t of S.tasks)if(t.done&&t.doneAt){const k=ds(new Date(t.doneAt));(c[k]=c[k]||[]).push(t)}return c}
+const lvlNum=n=>n?tierOf(n)+1:0;
+function openLevels(){const d=new Date();lcal={y:d.getFullYear(),m:d.getMonth(),sel:null};drawLevels();if(!dlg.open)dlg.showModal()}
+function drawLevels(){
+  const by=doneByDay(),now=new Date(),today=TODAY(),L=lvlAt();
+  const first=new Date(lcal.y,lcal.m,1),lead=(first.getDay()+6)%7,days=new Date(lcal.y,lcal.m+1,0).getDate();
+  const cnt=[0,0,0,0];let total=0,cells='<span></span>'.repeat(lead);
+  for(let d=1;d<=days;d++){
+    const k=ds(new Date(lcal.y,lcal.m,d)),n=(by[k]||[]).length,lv=lvlNum(n),fut=k>today;
+    if(!fut){cnt[lv]++;total+=n}
+    const ic=lv?TIERS[lv-1].i:'';
+    cells+=`<button type="button" class="cd lc lv${lv} ${k===today?'tod':''} ${lcal.sel===k?'sel':''}" ${fut?'disabled':`data-action="lvl-day" data-date="${k}"`} aria-label="${k}: ${n} ${L2('tasks','مهام')}${lv?', '+TIERS[lv-1].n:''}">${d}${ic?`<i class="lvi" aria-hidden="true">${ic}</i>`:''}</button>`;
+  }
+  const wk=[...Array(7)].map((_,i)=>`<span>${fmt(new Date(2024,0,1+i),{weekday:'narrow'})}</span>`).join('');
+  const atNow=lcal.y===now.getFullYear()&&lcal.m===now.getMonth();
+  const tn=i=>L2(TIERS[i].n,AR[TIERS[i].n]);
+  let dayBox='';
+  if(lcal.sel){const list=by[lcal.sel]||[],lv=lvlNum(list.length);
+    dayBox=`<div class="lv-day"><b>${fmtDate(lcal.sel)}${lv?' · '+TIERS[lv-1].i+' '+tn(lv-1):''}</b> · ${list.length} ${L2(list.length===1?'task':'tasks','مهمة')}
+      ${list.length?`<ul>${list.slice(0,12).map(t=>`<li>${esc(t.title)}</li>`).join('')}</ul>${list.length>12?`<div class="meta">+${list.length-12}</div>`:''}`:`<div class="meta">${L2('Nothing finished.','لم تُنجز شيئًا.')}</div>`}</div>`}
+  const stat=(b,l)=>`<div><b>${b}</b><span>${l}</span></div>`;
+  dlg.innerHTML=`<div class="hist">
+    <div class="hist-top"><h3>${L2('Day levels','مستويات الأيام')}</h3><button type="button" class="icon" data-action="dlg-close" aria-label="Close">✕</button></div>
+    <div class="hist-stats">${stat('⚡ '+cnt[1],tn(0))}${stat('🔥 '+cnt[2],tn(1))}${stat('⚔️ '+cnt[3],tn(2))}${stat(total,L2('Tasks done','مهام منجزة'))}</div>
+    <div class="cal-nav"><button type="button" class="icon" data-action="lvl-month" data-d="-1" aria-label="Previous month">‹</button><b>${fmt(first,{month:'long',year:'numeric'})}</b><button type="button" class="icon" data-action="lvl-month" data-d="1" ${atNow?'disabled':''} aria-label="Next month">›</button></div>
+    <div class="cal cal-wk">${wk}</div><div class="cal">${cells}</div>
+    <div class="lv-legend"><span>⚡ ${tn(0)} 1–${L[1]-1}</span><span>🔥 ${tn(1)} ${L[1]}–${L[2]-1}</span><span>⚔️ ${tn(2)} ${L[2]}+</span><span>${L2('Blank: nothing finished','فارغ: لم تُنجز شيئًا')}</span></div>
+    ${dayBox||`<p class="meta">${L2('Tap a day to see what you finished.','اضغط على يوم لترى ما أنجزته.')}</p>`}
+    <p class="meta">${L2('Levels use your current thresholds from Settings.','تُحسب المستويات حسب حدودك الحالية في الإعدادات.')}</p></div>`;
+}
+/* ---------- First-run intro ---------- */
+let introStep=0,introOn=false;
+const introSeen=()=>{try{return localStorage.getItem('gt-intro')==='1'}catch(e){return true}};
+const markIntro=()=>{try{localStorage.setItem('gt-intro','1')}catch(e){}};
+function openIntro(){introStep=0;introOn=true;drawIntro();if(!dlg.open)dlg.showModal()}
+function drawIntro(){
+  const L=lvlAt(),stu=!!S.cfg.student,ar=S.cfg.lang==='ar';
+  const steps=[
+    {i:'👋',t:L2('Welcome to Goal Tracker','أهلاً بك في متتبع الأهداف'),p:L2('Turn big goals into this week\'s steps, and show up every day. No account, no internet: everything stays on this phone.','حوّل أهدافك الكبيرة إلى خطوات لهذا الأسبوع، والتزم بها كل يوم. بلا حساب وبلا إنترنت: كل شيء يبقى على هذا الهاتف.'),
+     x:`<div class="intro-row"><button type="button" class="${ar?'ghost':'btn'}" data-action="intro-lang" data-v="en">English</button><button type="button" class="${ar?'btn':'ghost'}" data-action="intro-lang" data-v="ar">العربية</button></div>`},
+    {i:'🪜',t:L2('The goal ladder','سلّم الأهداف'),p:L2('Start with a 5-year goal, then break it into annual, monthly and weekly goals. Finish the small steps and progress climbs the ladder by itself.','ابدأ بهدف لخمس سنوات، ثم قسّمه إلى أهداف سنوية وشهرية وأسبوعية. أنجز الخطوات الصغيرة وسيصعد التقدم في السلّم تلقائيًا.')},
+    {i:'⚡',t:L2('Day levels','مستويات الأيام'),p:L2(`Every task you finish today raises your level: ⚡ Spark, 🔥 Blaze at ${L[1]}, ⚔️ Titan at ${L[2]}. Titan days get tougher on purpose. Tap the banner on the Dashboard to see your level calendar.`,`كل مهمة تنجزها اليوم ترفع مستواك: ⚡ شرارة، 🔥 لهب عند ${L[1]}، ⚔️ جبّار عند ${L[2]}. أيام الجبّار أصعب عن قصد. اضغط على الشريط في الرئيسية لترى تقويم مستوياتك.`)},
+    {i:'🔁',t:L2('Habits','العادات'),p:L2('Add habits you want to build, and "avoid" habits for things you\'re quitting. Every clean day grows your 🛡 streak.','أضف عادات تريد بناءها، وعادات "تجنّب" لأشياء تريد تركها. كل يوم نظيف يزيد سلسلتك 🛡.')},
+    {i:'🎓',t:L2('Studying?','هل تدرس؟'),p:L2('Student mode adds a Study tab: a revision timetable with Weak/OK/Strong ratings, spaced repetition and exam countdowns.','وضع الطالب يضيف تبويب الدراسة: جدول مراجعة بتقييم ضعيف/مقبول/قوي، ومراجعة متباعدة، وعدّ تنازلي للامتحانات.'),
+     x:`<div class="intro-row"><button type="button" class="${stu?'btn':'ghost'}" data-action="intro-student">${stu?L2('✓ Student mode on','✓ وضع الطالب مفعّل'):L2('Turn on student mode','تفعيل وضع الطالب')}</button></div>`},
+    {i:'🚀',t:L2('You\'re set','أنت جاهز'),p:L2('Your data lives only in this browser, so copy a backup from Settings now and then. Start with one goal for this week.','بياناتك محفوظة في هذا المتصفح فقط، لذا انسخ نسخة احتياطية من الإعدادات بين حين وآخر. ابدأ بهدف واحد لهذا الأسبوع.')}
+  ];
+  const st=steps[introStep],last=introStep===steps.length-1;
+  dlg.innerHTML=`<div class="intro">
+    <div class="ii" aria-hidden="true">${st.i}</div><h3>${st.t}</h3><p>${st.p}</p>${st.x||''}
+    <div class="intro-dots" aria-hidden="true">${steps.map((_,i)=>`<i class="${i===introStep?'on':''}"></i>`).join('')}</div>
+    <div class="intro-nav">${introStep?`<button type="button" class="ghost" data-action="intro-step" data-d="-1">${L2('Back','رجوع')}</button>`:`<button type="button" class="ghost" data-action="intro-done">${L2('Skip','تخطٍّ')}</button>`}<span class="grow"></span>
+    ${last?`<button type="button" class="ghost" data-action="intro-done" data-go="goals">${L2('Set my first goal','حدّد هدفي الأول')}</button><button type="button" class="btn" data-action="intro-done">${L2('Let\'s go','لنبدأ')}</button>`:`<button type="button" class="btn" data-action="intro-step" data-d="1">${L2('Next','التالي')}</button>`}</div></div>`;
+}
+dlg.addEventListener('close',()=>{if(introOn){introOn=false;markIntro()}});
 function openHabit(id){const d=new Date();cal={id,y:d.getFullYear(),m:d.getMonth()};drawHabit();dlg.showModal();}
 function drawHabit(){
   const h=S.habits.find(x=>x.id===cal.id);if(!h){dlg.close();return}
@@ -1421,7 +1498,7 @@ function drawHabit(){
 document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('[role=button][data-action]')){e.preventDefault();e.target.click()}});
 
 /* ---------- Version ---------- */
-const APP_VERSION='0.50.0';
+const APP_VERSION='0.51.0';
 
 /* ---------- Completion sounds (synthesised, no audio files) ---------- */
 const Sound={
@@ -1458,7 +1535,7 @@ const saveCfg=()=>{try{localStorage.setItem('gt-settings',JSON.stringify(S.cfg))
 /* ---------- Language: English / العربية ---------- */
 // The app is written in English. In Arabic mode every piece of text that appears on screen is translated from this dictionary
 // as it is added to the page (and restored when you switch back), and the layout flips to right-to-left.
-const AR={
+const AR={'Tap for your level calendar':'اضغط لرؤية تقويم مستوياتك','Show intro again':'عرض المقدمة مرة أخرى','Open level calendar':'فتح تقويم المستويات',
 'Goal Tracker':'متتبع الأهداف','Dashboard':'لوحة المتابعة','Home':'الرئيسية','Tasks':'المهام','Goals':'الأهداف','Habits':'العادات','Study':'الدراسة','Settings':'الإعدادات','Auto':'تلقائي','Light':'فاتح','Dark':'داكن',
 'Search':'بحث','Search everything…':'ابحث في كل شيء…','Type to search tasks, goals and habits.':'اكتب للبحث في المهام والأهداف والعادات.','Nothing found.':'لا توجد نتائج.','Close':'إغلاق','Cancel':'إلغاء','Save':'حفظ','Add':'إضافة','Edit':'تعديل','Delete':'حذف','Copy':'نسخ','Restore':'استعادة','Undo':'تراجع','Check off':'تم','Dismiss':'إخفاء',
 'Theme: auto (tap to change)':'السمة: تلقائي (اضغط للتغيير)','Theme: light (tap to change)':'السمة: فاتح (اضغط للتغيير)','Theme: dark (tap to change)':'السمة: داكن (اضغط للتغيير)','Theme':'السمة',
@@ -1692,6 +1769,14 @@ const actions={
   async 'cal-toggle'(el){await toggleLog(cal.id,el.dataset.date);drawHabit()},
   'cal-month'(el){const d=new Date(cal.y,cal.m+(+el.dataset.d),1);cal.y=d.getFullYear();cal.m=d.getMonth();drawHabit();return false},
   'dlg-close'(){dlg.close();return false},
+  'open-levels'(){openLevels();return false},
+  'lvl-month'(el){const d=new Date(lcal.y,lcal.m+(+el.dataset.d),1);lcal.y=d.getFullYear();lcal.m=d.getMonth();lcal.sel=null;drawLevels();return false},
+  'lvl-day'(el){lcal.sel=lcal.sel===el.dataset.date?null:el.dataset.date;drawLevels();return false},
+  'open-intro'(){openIntro();return false},
+  'intro-step'(el){introStep=Math.max(0,Math.min(5,introStep+(+el.dataset.d)));drawIntro();return false},
+  'intro-lang'(el){S.cfg.lang=el.dataset.v;saveCfg();applyLang();render();drawIntro()},
+  'intro-student'(){S.cfg.student=!S.cfg.student;saveCfg();render();drawIntro()},
+  'intro-done'(el){introOn=false;markIntro();dlg.close();if(el.dataset.go){S.view=el.dataset.go;scrollTo(0,0)}},
   'edit-task'(el){openEdit('task',el.dataset.id);return false},
   'edit-goal'(el){openEdit('goal',el.dataset.id);return false},
   'edit-habit'(el){openEdit('habit',el.dataset.id);return false},
@@ -2233,6 +2318,7 @@ async function autoArchive(){
 (async()=>{
   applyLang();
   await load();await autoArchive();render();
+  if(!introSeen()){if(S.tasks.length||S.goals.length||S.habits.length)markIntro();else openIntro()}
   await checkStorage(true);if(S.view==='data')render();
 })();
 </script>
