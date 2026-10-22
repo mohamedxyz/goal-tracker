@@ -5,6 +5,7 @@
     PATCH = bug fix · MINOR = new feature · MAJOR = breaks old backups or data
 
   Changelog
+  0.46.0 Goals: new Ladder view (default) shows the whole goal tree with tasks under each goal, tick tasks and add new ones in place, weekly 'tasks left' summary; one-line quick add; tasks can only link to weekly goals
   0.45.1 Dashboard is much shorter: one compact row of tiles, today's tasks/goals/habits first, charts and consistency tucked into a collapsed Insights card
   0.45.0 Tasks tab redesign to match Exams: one-line quick add with a More options drawer, due date as a pill, priority as a coloured edge, and a single ⋯ menu per task (edit, share, archive, delete)
   0.44.0 Select mode for tasks and habits (bulk date, priority, tag, goal, folder, schedule, done, archive, delete); Trash in Settings keeps deleted tasks and habits for 30 days; Student compact mode (tighter layout everywhere)
@@ -442,6 +443,20 @@ body.cmp .add{gap:6px}body.cmp .goals,body.cmp .list{gap:6px}
 .dstats .stat{padding:8px 6px;text-align:center}.dstats .stat .n{font-size:19px}.dstats .stat .l{font-size:11px;line-height:1.25}
 .insbtn{display:flex;justify-content:space-between;align-items:center;width:100%;margin-top:14px;font:inherit;color:var(--text);cursor:pointer;text-align:start}
 .insbtn small{color:var(--muted);margin-inline-start:6px}
+.lnode{margin-top:8px;border:1px solid var(--line);border-radius:12px;background:var(--card);padding:8px 10px}
+.lnode .lnode{margin-inline-start:0;padding:6px 8px;background:color-mix(in oklab,var(--card) 70%,var(--bg))}
+.lnode.isdone>.lrow .title{text-decoration:line-through;opacity:.6}
+.lrow{display:flex;align-items:center;gap:6px}.lrow .grow{cursor:pointer;min-width:0}
+.lchev{width:26px;flex:none;border:0;background:none;color:var(--muted);font-size:12px;padding:6px 0;cursor:pointer}
+.lnode>.bar{margin:6px 0 2px}
+.lkids{margin-top:6px;display:flex;flex-direction:column;gap:2px}
+.ltask{display:flex;align-items:center;gap:10px;padding:7px 4px;border-top:1px dashed var(--line);min-height:40px}
+.ltask input{width:20px;height:20px;accent-color:var(--accent);flex:none}.ltask span{flex:1;min-width:0;overflow-wrap:anywhere}
+.ltask small{color:var(--muted)}.ltask small.overdue{color:var(--bad)}.ltask.sdone span{text-decoration:line-through;opacity:.55}
+.ladd{display:flex;gap:6px;margin-top:4px}.ladd input{flex:1;min-width:0}
+.lnum{display:flex;gap:6px;margin-top:6px}.lnum .numval{flex:1}
+.wsum{margin:0 0 12px;padding:10px 12px;border-radius:12px;background:var(--soft);display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px}
+.wsum span{color:var(--muted);font-size:13px}.wsum .bar{flex:1 0 100%;margin-top:4px}.wsum.all{background:color-mix(in oklab,var(--ok) 20%,var(--card))}
 </style>
 </head>
 <body>
@@ -526,7 +541,7 @@ const fmt=(d,o)=>{const k=LOCALE+JSON.stringify(o);return(_fmts[k]||(_fmts[k]=ne
 const fmtDate=s=>{if(!s)return'';const d=new Date(s+'T00:00');return fmt(d,{month:'short',day:'numeric'})};
 
 /* ---------- State ---------- */
-const S={tasks:[],goals:[],habits:[],topics:[],exams:[],logs:new Set(),view:'dash',horizon:'weekly',goalScope:'current',taskFilter:'open',persistent:true,trash:[],sel:new Set(),selMode:null};
+const S={tasks:[],goals:[],habits:[],topics:[],exams:[],logs:new Set(),view:'dash',horizon:'ladder',goalScope:'current',taskFilter:'open',persistent:true,trash:[],sel:new Set(),selMode:null};
 
 const TRASH_DAYS=30;
 async function load(){
@@ -664,6 +679,40 @@ function habitCard(h,full){
     ${dayButtons(h)}
     ${full?`${mvBtns('move-habit',h.id,`data-id="${h.id}"`)}${shareBtn('habit',h.id)}<button class="icon" data-action="edit-habit" data-id="${h.id}" title="Edit" aria-label="Edit ${esc(h.name)}">✎</button><button class="icon" data-action="del-habit" data-id="${h.id}" title="Delete" aria-label="Delete ${esc(h.name)}">✕</button>`:''}
   </div>${full?`<div class="heat">${heat}</div>`:''}</div>`;
+}
+const HRANK={five:0,annual:1,monthly:2,weekly:3};
+function weekSummary(){
+  const ids=new Set(S.goals.filter(g=>g.horizon==='weekly'&&g.period===currentPeriod('weekly')).map(g=>g.id));
+  const ts=S.tasks.filter(t=>ids.has(t.goalId)&&!t.archived),n=ts.length,d=ts.filter(t=>t.done).length;
+  if(!n)return'';
+  return `<div class="wsum ${d===n?'all':''}"><b>${d===n?'🎉 All '+n+' tasks done this week':(n-d)+' task'+(n-d===1?'':'s')+' left this week'}</b><span>${d}/${n} done</span><div class="bar"><span style="width:${Math.round(d/n*100)}%"></span></div></div>`;
+}
+function ladderView(){
+  const cur=S.goalScope==='current';
+  const V=S.goals.filter(g=>!cur||g.period===currentPeriod(g.horizon)||needsReview(g)),ids=new Set(V.map(g=>g.id));
+  const ord=(a,b)=>(a.done-b.done)||b.period.localeCompare(a.period)||a.title.localeCompare(b.title);
+  const roots=V.filter(g=>!g.parentId||!ids.has(g.parentId)).sort((a,b)=>HRANK[a.horizon]-HRANK[b.horizon]||ord(a,b));
+  const seen=new Set();
+  return roots.map(g=>ladderNode(g,ids,seen,ord)).join('');
+}
+function ladderNode(g,ids,seen,ord){
+  if(seen.has(g.id))return'';seen.add(g.id);
+  const kids=S.goals.filter(c=>c.parentId===g.id&&ids.has(c.id)).sort(ord);
+  const tasks=S.tasks.filter(t=>t.goalId===g.id&&!t.archived).sort((a,b)=>(a.done-b.done)||(a.due||'9').localeCompare(b.due||'9'));
+  const key='goal:'+g.id,col=S.collapsed.has(key),p=progress(g),k=goalKind(g),rv=needsReview(g),det=goalDetail(g);
+  const can=g.horizon==='weekly'&&!g.done;
+  const has=kids.length||tasks.length||can;
+  const trow=t=>`<label class="ltask ${t.done?'sdone':''}"><input type="checkbox" data-action="toggle-task" data-id="${t.id}" ${t.done?'checked':''}><span>${esc(t.title)}</span>${t.due&&!t.done?`<small class="${t.due<TODAY()?'overdue':''}">${t.due===TODAY()?'Today':fmtDate(t.due)}</small>`:''}</label>`;
+  const num=k==='number'?`<div class="lnum"><button class="ghost" data-action="goal-dec" data-id="${g.id}" aria-label="Decrease">−</button><button class="numval" data-action="goal-set" data-id="${g.id}">${fmtNum(g.value)} <span>/ ${fmtNum(g.target)} ${esc(g.unit||'')}</span></button><button class="ghost" data-action="goal-inc" data-id="${g.id}" aria-label="Increase">+</button></div>`:'';
+  return `<div class="lnode ${g.done?'isdone':''} ${g.status==='missed'?'ismissed':''}">
+    <div class="lrow">${has?`<button type="button" class="lchev" data-action="toggle-folder" data-name="${key}" aria-expanded="${!col}" aria-label="${col?'Expand':'Collapse'}">${col?'▶':'▼'}</button>`:'<span class="lchev"></span>'}
+      <div class="grow" data-action="edit-goal" data-id="${g.id}" role="button" tabindex="0"><div class="title">${esc(g.title)}</div>
+        <div class="meta"><span class="tag">${HORIZONS[g.horizon]} · ${esc(g.period)}</span><span><b>${p}%</b></span>${det&&k!=='number'?`<span>${det}</span>`:''}${rv?'<span class="tag t-warn">Needs review</span>':''}${g.done?'<span class="tag t-ok">✓ Done</span>':''}</div></div>
+      ${k!=='rollup'&&!tasks.length?`<button class="icon" data-action="done-goal" data-id="${g.id}" aria-label="${g.done?'Reopen':'Mark complete'}">${g.done?'↺':'✓'}</button>`:''}</div>
+    <div class="bar"><span style="width:${p}%"></span></div>${num}
+    ${col?'':`<div class="lkids">${tasks.map(trow).join('')}
+      ${can?`<form class="ladd" data-form="ltask" data-goal="${g.id}"><input type="text" name="title" placeholder="+ Add a task for this goal" required autocomplete="off"><button class="chip" aria-label="Add task">＋</button></form>`:''}
+      ${kids.map(c=>ladderNode(c,ids,seen,ord)).join('')}</div>`}</div>`;
 }
 function goalCard(g){
   const p=progress(g),k=goalKind(g),parent=g.parentId&&goalById(g.parentId),rv=needsReview(g),missed=g.status==='missed';
@@ -837,7 +886,7 @@ function viewTasks(){
     <input type="date" name="due" value="${S.cfg.dueDef==="none"?"":S.cfg.dueDef==="tomorrow"?ds(addDays(new Date(),1)):today}">
     <select name="priority">${[['low','Low'],['med','Medium'],['high','High']].map(([v,l])=>`<option value="${v}" ${S.cfg.prio===v?'selected':''}>${l}</option>`).join('')}</select>
     <select name="repeat" aria-label="Repeat">${REPEATS.map(([v,l])=>`<option value="${v}">${v?'🔁 ':''}${l}</option>`).join('')}</select>
-    <select name="goalId">${goalOptions('')}</select>
+    <select name="goalId">${goalOptions('',g=>g.horizon==='weekly')}</select>
     <input type="text" name="tag" list="tagListAdd" placeholder="Tag folder (optional)" autocomplete="off">${tagList('tagListAdd')}
     <textarea name="notes" placeholder="Notes (optional)" style="min-height:40px"></textarea>
     <textarea name="items" placeholder="Checklist (optional, one item per line)" style="min-height:40px"></textarea>
@@ -847,26 +896,28 @@ function viewTasks(){
   ${(done.length&&showDone)?`${f==='done'?'':`<div class="divider">Completed · ${done.length}</div>`}<ul class="list">${(S.doneAll?done:done.slice(0,40)).map(taskItem).join('')}</ul>${done.length>40?`<button class="chip" style="margin-top:8px" data-action="toggle-done-all">${S.doneAll?'Show fewer':'Show all '+done.length+' completed'}</button>`:''}`:''}`;
 }
 function viewGoals(){
-  const h=S.horizon;const cur=currentPeriod(h);const ph=PARENT[h];
+  const ladder=S.horizon==='ladder',h=ladder?'weekly':S.horizon;const cur=currentPeriod(h);const ph=PARENT[h];
   let list=S.goals.filter(g=>g.horizon===h);
   if(S.goalScope==='current')list=list.filter(g=>g.period===cur||needsReview(g));
   list.sort((a,b)=>(needsReview(b)-needsReview(a))||(a.done-b.done)||((a.status==='missed')-(b.status==='missed'))||b.period.localeCompare(a.period));
   const defKind=h==='weekly'?'check':'rollup';
-  const seg=Object.entries(HORIZONS).map(([k,l])=>`<button class="${k===h?'on':''}" data-action="horizon" data-v="${k}">${l}</button>`).join('');
+  const seg=`<button class="${ladder?'on':''}" data-action="horizon" data-v="ladder">🪜 Ladder</button>`+Object.entries(HORIZONS).map(([k,l])=>`<button class="${!ladder&&k===h?'on':''}" data-action="horizon" data-v="${k}">${l}</button>`).join('');
   return `<div class="seg">${seg}</div>
-  <form class="add" data-form="goal" data-kind="${defKind}">
-    <input type="text" name="title" placeholder="New ${HORIZONS[h].toLowerCase()} goal…" required>
+  <form class="add taskadd card" data-form="goal" data-kind="${defKind}">
+    <div class="qa"><input type="text" name="title" placeholder="New ${HORIZONS[h].toLowerCase()} goal…" required><button class="btn">Add</button></div>
+    <details class="more"><summary>More options</summary><div class="moreg">
     <input type="text" name="period" value="${cur}" style="flex:0 1 130px" title="Period">
     <select name="kind" title="How will you measure it?"><option value="check" ${defKind==='check'?'selected':''}>☐ Checkbox</option><option value="number">🔢 Number target</option>${h!=='weekly'?`<option value="rollup" selected>🧩 Built from ${HORIZONS[CHILD[h]].toLowerCase()} goals</option>`:''}</select>
     <span class="f-num"><input type="number" name="target" min="0" step="any" placeholder="Target, e.g. 40" style="flex:1 1 120px"><input type="text" name="unit" placeholder="Unit, e.g. hours" style="flex:1 1 120px"></span>
     ${h!=='weekly'?`<span class="f-roll"><input type="number" name="expected" min="1" step="1" placeholder="How many ${HORIZONS[CHILD[h]].toLowerCase()} goals? (default ${defaultExpected({horizon:h,period:cur})})" style="flex:1 1 100%"></span>`:''}
     ${ph?`<select name="parentId">${goalOptions('',g=>g.horizon===ph).replace('— No goal —','— Supports which '+HORIZONS[ph].toLowerCase()+' goal? —')}</select>`:''}
     <textarea name="notes" placeholder="Why it matters / how you'll measure it (optional)"></textarea>
-    <button class="btn">Add goal</button></form>
+    </div></details></form>
+  ${ladder?weekSummary():''}
   <div class="filters">
     <button class="chip ${S.goalScope==='current'?'on':''}" data-action="goal-scope" data-v="current">Current (${cur})</button>
     <button class="chip ${S.goalScope==='all'?'on':''}" data-action="goal-scope" data-v="all">All periods</button>${h==='weekly'?'<button class="chip" data-action="open-plan">Plan this week</button>':''}</div>
-  ${list.length?`<div class="goals">${list.map(goalCard).join('')}</div>`:`<div class="empty">No ${HORIZONS[h].toLowerCase()} goals yet.</div>`}`;
+  ${ladder?(ladderView()||`<div class="empty">No goals yet. Add one above, then hang tasks under it.</div>`):list.length?`<div class="goals">${list.map(goalCard).join('')}</div>`:`<div class="empty">No ${HORIZONS[h].toLowerCase()} goals yet.</div>`}`;
 }
 function viewHabits(){
   return `<form class="add" data-form="habit">
@@ -974,13 +1025,13 @@ function openBulk(){
   const k=S.selMode,n=S.sel.size;if(!k||!n)return;
   let body='';
   if(k==='tasks'){
-    const goals=`<option value="">Don't change</option><option value="-">— No goal —</option>`+S.goals.filter(g=>!g.done).map(g=>`<option value="${g.id}">${HORIZONS[g.horizon]} · ${esc(g.title)}</option>`).join('');
+    const goals=`<option value="">Don't change</option><option value="-">— No goal —</option>`+S.goals.filter(g=>!g.done&&g.horizon==='weekly').map(g=>`<option value="${g.id}">${HORIZONS[g.horizon]} · ${esc(g.title)}</option>`).join('');
     body=`<label>Due date</label><select name="dmode"><option value="">Don't change</option><option value="today">Today</option><option value="tomorrow">Tomorrow</option><option value="week">In 7 days</option><option value="plus1">Push back 1 day</option><option value="pick">Pick a date…</option><option value="none">No date</option></select>
       <input type="date" name="due" style="margin-top:6px">
       <label>Priority</label><select name="priority"><option value="">Don't change</option><option value="low">Low</option><option value="med">Medium</option><option value="high">High</option></select>
       <label>Tag folder</label><input type="text" name="tag" list="tagListBulk" placeholder="Don't change" autocomplete="off">${tagList('tagListBulk')}
       <label class="check"><input type="checkbox" name="notag"> Remove tag</label>
-      <label>Linked goal</label><select name="goalId">${goals}</select>`;
+      <label>Weekly goal</label><select name="goalId">${goals}</select>`;
   }else{
     body=`<label>Folder</label><input type="text" name="group" list="folderListBulk" placeholder="Don't change" autocomplete="off">${folderList('folderListBulk')}
       <label class="check"><input type="checkbox" name="nogroup"> Remove from folder</label>
@@ -1149,11 +1200,11 @@ function parentField(h,sel,selfId){
 function openEdit(kind,id){
   let body='',title='';
   if(kind==='task'){const t=S.tasks.find(x=>x.id===id);title='Edit task';
-    const goals=`<option value="">— No goal —</option>`+S.goals.filter(g=>!g.done||g.id===t.goalId).map(g=>`<option value="${g.id}" ${g.id===t.goalId?'selected':''}>${HORIZONS[g.horizon]} · ${esc(g.title)}</option>`).join('');
+    const goals=`<option value="">— No weekly goal —</option>`+S.goals.filter(g=>(g.horizon==='weekly'&&!g.done)||g.id===t.goalId).map(g=>`<option value="${g.id}" ${g.id===t.goalId?'selected':''}>${HORIZONS[g.horizon]} · ${esc(g.title)}</option>`).join('');
     body=`<label>Title</label><input type="text" name="title" value="${esc(t.title)}" required>
       <div class="two"><div><label>Due date</label><input type="date" name="due" value="${t.due||''}"></div>
       <div><label>Priority</label><select name="priority">${[['low','Low'],['med','Medium'],['high','High']].map(([v,l])=>`<option value="${v}" ${t.priority===v?'selected':''}>${l}</option>`).join('')}</select></div></div>
-      <label>Linked goal</label><select name="goalId">${goals}</select>
+      <label>Weekly goal</label><select name="goalId">${goals}</select>
       <label>Tag folder</label><input type="text" name="tag" list="tagListEdit" value="${esc(t.tag||'')}" placeholder="None" autocomplete="off">${tagList('tagListEdit')}
       <label>Repeat</label><select name="repeat">${REPEATS.map(([r,l])=>`<option value="${r}" ${(t.repeat||'')===r?'selected':''}>${l}</option>`).join('')}</select>
       <label>Notes</label><textarea name="notes" placeholder="Details, links, anything…">${esc(t.notes)}</textarea>
@@ -1263,7 +1314,7 @@ function drawHabit(){
 document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('[role=button][data-action]')){e.preventDefault();e.target.click()}});
 
 /* ---------- Version ---------- */
-const APP_VERSION='0.45.1';
+const APP_VERSION='0.46.0';
 
 /* ---------- Completion sounds (synthesised, no audio files) ---------- */
 const Sound={
@@ -1306,7 +1357,7 @@ const AR={
 'Theme: auto (tap to change)':'السمة: تلقائي (اضغط للتغيير)','Theme: light (tap to change)':'السمة: فاتح (اضغط للتغيير)','Theme: dark (tap to change)':'السمة: داكن (اضغط للتغيير)','Theme':'السمة',
 // dashboard
 'Today':'اليوم','Tomorrow':'غدًا','yesterday':'أمس','Overdue':'متأخرة','Today\'s tasks':'مهام اليوم','Today\'s habits':'عادات اليوم','This week\'s goals':'أهداف هذا الأسبوع','Today\'s picks':'اختيارات اليوم','Today\'s tasks done':'مهام اليوم المنجزة','Habits done today':'العادات المنجزة اليوم',
-'Nothing due today.':'لا شيء مستحق اليوم.','Staying clean':'البقاء بعيداً','☑ Select':'☑ تحديد','More options':'خيارات إضافية','Insights':'الإحصائيات','⋯':'⋯','✎ Edit':'✎ تعديل','Share':'مشاركة','✓ Selecting':'✓ جارٍ التحديد','All':'الكل','None':'لا شيء','Cancel':'إلغاء','✓ Done':'✓ تم','✎ Edit…':'✎ تعديل…','Archive':'أرشفة','🗑 Delete':'🗑 حذف','Trash':'سلة المحذوفات','Open trash →':'فتح السلة ←','Trash is empty.':'السلة فارغة.','Empty trash':'إفراغ السلة','Compact layout':'تخطيط مضغوط','Apply':'تطبيق','Staying clean today':'بعيد عنها اليوم','Longest clean streak':'أطول سلسلة امتناع','Clean so far today':'ملتزم حتى الآن اليوم','Slipped today':'زلّ اليوم','Held today':'امتنعت اليوم','Not confirmed yet':'لم يؤكَّد بعد','Log slip':'سجّل زلّة','Undo slip':'تراجع عن الزلّة','Mark avoided':'تم الامتناع','Plan this week':'خطّط هذا الأسبوع','Weekly report':'التقرير الأسبوعي','Activity':'النشاط','Activity heatmap':'خريطة النشاط','Less':'أقل','More':'أكثر','actions':'إجراءات','active days':'أيام نشطة','Last 26 weeks':'آخر 26 أسبوعًا','Last 30 days':'آخر 30 يومًا','Last 30':'آخر 30','Total days':'إجمالي الأيام','Best current streak':'أفضل سلسلة حالية','Best streak':'أفضل سلسلة','Habit consistency':'انتظام العادات','Tasks completed':'المهام المنجزة','Goal progress':'تقدم الأهداف','Active goals':'الأهداف النشطة','none yet':'لا شيء بعد','Current':'الحالية','Current periods':'الفترات الحالية','Sections':'الأقسام',
+'Nothing due today.':'لا شيء مستحق اليوم.','Staying clean':'البقاء بعيداً','☑ Select':'☑ تحديد','🪜 Ladder':'🪜 السلّم','+ Add a task for this goal':'+ أضف مهمة لهذا الهدف','Weekly goal':'هدف أسبوعي','More options':'خيارات إضافية','Insights':'الإحصائيات','⋯':'⋯','✎ Edit':'✎ تعديل','Share':'مشاركة','✓ Selecting':'✓ جارٍ التحديد','All':'الكل','None':'لا شيء','Cancel':'إلغاء','✓ Done':'✓ تم','✎ Edit…':'✎ تعديل…','Archive':'أرشفة','🗑 Delete':'🗑 حذف','Trash':'سلة المحذوفات','Open trash →':'فتح السلة ←','Trash is empty.':'السلة فارغة.','Empty trash':'إفراغ السلة','Compact layout':'تخطيط مضغوط','Apply':'تطبيق','Staying clean today':'بعيد عنها اليوم','Longest clean streak':'أطول سلسلة امتناع','Clean so far today':'ملتزم حتى الآن اليوم','Slipped today':'زلّ اليوم','Held today':'امتنعت اليوم','Not confirmed yet':'لم يؤكَّد بعد','Log slip':'سجّل زلّة','Undo slip':'تراجع عن الزلّة','Mark avoided':'تم الامتناع','Plan this week':'خطّط هذا الأسبوع','Weekly report':'التقرير الأسبوعي','Activity':'النشاط','Activity heatmap':'خريطة النشاط','Less':'أقل','More':'أكثر','actions':'إجراءات','active days':'أيام نشطة','Last 26 weeks':'آخر 26 أسبوعًا','Last 30 days':'آخر 30 يومًا','Last 30':'آخر 30','Total days':'إجمالي الأيام','Best current streak':'أفضل سلسلة حالية','Best streak':'أفضل سلسلة','Habit consistency':'انتظام العادات','Tasks completed':'المهام المنجزة','Goal progress':'تقدم الأهداف','Active goals':'الأهداف النشطة','none yet':'لا شيء بعد','Current':'الحالية','Current periods':'الفترات الحالية','Sections':'الأقسام',
 'Review':'مراجعة','Hit it, missed, or carry over. About a minute.':'حققته أو فاتني أو أرحّله. دقيقة تقريبًا.','These periods have ended. Be honest. This is where the system gets smarter.':'انتهت هذه الفترات. كن صادقًا، هنا يصبح النظام أذكى.','All caught up. Reviews done ✓':'لا شيء متأخر. اكتملت المراجعات ✓','✓ Hit it':'✓ حققته','✗ Missed':'✗ فاتني','Hit it':'حققته','Missed':'فاتني','Review note (what got in the way / what worked)':'ملاحظة المراجعة (ما الذي أعاق / ما الذي نجح)','What got in the way / what worked? (optional)':'ما الذي أعاق / ما الذي نجح؟ (اختياري)',
 'No backup yet':'لا توجد نسخة احتياطية بعد','Your data lives only in this browser. Copy a backup and keep it somewhere safe.':'بياناتك محفوظة في هذا المتصفح فقط. انسخ نسخة احتياطية واحتفظ بها في مكان آمن.','Copy backup':'نسخ احتياطي','Remind me later':'ذكّرني لاحقًا','Dismiss backup reminder':'إخفاء تذكير النسخ الاحتياطي','OK →':'حسنًا →',
 // tasks
@@ -1689,18 +1740,19 @@ document.addEventListener('submit',async e=>{
   const v=Object.fromEntries(new FormData(f));const kind=f.dataset.form;
   if(kind==='task'){const t={id:uid(),title:v.title.trim(),notes:(v.notes||'').trim(),repeat:v.repeat||'',tag:(v.tag||'').trim(),items:parseItems(v.items),due:v.due||null,priority:v.priority,goalId:v.goalId||null,done:false,created:Date.now()};S.tasks.push(t);await DB.put('tasks',t)}
   if(kind==='goal'){
-    let gk=v.kind||'check';if(gk==='rollup'&&S.horizon==='weekly')gk='check';
+    const hz=S.horizon==='ladder'?'weekly':S.horizon;let gk=v.kind||'check';if(gk==='rollup'&&hz==='weekly')gk='check';
     if(gk==='number'&&!(+v.target>0)){alert('Set a target number for this goal (for example 40).');return}
-    const g={id:uid(),title:v.title.trim(),horizon:S.horizon,period:(v.period||currentPeriod(S.horizon)).trim(),parentId:v.parentId||null,notes:(v.notes||'').trim(),
+    const g={id:uid(),title:v.title.trim(),horizon:hz,period:(v.period||currentPeriod(hz)).trim(),parentId:v.parentId||null,notes:(v.notes||'').trim(),
       kind:gk,target:+v.target||0,unit:(v.unit||'').trim(),value:0,expected:v.expected?Math.max(1,Math.round(+v.expected)):null,done:false,created:Date.now()};
     S.goals.push(g);await DB.put('goals',g)}
+  if(kind==='ltask'){const t={id:uid(),title:v.title.trim(),notes:'',repeat:'',tag:'',items:[],due:S.cfg.dueDef==='none'?null:S.cfg.dueDef==='tomorrow'?ds(addDays(new Date(),1)):TODAY(),priority:S.cfg.prio,goalId:f.dataset.goal,done:false,created:Date.now()};S.tasks.push(t);await DB.put('tasks',t)}
   if(kind==='topics'){const sub=(v.subject||'').trim();const names=String(v.names||'').split('\n').map(x=>x.trim()).filter(Boolean).slice(0,100);
     if(!sub||!names.length){return}
     let added=0;for(const name of names){if(S.topics.some(t=>t.subject===sub&&t.name.toLowerCase()===name.toLowerCase()))continue;const t={id:uid(),subject:sub,name,sessions:[],created:Date.now()};S.topics.push(t);await DB.put('topics',t);added++}
     toast(added?`Added ${added} topic${added>1?'s':''} to ${sub}`:'Those topics already exist')}
   if(kind==='habit'){const av=v.kind==='avoid';const h={id:uid(),name:v.name.trim(),kind:av?'avoid':'',mode:av&&S.cfg.avoidMode==='confirm'?'confirm':'',target:av?7:+v.target,group:(v.group||'').trim(),days:av?[]:readDays(f),created:Date.now()};S.habits.push(h);await DB.put('habits',h)}
-  render();
-  const first=$('#app form input[type=text]');if(first)first.focus();
+  const gl=f.dataset.goal;render();
+  const first=kind==='ltask'?$(`#app form[data-goal="${gl}"] input`):$('#app form input[type=text]');if(first)first.focus();
 });
 /* ---------- Student mode: retrospective revision timetable ---------- */
 const CONF_LABEL=['Not started','Weak','OK','Strong'];
