@@ -1,4 +1,8 @@
-# Goal Tracker
+<p align="center"><img src="docs/images/logo.svg" width="96" alt="GoalTerra logo"></p>
+
+# GoalTerra
+
+*Formerly Goal Tracker.*
 
 A free, private goal, habit, task and study tracker in **one HTML file**. No account, no server, no tracking: everything is stored on your own device. It works offline and is built for phones first (it also works on a desktop browser), in **English and Arabic**.
 
