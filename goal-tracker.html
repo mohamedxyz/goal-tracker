@@ -5,6 +5,7 @@
     PATCH = bug fix · MINOR = new feature · MAJOR = breaks old backups or data
 
   Changelog
+  0.48.0 Coach personalities: Friend (easy), Coach (medium), Monk (hard), or Off; pick in Settings
   0.47.0 Dashboard coach: task stats (today vs your 7-day average, best day, active-day streak) and a challenge message that pushes you to finish more or pull tasks forward from future dates; tone is Challenge, Gentle or Off in Settings
   0.46.0 Goals: new Ladder view (default) shows the whole goal tree with tasks under each goal, tick tasks and add new ones in place, weekly 'tasks left' summary; one-line quick add; tasks can only link to weekly goals
   0.45.1 Dashboard is much shorter: one compact row of tiles, today's tasks/goals/habits first, charts and consistency tucked into a collapsed Insights card
@@ -695,19 +696,54 @@ function coachStats(){
   return{today:dn(0),yday:dn(1),avg:sum/7,best,streak:st}
 }
 function coachCard(){
-  const tone=S.cfg.coachTone;if(tone==='off'||!S.tasks.length)return'';
+  const tone0=S.cfg.coachTone,tone=tone0==='challenge'?'coach':tone0==='gentle'?'friend':tone0;if(tone==='off'||!S.tasks.length)return'';
   const st=coachStats(),today=TODAY(),hr=new Date().getHours();
   const live=S.tasks.filter(t=>!t.done&&!t.archived);
   const left=live.filter(t=>t.due&&t.due<=today).length,overdue=live.filter(t=>t.due&&t.due<today).length;
   const next=live.filter(t=>t.due&&t.due>today).sort((a,b)=>a.due.localeCompare(b.due)||(a.created||0)-(b.created||0))[0];
-  const avg=Math.round(st.avg*10)/10,h=[...today].reduce((a,c)=>a+c.charCodeAt(0),0);
-  const pk=a=>a[h%a.length],ch=tone==='challenge',d=st.today;
+  const avg=Math.round(st.avg*10)/10,h=[...today].reduce((a,c)=>a+c.charCodeAt(0),0),d=st.today,best=st.best;
+  const pk=a=>a[h%a.length];
+  const M={
+   friend:{
+    empty:[`Nothing due today. If you've got energy, a task from later could be a nice head start.`,`Quiet day! Want to get ahead? Pulling one task forward would feel good.`],
+    none:`Nothing planned yet. Add a task whenever you're ready, I'm here.`,
+    zeroLate:`Evening already, and ${left} still waiting. No pressure. One small one would still make today count.`,
+    zero:[`${left} on the list today. Start with the easiest one, you've got this.`,`Ready when you are. ${left} to do, and the first step is the hardest.`],
+    behind:`${d} done, ${left} to go. Nice start, keep it rolling.`,
+    ahead:`${d} done already, above your usual ${avg}. ${left} left, you're doing great.`,
+    record:`${d} done: your best day in a month! If you're feeling it, pull one more forward.`,
+    clear:[`List cleared, ${d} done. Proud of you. Want to get ahead a little?`,`All done for today (${d}). Take a breath, or pull one in if you're on a roll.`],
+    done:`All done: ${d}. Enjoy the rest of your day.`,
+    over:`${overdue} overdue are waiting whenever you're ready.`},
+   coach:{
+    empty:[`Zero on the board today, and your usual day is ${avg}. Pick a fight with the future: pull one in.`,`An empty today is a choice. Your average day is ${avg}. Steal a task from later and prove it.`],
+    none:`Nothing planned at all. An empty list isn't rest, it's a plan you haven't made yet.`,
+    zeroLate:`It's evening and you've finished nothing. ${left} waiting. Do one. Right now.`,
+    zero:[`${left} on the list, 0 done. Make the first one tiny and start.`,`${left} waiting and 0 finished. Your average is ${avg} a day. Don't start behind yourself.`],
+    behind:`${d} done, ${left} to go. Your normal day is ${avg}. Don't settle below yourself.`,
+    ahead:`${d} done, ${left} to go. You're already above your average (${avg}). Finish what's left.`,
+    record:`${d} done: that's your best day in a month. Think you can do more? Pull one from the future.`,
+    clear:[`Today's list is clear, but your best day is ${best} and you're at ${d}. Steal one from the future.`,`${d} done and nothing left? Then why stop. Pull one in.`],
+    done:`Clean sheet: ${d} done. That's earned. Now plan tomorrow so it doesn't plan you.`,
+    over:`Overdue: ${overdue}. They aren't getting younger.`},
+   monk:{
+    empty:[`Zero tasks. Your average is ${avg}. Comfort is not a plan. Pull one in.`,`The day is empty because you left it empty. Take a task from later. Begin.`],
+    none:`Nothing is planned. Whoever has no plan has chosen drift. Write the first task.`,
+    zeroLate:`Night approaches. ${left} undone, none finished. Mood is irrelevant. Do one.`,
+    zero:[`${left} tasks. Zero done. Motivation is a rumour. Act, and it follows.`,`${left} waiting. You do not need to feel ready. Start the smallest one.`],
+    behind:`${d} done, ${left} remain. Your standard is ${avg}. You are below it. Correct that.`,
+    ahead:`${d} done, above ${avg}. Do not stop to admire it. ${left} remain.`,
+    record:`${d}: your best day in a month. That is the new floor, not the ceiling. Pull one in.`,
+    clear:[`The list is empty. ${d} done, your best is ${best}. Discipline is what you do after it is finished. Pull one in.`,`Done. Do not celebrate. The future has tasks. Take one.`],
+    done:`${d} done. Nothing left. Rest without guilt, then plan tomorrow before you sleep.`,
+    over:`Overdue: ${overdue}. Debts do not shrink by being ignored.`}
+  }[tone]||{};
   let msg,pull=false;
-  if(d===0&&left===0){pull=!!next;msg=next?(ch?pk([`Zero on the board today, and your usual day is ${avg}. Pick a fight with the future: pull one in.`,`An empty today is a choice. Your average day is ${avg}. Steal a task from later and prove it.`]):`Nothing due today. If you have energy, you could pull a task forward.`):(ch?`Nothing planned at all. An empty list isn't rest, it's a plan you haven't made yet.`:`Nothing planned. Add a task whenever you're ready.`)}
-  else if(d===0){msg=ch?(hr>=18?`It's evening and you've finished nothing. ${left} waiting. Do one. Right now.`:pk([`${left} on the list, 0 done. Make the first one tiny and start.`,`${left} waiting and 0 finished. Your average is ${avg} a day. Don't start behind yourself.`])):`${left} to do today. Start with the smallest one.`}
-  else if(left>0){msg=d<st.avg?(ch?`${d} done, ${left} to go. Your normal day is ${avg}. Don't settle below yourself.`:`${d} done, ${left} left. Nice start.`):(ch?`${d} done, ${left} to go. You're already above your average (${avg}). Finish what's left.`:`${d} done and above your usual. ${left} left.`)}
-  else{pull=!!next;msg=next?(ch?(d>=st.best&&d>1?`${d} done: that's your best day in a month. Think you can do more? Pull one from the future.`:pk([`Today's list is clear, but your best day is ${st.best} and you're at ${d}. Steal one from the future.`,`${d} done and nothing left? Then why stop. Pull one in.`])):`List cleared with ${d} done. Want to get ahead? You can pull one in.`):(ch?`Clean sheet: ${d} done. That's earned. Now plan tomorrow so it doesn't plan you.`:`All done: ${d}. Enjoy the rest.`)}
-  if(ch&&overdue>0)msg+=` ${overdue} overdue, and they aren't getting younger.`;
+  if(d===0&&left===0){pull=!!next;msg=next?pk(M.empty):M.none}
+  else if(d===0)msg=hr>=18?M.zeroLate:pk(M.zero);
+  else if(left>0)msg=d<st.avg?M.behind:M.ahead;
+  else{pull=!!next;msg=next?(d>=best&&d>1?M.record:pk(M.clear)):M.done}
+  if(overdue>0&&tone!=='friend')msg+=' '+M.over;else if(overdue>0&&d>0)msg+=' '+M.over;
   const stat=(n,l)=>`<div><b>${n}</b><span>${l}</span></div>`;
   return `<div class="card coach"><div class="cmsg">${esc(msg)}</div>
     <div class="cstats">${stat(d,'Done today')}${stat(avg,'7-day avg')}${stat(st.best,'Best day')}${stat('🔥 '+st.streak,'Day streak')}</div>
@@ -1144,8 +1180,8 @@ function settingsCard(){
     ${sw('student','Student mode','Adds a Study tab: revision timetable, today\'s picks, and exams',c.student)}
   </div>
   <div class="card settings" style="margin-top:12px"><div class="title">Coach</div>
-    ${sel('coachTone','Dashboard coach message',[['challenge','Challenge me'],['gentle','Gentle'],['off','Off']],c.coachTone)}
-    <p class="meta">Shows today's stats and nudges you to finish more or pull tasks forward from later dates.</p>
+    ${sel('coachTone','Dashboard coach',[['friend','😊 Friend (easy)'],['coach','🏋 Coach (medium)'],['monk','🧘 Monk (hard)'],['off','Off']],({challenge:'coach',gentle:'friend'})[c.coachTone]||c.coachTone)}
+    <p class="meta">Friend encourages. Coach pushes. Monk is blunt and demands more. All show your stats and nudge you to finish more or pull tasks forward.</p>
   </div>
   <div class="card settings" style="margin-top:12px"><div class="title">Tasks</div>
     ${sel('dueDef','Default due date for new tasks',[['today','Today'],['tomorrow','Tomorrow'],['none','No date']],c.dueDef)}
@@ -1352,7 +1388,7 @@ function drawHabit(){
 document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('[role=button][data-action]')){e.preventDefault();e.target.click()}});
 
 /* ---------- Version ---------- */
-const APP_VERSION='0.47.0';
+const APP_VERSION='0.48.0';
 
 /* ---------- Completion sounds (synthesised, no audio files) ---------- */
 const Sound={
@@ -1382,7 +1418,7 @@ const Sound={
   }
 };
 Sound.load();
-const CFG_DEF={coachTone:'challenge',stuCompact:false,avoidHide:true,cTask:true,cGoal:true,cHabit:true,dCharts:true,dTasks:true,dGoals:true,dHabits:true,prio:'low',showDone:true,dueDef:'today',sortBy:'due',groupTags:true,autoArch:'0',defFilter:'all',showSubs:true,showNotes:true,dOverdue:false,avoidMode:'clean',student:false,lang:'en',srOn:true,srWeak:'1',srOk:'3',srLadder:'1,3,7,14,30'};
+const CFG_DEF={coachTone:'coach',stuCompact:false,avoidHide:true,cTask:true,cGoal:true,cHabit:true,dCharts:true,dTasks:true,dGoals:true,dHabits:true,prio:'low',showDone:true,dueDef:'today',sortBy:'due',groupTags:true,autoArch:'0',defFilter:'all',showSubs:true,showNotes:true,dOverdue:false,avoidMode:'clean',student:false,lang:'en',srOn:true,srWeak:'1',srOk:'3',srLadder:'1,3,7,14,30'};
 try{S.cfg={...CFG_DEF,...JSON.parse(localStorage.getItem('gt-settings')||'{}')}}catch(e){S.cfg={...CFG_DEF}}
 S.taskFilter=S.cfg.defFilter;
 const saveCfg=()=>{try{localStorage.setItem('gt-settings',JSON.stringify(S.cfg))}catch(e){}};
