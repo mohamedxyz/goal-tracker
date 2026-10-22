@@ -5,6 +5,7 @@
     PATCH = bug fix · MINOR = new feature · MAJOR = breaks old backups or data
 
   Changelog
+  0.49.0 Monk is now Beast mode and it changes behaviour: a daily quota (your 7-day average + 1) with one-tap fill from future tasks, and a typed reason is required to push back, reschedule or delete work that is due; pushed tasks show ↻ N×
   0.48.0 Coach personalities: Friend (easy), Coach (medium), Monk (hard), or Off; pick in Settings
   0.47.0 Dashboard coach: task stats (today vs your 7-day average, best day, active-day streak) and a challenge message that pushes you to finish more or pull tasks forward from future dates; tone is Challenge, Gentle or Off in Settings
   0.46.0 Goals: new Ladder view (default) shows the whole goal tree with tasks under each goal, tick tasks and add new ones in place, weekly 'tasks left' summary; one-line quick add; tasks can only link to weekly goals
@@ -658,6 +659,7 @@ function taskItem(t){
         ${t.done&&t.doneAt?`<span>Done ${fmtWhen(t.doneAt)}</span>`:''}
         ${t.done&&t.due?`<span>${fmtDate(t.due)}</span>`:''}
         ${t.tag?`<span class="tag">#${esc(t.tag)}</span>`:''}
+        ${(t.pushes||[]).length?`<span title="Pushed back: ${esc(t.pushes[t.pushes.length-1].why)}">↻ ${t.pushes.length}×</span>`:''}
         ${t.repeat?`<span title="Repeats">🔁 ${REPEAT_LABEL[t.repeat]||''}</span>`:''}
         ${g?`<span class="tag">${esc(g.title)}</span>`:''}
       </div></div>
@@ -688,6 +690,10 @@ function habitCard(h,full){
   </div>${full?`<div class="heat">${heat}</div>`:''}</div>`;
 }
 /* ---------- Coach ---------- */
+const coachTone=()=>({challenge:'coach',gentle:'friend',monk:'beast'})[S.cfg.coachTone]||S.cfg.coachTone;
+const beastOn=()=>coachTone()==='beast';
+const quotaOf=st=>Math.min(12,Math.max(3,Math.ceil(st.avg)+1));
+function askWhy(what){const r=prompt(`Beast mode: why are you ${what}? Type a reason.`);return r&&r.trim()?r.trim():null}
 function coachStats(){
   const cnt={};for(const t of S.tasks)if(t.done&&t.doneAt){const k=ds(new Date(t.doneAt));cnt[k]=(cnt[k]||0)+1}
   const dn=i=>cnt[ds(addDays(new Date(),-i))]||0;
@@ -696,7 +702,7 @@ function coachStats(){
   return{today:dn(0),yday:dn(1),avg:sum/7,best,streak:st}
 }
 function coachCard(){
-  const tone0=S.cfg.coachTone,tone=tone0==='challenge'?'coach':tone0==='gentle'?'friend':tone0;if(tone==='off'||!S.tasks.length)return'';
+  const tone=coachTone();if(tone==='off'||!S.tasks.length)return'';
   const st=coachStats(),today=TODAY(),hr=new Date().getHours();
   const live=S.tasks.filter(t=>!t.done&&!t.archived);
   const left=live.filter(t=>t.due&&t.due<=today).length,overdue=live.filter(t=>t.due&&t.due<today).length;
@@ -726,7 +732,7 @@ function coachCard(){
     clear:[`Today's list is clear, but your best day is ${best} and you're at ${d}. Steal one from the future.`,`${d} done and nothing left? Then why stop. Pull one in.`],
     done:`Clean sheet: ${d} done. That's earned. Now plan tomorrow so it doesn't plan you.`,
     over:`Overdue: ${overdue}. They aren't getting younger.`},
-   monk:{
+   beast:{
     empty:[`Zero tasks. Your average is ${avg}. Comfort is not a plan. Pull one in.`,`The day is empty because you left it empty. Take a task from later. Begin.`],
     none:`Nothing is planned. Whoever has no plan has chosen drift. Write the first task.`,
     zeroLate:`Night approaches. ${left} undone, none finished. Mood is irrelevant. Do one.`,
@@ -743,11 +749,15 @@ function coachCard(){
   else if(d===0)msg=hr>=18?M.zeroLate:pk(M.zero);
   else if(left>0)msg=d<st.avg?M.behind:M.ahead;
   else{pull=!!next;msg=next?(d>=best&&d>1?M.record:pk(M.clear)):M.done}
+  let pullN=0;const quota=quotaOf(st);
+  if(tone==='beast'){const gap=quota-d-left,fut=live.filter(t=>t.due&&t.due>today).length;
+    if(gap>0&&fut>0){pullN=Math.min(gap,fut);msg+=` Quota is ${quota}; you have ${d+left} lined up. Fill the gap.`}
+    else if(d>=quota&&left===0)msg=`Quota met: ${d}/${quota}. A beast raises it.`+(next?' Pull one more in.':'')}
   if(overdue>0&&tone!=='friend')msg+=' '+M.over;else if(overdue>0&&d>0)msg+=' '+M.over;
   const stat=(n,l)=>`<div><b>${n}</b><span>${l}</span></div>`;
   return `<div class="card coach"><div class="cmsg">${esc(msg)}</div>
-    <div class="cstats">${stat(d,'Done today')}${stat(avg,'7-day avg')}${stat(st.best,'Best day')}${stat('🔥 '+st.streak,'Day streak')}</div>
-    ${pull?`<button class="btn" data-action="coach-pull" data-id="${next.id}">⚡ Pull in: ${esc(next.title.length>34?next.title.slice(0,33)+'…':next.title)} <small>(${fmtDate(next.due)})</small></button>`:''}</div>`;
+    <div class="cstats">${tone==='beast'?stat(d+'/'+quota,'Quota'):stat(d,'Done today')}${stat(avg,'7-day avg')}${stat(st.best,'Best day')}${stat('🔥 '+st.streak,'Day streak')}</div>
+ ${pullN?`<button class="btn" data-action="coach-pull-n" data-n="${pullN}">⚡ Fill quota: pull in ${pullN} task${pullN===1?'':'s'}</button>`:pull?`<button class="btn" data-action="coach-pull" data-id="${next.id}">⚡ Pull in: ${esc(next.title.length>34?next.title.slice(0,33)+'…':next.title)} <small>(${fmtDate(next.due)})</small></button>`:''}</div>`;
 }
 const HRANK={five:0,annual:1,monthly:2,weekly:3};
 function weekSummary(){
@@ -1115,8 +1125,11 @@ function openBulk(){
 async function applyBulk(kind,f){
   const v=Object.fromEntries(new FormData(f)),ids=[...S.sel];let n=0;
   if(kind==='bulktasks'){
+    const lat=t=>{const m=v.dmode;return m==='tomorrow'||m==='week'||m==='plus1'||m==='none'||(m==='pick'&&v.due&&v.due>(t.due||''))};
+    let why=null;
+    if(beastOn()&&ids.some(id=>{const t=S.tasks.find(x=>x.id===id);return t&&!t.done&&t.due&&t.due<=TODAY()&&lat(t)})){why=askWhy('pushing these back');if(!why){toast('Not applied. Beast mode wants a reason.');return false}}
     for(const id of ids){const t=S.tasks.find(x=>x.id===id);if(!t)continue;
-      const m=v.dmode;
+      const m=v.dmode;if(why&&!t.done&&t.due&&t.due<=TODAY()&&lat(t))(t.pushes=t.pushes||[]).push({at:Date.now(),from:t.due,to:null,why});
       if(m==='today')t.due=TODAY();else if(m==='tomorrow')t.due=ds(addDays(new Date(),1));else if(m==='week')t.due=ds(addDays(new Date(),7));
       else if(m==='plus1')t.due=ds(addDays(new Date((t.due||TODAY())+'T00:00'),1));
       else if(m==='pick'&&v.due)t.due=v.due;else if(m==='none')t.due=null;
@@ -1180,8 +1193,8 @@ function settingsCard(){
     ${sw('student','Student mode','Adds a Study tab: revision timetable, today\'s picks, and exams',c.student)}
   </div>
   <div class="card settings" style="margin-top:12px"><div class="title">Coach</div>
-    ${sel('coachTone','Dashboard coach',[['friend','😊 Friend (easy)'],['coach','🏋 Coach (medium)'],['monk','🧘 Monk (hard)'],['off','Off']],({challenge:'coach',gentle:'friend'})[c.coachTone]||c.coachTone)}
-    <p class="meta">Friend encourages. Coach pushes. Monk is blunt and demands more. All show your stats and nudge you to finish more or pull tasks forward.</p>
+    ${sel('coachTone','Dashboard coach',[['friend','😊 Friend (easy)'],['coach','🏋 Coach (medium)'],['beast','🔥 Beast (hard)'],['off','Off']],coachTone())}
+    <p class="meta">Friend encourages. Coach pushes. Beast changes how the app works: a daily quota, and you must type a reason to push back, reschedule or delete work that is due. Nothing is ever changed without you.</p>
   </div>
   <div class="card settings" style="margin-top:12px"><div class="title">Tasks</div>
     ${sel('dueDef','Default due date for new tasks',[['today','Today'],['tomorrow','Tomorrow'],['none','No date']],c.dueDef)}
@@ -1330,9 +1343,11 @@ dlg.addEventListener('submit',async e=>{
   const f=e.target.closest('form[data-edit]');if(!f)return;e.preventDefault();
   if(e.submitter&&e.submitter.value==='cancel'){dlg.close();return}
   const kind=f.dataset.edit;
-  if(kind==='bulktasks'||kind==='bulkhabits'){await applyBulk(kind,f);dlg.close();render();return}
+  if(kind==='bulktasks'||kind==='bulkhabits'){if((await applyBulk(kind,f))===false)return;dlg.close();render();return}
   const v=Object.fromEntries(new FormData(f));const id=f.dataset.id;
   if(kind==='task'){const t=S.tasks.find(x=>x.id===id);const done=!!v.done;
+    if(beastOn()&&!t.done&&!done&&t.due&&t.due<=TODAY()&&(!v.due||v.due>t.due)){const why=askWhy('pushing this back');if(!why){toast('Not saved. Beast mode wants a reason.');return}
+      (t.pushes=t.pushes||[]).push({at:Date.now(),from:t.due,to:v.due||null,why})}
     Object.assign(t,{title:v.title.trim(),due:v.due||null,priority:v.priority,goalId:v.goalId||null,notes:(v.notes||'').trim(),repeat:v.repeat||'',tag:(v.tag||'').trim(),items:parseItems(v.items,t.items)});
     if(done!==t.done){t.done=done;t.doneAt=done?Date.now():null;Sound.play(done?'task':'undo');await onTaskDone(t)}
     await DB.put('tasks',t)}
@@ -1388,7 +1403,7 @@ function drawHabit(){
 document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('[role=button][data-action]')){e.preventDefault();e.target.click()}});
 
 /* ---------- Version ---------- */
-const APP_VERSION='0.48.0';
+const APP_VERSION='0.49.0';
 
 /* ---------- Completion sounds (synthesised, no audio files) ---------- */
 const Sound={
@@ -1710,11 +1725,16 @@ const actions={
   async 'del-task'(el){
     const t=S.tasks.find(x=>x.id===el.dataset.id);if(!t)return false;
     if(S.cfg.cTask&&!confirm(`Delete "${t.title}"?\n\nIt stays in Trash (Settings) for ${TRASH_DAYS} days.${t.archived?'':' Tip: archive it instead to keep it with your tasks.'}`))return false;
+    if(beastOn()&&!t.done&&!t.archived&&t.due&&t.due<=TODAY()&&!askWhy('deleting work that is due')){toast('Not deleted. Beast mode wants a reason.');return false}
     await removeTasks([t]);
     toastUndo('Task moved to Trash.',async()=>{await trashRestore('task:'+t.id)});
   },
   'task-filter'(el){S.taskFilter=el.dataset.v},
   'toggle-ins'(){S.insOpen=!S.insOpen},
+  async 'coach-pull-n'(el){const today=TODAY(),n=+el.dataset.n||1;
+    const list=S.tasks.filter(t=>!t.done&&!t.archived&&t.due&&t.due>today).sort((a,b)=>a.due.localeCompare(b.due)||(a.created||0)-(b.created||0)).slice(0,n);
+    const old=list.map(t=>t.due);for(const t of list){t.due=today;await DB.put('tasks',t)}
+    toastUndo(`Pulled ${list.length} into today.`,async()=>{for(let i=0;i<list.length;i++){list[i].due=old[i];await DB.put('tasks',list[i])}})},
   async 'coach-pull'(el){const t=S.tasks.find(x=>x.id===el.dataset.id);if(!t)return false;const old=t.due;t.due=TODAY();await DB.put('tasks',t);
     toastUndo('Pulled into today.',async()=>{t.due=old;await DB.put('tasks',t)})},
   'task-menu'(el){const t=S.tasks.find(x=>x.id===el.dataset.id);if(!t)return false;const id=t.id;
