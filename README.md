@@ -110,9 +110,36 @@ Settings → Language switches the whole app to Arabic with a mirrored right-to-
 - The backup reminder escalates if you go 30 days without one; older backups keep loading in newer versions
 - Clearing the browser's site data deletes your data, so keep a backup
 
+## Android app
+
+GoalTerra also runs as a real Android app (Android 7 and newer), built from the same `goal-tracker.html`.
+
+**Install**
+1. Open the repository's **Releases** page on your phone and download the newest `GoalTerra-x.y.z.apk`.
+2. Tap it. The first time, Android asks you to allow installs from your browser or Files app.
+3. Updates install over the old version and keep your data, because every build is signed with the same key.
+
+**What the app adds**
+- **Backups and exports** save to `Documents/GoalTerra` on the phone and open the share sheet, so you can also send them to Drive, email or a chat. **Import** opens the phone's file picker
+- **Notifications**: a morning plan, an evening check-in (with the boss warning in Game mode), class reminders 10 minutes before, exam reminders the evening before, the focus timer, and a backup reminder. Times and switches are in Settings → Notifications
+- The back button closes dialogs and returns to Home, the status bar follows the theme, and the app has its own icon and splash screen
+
+Your browser data and the app's data are separate. To move over, use **Back up now** in the browser and **Import** in the app.
+
+**How it is built**
+`android-app/` is a [Capacitor](https://capacitorjs.com) project. `npm run sync` copies `goal-tracker.html` into the app and adds the Capacitor runtime next to it (the web file itself stays network-free). The GitHub Actions workflow `.github/workflows/android.yml` builds the APK on every change and publishes it as a release; the app's version always matches `APP_VERSION`.
+
+To build locally you need Node 22, JDK 21 and the Android SDK:
+```
+cd android-app
+npm ci
+npm run build:debug        # APK in android/app/build/outputs/apk/debug/
+```
+Debug builds use the fixed key in `android-app/keys/debug.keystore` (a public debug key). For a Play Store release, create your own upload key, keep it safe, and build with `GT_KEYSTORE`, `GT_KEYSTORE_PASSWORD`, `GT_KEY_ALIAS` and `GT_KEY_PASSWORD` set (`npm run build:release`).
+
 ## Development
 
-The app is the single file `goal-tracker.html`. There is no build step for it.
+The app is the single file `goal-tracker.html`. There is no build step for it (the Android app copies it as is).
 
 A Playwright test suite (development only, never part of the app) lives in `tests/`:
 
