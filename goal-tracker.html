@@ -5,6 +5,7 @@
     PATCH = bug fix · MINOR = new feature · MAJOR = breaks old backups or data
 
   Changelog
+  0.53.0 Task countdown: the due pill on each task now says Today, Tomorrow, 3 days left or 2 days late (amber when 3 days or less remain); dates more than a week away still show the date, and the exact date is in the tooltip
   0.52.0 New name and logo: the app is now GoalTerra, with the orbit logo in the header, the intro, the browser tab icon and the home-screen icon. Your data, backups and shared files are unaffected
   0.51.0 Level calendar: tap the day banner or the coach message to see a month calendar where every day shows its level (⚡ Spark, 🔥 Blaze, ⚔️ Titan), with monthly counts and the tasks you finished on any day you tap. New first-run intro walks through the goal ladder, day levels, habits, student mode and language; replay it from Settings
   0.50.0 Day levels replace the coach modes: how many tasks you finish today sets your level (Spark, Blaze, Titan). A banner on top of the Dashboard shows today's level and your streak, the coach message gets tougher as you level up, and Titan days switch on the quota and push-back friction. Thresholds are adjustable in Settings
@@ -153,7 +154,7 @@ ul.list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;ga
 .stile.hot b{color:#b4442f}.stile.ok b{color:var(--ok)}
 .scard{margin-bottom:12px}.shead{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px}
 .pill{display:inline-flex;align-items:center;border-radius:999px;padding:3px 10px;font:600 12px/1.3 inherit;background:var(--line);color:var(--text);border:0;white-space:nowrap}
-.pill.hot{background:#b4442f;color:#fff}.pill.warm{background:#d9a13b;color:#2e2520}.pill.ok{background:color-mix(in oklab,var(--ok) 22%,transparent);color:var(--ok)}.pill.warn{background:var(--soft);color:var(--accent);cursor:pointer}
+.pill.hot{background:#b4442f;color:#fff}.pill.soon{background:color-mix(in oklab,#d9a13b 26%,transparent);color:var(--text)}.pill.warm{background:#d9a13b;color:#2e2520}.pill.ok{background:color-mix(in oklab,var(--ok) 22%,transparent);color:var(--ok)}.pill.warn{background:var(--soft);color:var(--accent);cursor:pointer}
 .exrow{display:flex;gap:10px;align-items:center;padding:10px 0;border-top:1px dashed var(--line)}.exrow:first-of-type{border-top:0}
 .datebox{flex:none;width:46px;border-radius:12px;background:var(--soft);display:flex;flex-direction:column;align-items:center;padding:4px 0;line-height:1.1}
 .datebox small{font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}.datebox b{font-size:19px}
@@ -676,11 +677,17 @@ const ARCHIVE_ICON='<svg viewBox="0 0 24 24" width="16" height="16" fill="none" 
 function fmtWhen(ts){if(!ts)return'';const d=new Date(ts);const y=d.getFullYear()!==new Date().getFullYear();
   return fmt(d,{month:'short',day:'numeric',...(y?{year:'numeric'}:{}),hour:'numeric',minute:'2-digit'})}
 function fmtDay(s){return s?fmt(new Date(s+'T00:00'),{weekday:'short',month:'short',day:'numeric',year:'numeric'}):'—'}
+function dueLeft(due){
+  const n=Math.round((new Date(due+'T00:00')-new Date(TODAY()+'T00:00'))/864e5);
+  const txt=n<0?`${-n} day${n===-1?'':'s'} late`:n===0?'Today':n===1?'Tomorrow':n<=7?`${n} days left`:fmtDate(due);
+  const cls=n<0?'hot':n===0?'warm':n<=3?'soon':'';
+  return `<span class="pill ${cls}" title="${fmtDay(due)}">${txt}</span>`;
+}
 function taskItem(t){
   const g=t.goalId&&goalById(t.goalId);const today=TODAY();
   const overdue=!t.done&&t.due&&t.due<today;
   const sm=selOn('tasks');
-  const dp=t.done?'':t.due?`<span class="pill ${overdue?'hot':t.due===today?'warm':''}">${overdue?'Overdue · ':''}${t.due===today?'Today':fmtDate(t.due)}</span>`:'';
+  const dp=t.done?'':t.due?dueLeft(t.due):'';
   return `<li class="item trow2 pr-${t.priority||'low'} ${t.done?'done dim':''} ${sm&&S.sel.has(t.id)?'selected':''}">
     ${sm?selBox(t.id):`<input type="checkbox" data-action="toggle-task" data-id="${t.id}" ${t.done?'checked':''} aria-label="Complete">`}
     <div class="grow" ${sm?'':`data-action="edit-task" data-id="${t.id}" role="button" tabindex="0"`}><div class="title">${esc(t.title)}</div>
@@ -1505,7 +1512,7 @@ function drawHabit(){
 document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('[role=button][data-action]')){e.preventDefault();e.target.click()}});
 
 /* ---------- Version ---------- */
-const APP_VERSION='0.52.0';
+const APP_VERSION='0.53.0';
 
 /* ---------- Completion sounds (synthesised, no audio files) ---------- */
 const Sound={
@@ -1583,7 +1590,7 @@ const PAT=[
 [/^30-day (\d+)%$/,m=>`آخر 30 يومًا ${m[1]}%`],[/^This week (\d+\/\d+)$/,m=>`هذا الأسبوع ${m[1]}`],[/^(\d+)\/(\d+) this wk$/,m=>`${m[1]}/${m[2]} هذا الأسبوع`],
 [/^Check off (.+) for today$/,m=>`تعليم ${m[1]} لهذا اليوم`],[/^Clean today\. Tap to log a slip$/,()=>'نظيف اليوم. اضغط لتسجيل انزلاق'],[/^Slipped today\. Tap to undo$/,()=>'انزلاق اليوم. اضغط للتراجع'],
 [/^Delete (\d+) completed$/,m=>`حذف ${m[1]} مكتملة`],[/^Delete "(.+)"\?$/,m=>`حذف "${m[1]}"؟`],[/^Delete topic "(.+)" and its study log\?$/,m=>`حذف الموضوع "${m[1]}" وسجل دراسته؟`],[/^Delete (.+)$/,m=>`حذف ${m[1]}`],[/^Edit (.+)$/,m=>`تعديل ${m[1]}`],
-[/^Completed · (\d+)$/,m=>`المكتملة · ${m[1]}`],[/^Completed (.+)$/,m=>`اكتملت ${m[1]}`],[/^Done (.+)$/,m=>`أُنجزت ${m[1]}`],[/^Created (.+)$/,m=>`أُنشئت ${m[1]}`],[/^Overdue · (.+)$/,m=>`متأخرة · ${m[1]}`],
+[/^Completed · (\d+)$/,m=>`المكتملة · ${m[1]}`],[/^Completed (.+)$/,m=>`اكتملت ${m[1]}`],[/^Done (.+)$/,m=>`أُنجزت ${m[1]}`],[/^Created (.+)$/,m=>`أُنشئت ${m[1]}`],[/^Overdue · (.+)$/,m=>`متأخرة · ${m[1]}`],[/^(\d+) days? late$/,m=>`متأخرة ${+m[1]===1?'يومًا':+m[1]===2?'يومين':m[1]+' '+(+m[1]<=10?'أيام':'يومًا')}`],[/^(\d+) days left$/,m=>`باقي ${+m[1]===2?'يومان':m[1]+' '+(+m[1]<=10?'أيام':'يومًا')}`],
 [/^in (\d+) days$/,m=>`بعد ${m[1]} يومًا`],[/^(\d+) days? ago$/,m=>`قبل ${m[1]} يومًا`],[/^Last: (.+)$/,m=>`آخر مرة: ${trText(m[1])}`],
 [/^(Hide|Show) past \((.+)\)$/,m=>`${m[1]==='Hide'?'إخفاء':'إظهار'} السابقة (${trText(m[2])})`],[/^(\d+) · result missing$/,m=>`${m[1]} · النتيجة ناقصة`],
 [/^Plan (.+)$/,m=>`تخطيط ${m[1]}`],[/^Review (\d+) goals?$/,m=>`مراجعة ${m[1]} هدف`],[/^Carry to (.+)$/,m=>`ترحيل إلى ${m[1]}`],
