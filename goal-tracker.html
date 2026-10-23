@@ -5,6 +5,7 @@
     PATCH = bug fix · MINOR = new feature · MAJOR = breaks old backups or data
 
   Changelog
+  0.58.0 Smart quick add: type "Essay tomorrow !high #uni" and the due date, priority and tag fill themselves. Understands today, tomorrow, weekday names, in 3 days, next week, 25 oct and 25/10 at the end, plus Arabic (اليوم، غدًا، بكرة، باچر، بعد غد، الخميس، بعد 3 أيام). A preview under the box shows what it understood. Works in the ladder's + Task too
   0.57.0 Habits tab split: habits you build and habits you avoid now sit in their own sections (✅ Build and 🛡 Avoid), each with its own count for today; folders still work inside each section
   0.56.0 Arabic, complete: the day banner, all three coach tones, quota and pull-in buttons, Titan prompts, trash and bulk messages, goal planning text and screen-reader labels are now in Arabic. Beast-mode wording in prompts is now Titan
   0.55.0 Calmer Goals tab: the Ladder is now one card per top goal with a thin guide line instead of boxes inside boxes, a small level label (Week, Month, Year, 5 Yr), the percentage on the right, slimmer bars, and a + Task button instead of an always-open input; period labels only show under All periods; shorter tab names. More themes: six colour palettes (Clay, Terra, Ocean, Grape, Rose, Graphite) that work in light and dark, plus a Black (OLED) mode
@@ -493,7 +494,7 @@ body.cmp .add{gap:6px}body.cmp .goals,body.cmp .list{gap:6px}
 .ltask{display:flex;align-items:center;gap:9px;padding:5px 0;min-height:38px;font-size:14px}
 .ltask input{width:19px;height:19px;accent-color:var(--accent);flex:none}.ltask span{flex:1;min-width:0;overflow-wrap:anywhere}
 .ltask.sdone span{text-decoration:line-through;opacity:.55}
-.pill.sm{font-size:11px;padding:2px 7px}.ltask .pill{flex:none}
+.pill.sm{font-size:11px;padding:2px 7px}.qa-hint{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}.qa-hint[hidden]{display:none}.ltask .pill{flex:none}
 .ladd-btn{align-self:flex-start;border:0;background:none;color:var(--accent);font:600 13px inherit;padding:8px 2px;cursor:pointer}
 .ladd{display:flex;gap:6px;margin:4px 0}.ladd input{flex:1;min-width:0}
 .lnum{display:flex;gap:6px;margin:6px 0 2px;margin-inline-start:24px}.lnum .numval{flex:1;padding:6px 8px}.lnum .ghost{padding:6px 12px}
@@ -898,6 +899,45 @@ function viewBestiary(){
     <div class="meta"><span class="pill ${w.won?'ok':''}">${w.won?'Defeated':'Escaped'}</span><span>${fmtDate(w.keys[0])} – ${fmtDate(w.keys[6])}</span><span>${w.total} / ${w.hp} damage</span>${w.best?`<span>Best hit ${w.best}</span>`:''}</div></div></div>`}).join('')}</div>`
   :`<div class="empty">No monsters yet. Beat this week's boss to start your collection.</div>`}`;
 }
+/* ---------- Smart quick add ---------- */
+const QA_WD={sunday:0,sun:0,monday:1,mon:1,tuesday:2,tue:2,tues:2,wednesday:3,wed:3,thursday:4,thu:4,thur:4,thurs:4,friday:5,fri:5,saturday:6,sat:6};
+const QA_WDAR={'أحد':0,'احد':0,'اثنين':1,'إثنين':1,'ثلاثاء':2,'أربعاء':3,'اربعاء':3,'خميس':4,'جمعة':5,'جمعه':5,'سبت':6};
+const QA_MON=['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
+const QA_PRI={high:'high',h:'high','3':'high','عالي':'high','عالية':'high',med:'med',medium:'med',m:'med','2':'med','متوسط':'med','متوسطة':'med',low:'low',l:'low','1':'low','منخفض':'low','منخفضة':'low'};
+// Pulls a due date, !priority and #tag out of a quick-add title. Tokens must stand alone (spaces around them).
+function parseQuick(raw){
+  let s=' '+String(raw||'').replace(/\s+/g,' ')+' ',due=null,priority=null,tag=null;const now=new Date(),T=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+  const dm=(d,mo)=>{if(!(mo>=1&&mo<=12&&d>=1&&d<=31))return null;let x=new Date(T.getFullYear(),mo-1,d);if(x.getDate()!==d)return null;if(x<T)x=new Date(T.getFullYear()+1,mo-1,d);return x};
+  const wd=i=>addDays(T,(i-T.getDay()+7)%7);
+  const take=(re,fn)=>{if(due)return;const m=s.match(new RegExp('(?<=\\s)'+re+'(?=\\s)','iu'));if(!m)return;const d=fn(m);if(d){due=ds(d);s=s.replace(m[0],' ')}};
+  take('(?:today|tod|اليوم)',()=>T);
+  take('بعد\\s+(?:غد|غدٍ|بكرة|باچر)',()=>addDays(T,2));
+  take('(?:tomorrow|tmrw?|غدا|غدًا|غداً|بكرة|باچر|باكر)',()=>addDays(T,1));
+  take('in\\s+(\\d{1,3})\\s+(days?|weeks?)',m=>addDays(T,+m[1]*(/^w/i.test(m[2])?7:1)));
+  take('بعد\\s+(\\d{1,3})\\s+(?:أيام|ايام|يوم|يومًا|يوما)',m=>addDays(T,+m[1]));
+  take('بعد\\s+(\\d{1,2})\\s+(?:أسابيع|اسابيع|أسبوع|اسبوع)',m=>addDays(T,7*m[1]));
+  take('(?:next\\s+week|الأسبوع\\s+القادم|الاسبوع\\s+القادم)',()=>addDays(T,((8-T.getDay())%7)||7));
+  take('(?:on\\s+)?(sunday|monday|tuesday|wednesday|thursday|friday|saturday|sun|mon|tues|tue|wed|thurs|thur|thu|fri|sat)',m=>/^[A-Z]{3,}$/.test(m[1])?null:wd(QA_WD[m[1].toLowerCase()]));
+  take('(?:يوم\\s+)?ال(أحد|احد|اثنين|إثنين|ثلاثاء|أربعاء|اربعاء|خميس|جمعة|جمعه|سبت)',m=>wd(QA_WDAR[m[1]]));
+  take('(\\d{4})-(\\d{1,2})-(\\d{1,2})',m=>{const x=new Date(+m[1],m[2]-1,+m[3]);return x.getDate()===+m[3]?x:null});
+  take('(\\d{1,2})\\s+(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*',m=>dm(+m[1],QA_MON.indexOf(m[2].toLowerCase())+1));
+  take('(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\\s+(\\d{1,2})',m=>dm(+m[2],QA_MON.indexOf(m[1].toLowerCase())+1));
+  if(!due){const m=s.match(/(?<=\s)(\d{1,2})\/(\d{1,2})\s$/);if(m){const d=dm(+m[1],+m[2]);if(d){due=ds(d);s=s.slice(0,m.index)+' '}}}
+  const pm=s.match(/(?<=\s)!(high|medium|med|low|h|m|l|1|2|3|عالي|عالية|متوسط|متوسطة|منخفض|منخفضة)(?=\s)/iu);
+  if(pm){priority=QA_PRI[pm[1].toLowerCase()];s=s.replace(pm[0],' ')}
+  const tm=s.match(/(?<=\s)#([\p{L}\p{N}_-]{1,40})(?=\s)/u);
+  if(tm){tag=tm[1];s=s.replace(tm[0],' ')}
+  const title=s.replace(/\s+/g,' ').trim();
+  return{title:title||String(raw||'').trim(),due,priority,tag};
+}
+function qaHint(inp){
+  const f=inp.form,h=f&&f.querySelector('.qa-hint');if(!h)return;const q=parseQuick(inp.value),bits=[];
+  if(q.due)bits.push(`<span class="pill sm">📅 ${fmtDay(q.due)}</span>`);
+  if(q.priority)bits.push(`<span class="pill sm">⚑ ${{high:'High',med:'Medium',low:'Low'}[q.priority]}</span>`);
+  if(q.tag)bits.push(`<span class="pill sm" translate="no">#${esc(q.tag)}</span>`);
+  h.innerHTML=bits.join(' ');h.hidden=!bits.length;
+}
+document.addEventListener('input',e=>{if(e.target.matches&&e.target.matches('form[data-form=task] input[name=title]'))qaHint(e.target)});
 /* ---------- Coach ---------- */
 const TIERS=[{n:'Spark',i:'⚡',k:'friend'},{n:'Blaze',i:'🔥',k:'coach'},{n:'Titan',i:'⚔️',k:'beast'}];
 const lvlAt=()=>[0,Math.max(1,+S.cfg.lvl2||3),Math.max(2,+S.cfg.lvl3||5)];
@@ -1216,7 +1256,8 @@ function viewTasks(){
   const nOver=live.filter(t=>!t.done&&t.due&&t.due<today).length;
   const chip=(k,l)=>`<button class="chip ${f===k?'on':''}" data-action="task-filter" data-v="${k}">${l}</button>`;
   return `<form class="add taskadd card" data-form="task">
-    <div class="qa"><input type="text" name="title" placeholder="New task…" required><button class="btn">Add</button></div>
+    <div class="qa"><input type="text" name="title" placeholder="New task…" required autocomplete="off" aria-describedby="qaHint"><button class="btn">Add</button></div>
+    <div class="qa-hint" id="qaHint" aria-live="polite" hidden></div>
     <details class="more"><summary>More options</summary><div class="moreg">
     <input type="date" name="due" value="${S.cfg.dueDef==="none"?"":S.cfg.dueDef==="tomorrow"?ds(addDays(new Date(),1)):today}">
     <select name="priority">${[['low','Low'],['med','Medium'],['high','High']].map(([v,l])=>`<option value="${v}" ${S.cfg.prio===v?'selected':''}>${l}</option>`).join('')}</select>
@@ -1731,7 +1772,7 @@ function drawHabit(){
 document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('[role=button][data-action]')){e.preventDefault();e.target.click()}});
 
 /* ---------- Version ---------- */
-const APP_VERSION='0.57.0';
+const APP_VERSION='0.58.0';
 
 /* ---------- Completion sounds (synthesised, no audio files) ---------- */
 const Sound={
@@ -2194,14 +2235,14 @@ document.addEventListener('change',async e=>{
 document.addEventListener('submit',async e=>{
   const f=e.target.closest('form[data-form]');if(!f)return;e.preventDefault();
   const v=Object.fromEntries(new FormData(f));const kind=f.dataset.form;
-  if(kind==='task'){const t={id:uid(),title:v.title.trim(),notes:(v.notes||'').trim(),repeat:v.repeat||'',tag:(v.tag||'').trim(),items:parseItems(v.items),due:v.due||null,priority:v.priority,goalId:v.goalId||null,done:false,created:Date.now()};S.tasks.push(t);await DB.put('tasks',t)}
+  if(kind==='task'){const q=parseQuick(v.title);const t={id:uid(),title:q.title,notes:(v.notes||'').trim(),repeat:v.repeat||'',tag:q.tag||(v.tag||'').trim(),items:parseItems(v.items),due:q.due||v.due||null,priority:q.priority||v.priority,goalId:v.goalId||null,done:false,created:Date.now()};S.tasks.push(t);await DB.put('tasks',t)}
   if(kind==='goal'){
     const hz=S.horizon==='ladder'?'weekly':S.horizon;let gk=v.kind||'check';if(gk==='rollup'&&hz==='weekly')gk='check';
     if(gk==='number'&&!(+v.target>0)){alert('Set a target number for this goal (for example 40).');return}
     const g={id:uid(),title:v.title.trim(),horizon:hz,period:(v.period||currentPeriod(hz)).trim(),parentId:v.parentId||null,notes:(v.notes||'').trim(),
       kind:gk,target:+v.target||0,unit:(v.unit||'').trim(),value:0,expected:v.expected?Math.max(1,Math.round(+v.expected)):null,done:false,created:Date.now()};
     S.goals.push(g);await DB.put('goals',g)}
-  if(kind==='ltask'){const t={id:uid(),title:v.title.trim(),notes:'',repeat:'',tag:'',items:[],due:S.cfg.dueDef==='none'?null:S.cfg.dueDef==='tomorrow'?ds(addDays(new Date(),1)):TODAY(),priority:S.cfg.prio,goalId:f.dataset.goal,done:false,created:Date.now()};S.tasks.push(t);await DB.put('tasks',t);setTimeout(()=>{const i=document.querySelector('.ladd input');if(i)i.focus()},60)}
+  if(kind==='ltask'){const q=parseQuick(v.title);const t={id:uid(),title:q.title,notes:'',repeat:'',tag:q.tag||'',items:[],due:q.due||(S.cfg.dueDef==='none'?null:S.cfg.dueDef==='tomorrow'?ds(addDays(new Date(),1)):TODAY()),priority:q.priority||S.cfg.prio,goalId:f.dataset.goal,done:false,created:Date.now()};S.tasks.push(t);await DB.put('tasks',t);setTimeout(()=>{const i=document.querySelector('.ladd input');if(i)i.focus()},60)}
   if(kind==='topics'){const sub=(v.subject||'').trim();const names=String(v.names||'').split('\n').map(x=>x.trim()).filter(Boolean).slice(0,100);
     if(!sub||!names.length){return}
     let added=0;for(const name of names){if(S.topics.some(t=>t.subject===sub&&t.name.toLowerCase()===name.toLowerCase()))continue;const t={id:uid(),subject:sub,name,sessions:[],created:Date.now()};S.topics.push(t);await DB.put('topics',t);added++}
