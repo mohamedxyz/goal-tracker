@@ -5,6 +5,7 @@
     PATCH = bug fix · MINOR = new feature · MAJOR = breaks old backups or data
 
   Changelog
+  0.59.0 Focus timer: start a focus session from any task's ⋯ menu. A bar above the tabs counts down (pause, resume or stop), then a short break follows. Finished minutes are saved on the task (⏱ on its row) and, in Game mode, every 5 focused minutes deal 2 damage to the weekly boss. The timer keeps correct time if the screen locks or you leave the app. Focus and break lengths are in Settings → Tasks
   0.58.0 Smart quick add: type "Essay tomorrow !high #uni" and the due date, priority and tag fill themselves. Understands today, tomorrow, weekday names, in 3 days, next week, 25 oct and 25/10 at the end, plus Arabic (اليوم، غدًا، بكرة، باچر، بعد غد، الخميس، بعد 3 أيام). A preview under the box shows what it understood. Works in the ladder's + Task too
   0.57.0 Habits tab split: habits you build and habits you avoid now sit in their own sections (✅ Build and 🛡 Avoid), each with its own count for today; folders still work inside each section
   0.56.0 Arabic, complete: the day banner, all three coach tones, quota and pull-in buttons, Titan prompts, trash and bulk messages, goal planning text and screen-reader labels are now in Arabic. Beast-mode wording in prompts is now Titan
@@ -360,6 +361,16 @@ form[data-kind=number] .f-num,form[data-kind=rollup] .f-roll{display:flex;flex-w
 #toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom));transform:translate(-50%,20px);opacity:0;pointer-events:none;z-index:60;background:var(--text);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:14px;box-shadow:0 10px 30px rgba(0,0,0,.25);transition:.2s;max-width:calc(100vw - 32px)}
 #toast.act{pointer-events:auto}#toast button{margin-left:10px;background:none;border:1px solid currentColor;color:inherit;border-radius:8px;padding:2px 10px;font:inherit;font-weight:700;cursor:pointer}
 #toast.show{opacity:1;transform:translate(-50%,0)}
+#focusBar{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom));z-index:25;width:min(460px,calc(100vw - 24px));display:flex;align-items:center;gap:10px;padding:8px 8px 8px 14px;border-radius:14px;background:var(--text);color:var(--bg);box-shadow:0 8px 24px rgba(0,0,0,.22)}
+#focusBar[hidden]{display:none}
+#focusBar .ft-main{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.25}
+#focusBar .ft-ph{font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;opacity:.8}
+#focusBar .ft-t{font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#focusBar .ft-time{font:700 20px/1 ui-monospace,Menlo,monospace;font-variant-numeric:tabular-nums}
+#focusBar button{width:40px;height:40px;border-radius:10px;border:1px solid color-mix(in oklab,var(--bg) 35%,transparent);background:transparent;color:inherit;font:600 15px inherit;cursor:pointer;flex:none}
+#focusBar.brk{background:var(--ok);color:var(--on-ok)}
+body.ftOn main.wrap{padding-bottom:calc(150px + env(safe-area-inset-bottom))}
+@media (max-width:700px){#focusBar{bottom:calc(72px + env(safe-area-inset-bottom))}}
 /* ---------- Compact habits ---------- */
 .card.hcompact{padding:8px 12px}
 .hcompact .habit{flex-wrap:nowrap;gap:8px}
@@ -576,6 +587,7 @@ body.cmp .add{gap:6px}body.cmp .goals,body.cmp .list{gap:6px}
 </nav>
 <input type="file" id="importFile" accept="application/json" hidden>
 <div id="tip" role="tooltip"></div>
+<div id="focusBar" role="timer" aria-live="off" hidden></div>
 <div id="toast" role="status"></div>
 <dialog id="editDlg" class="dlg"></dialog>
 
@@ -751,6 +763,7 @@ function taskItem(t){
         ${t.done&&t.doneAt?`<span>Done ${fmtWhen(t.doneAt)}</span>`:''}
         ${t.done&&t.due?`<span>${fmtDate(t.due)}</span>`:''}
         ${t.tag?`<span class="tag">#${esc(t.tag)}</span>`:''}
+        ${t.focus?`<span title="Focus time">⏱ ${fmtMin(t.focus)}</span>`:''}
         ${(t.pushes||[]).length?`<span title="Pushed back: ${esc(t.pushes[t.pushes.length-1].why)}">↻ ${t.pushes.length}×</span>`:''}
         ${t.repeat?`<span title="Repeats">🔁 ${REPEAT_LABEL[t.repeat]||''}</span>`:''}
         ${g?`<span class="tag">${esc(g.title)}</span>`:''}
@@ -820,15 +833,16 @@ function rpgAll(){
   const curMon=mondayOf(new Date());let mon=mondayOf(new Date(start+'T00:00'));const min=addDays(curMon,-7*103);if(mon<min)mon=min;
   const weeks=[],hist=[];let xp=0,totT=0,totH=0,totS=0;
   for(let m=new Date(mon);m<=curMon;m=addDays(m,7)){
-    const keys=weekKeys(m),set=new Set(keys);let tD=0,hD=0,sD=0,best=0,planned=0;
+    const keys=weekKeys(m),set=new Set(keys);let tD=0,hD=0,sD=0,fD=0,best=0,planned=0;
+    for(const t of S.tasks)for(const f of t.focusLog||[]){if(set.has(ds(new Date(f.at))))fD+=2*Math.floor(f.m/5)}
     for(const k of keys)for(const t of byDay[k]||[]){const d=tdmg.get(t.id);tD+=d.v;if(d.v>best)best=d.v}
     for(const t of S.tasks)if(t.due&&set.has(t.due))planned+=taskBase(t);
     for(const h of build){const b=bornK(h);for(const k of keys){if(k>=b&&isDue(h,new Date(k+'T00:00')))planned+=5;if(k<=today&&S.logs.has(h.id+'|'+k))hD+=habitHit(h,k)}}
     if(stu)for(const tp of S.topics)for(const se of tp.sessions||[])if(set.has(se.d))sD+=[0,5,8,12][se.c]||0;
-    const total=tD+hD+sD,prev=hist.slice(-4).filter(x=>x>0),avg=prev.length?prev.reduce((a,b)=>a+b,0)/prev.length:0;
+    const total=tD+hD+sD+fD,prev=hist.slice(-4).filter(x=>x>0),avg=prev.length?prev.reduce((a,b)=>a+b,0)/prev.length:0;
     const hp=Math.max(60,Math.round(planned*.8),Math.round(avg*.9));
-    hist.push(total);xp+=total;totT+=tD;totH+=hD;totS+=sD;
-    weeks.push({key:isoWeek(m),keys,tD,hD,sD,total,hp,best,won:total>=hp});
+    hist.push(total);xp+=total;totT+=tD+fD;totH+=hD;totS+=sD;
+    weeks.push({key:isoWeek(m),keys,tD,hD,sD,fD,total,hp,best,won:total>=hp});
   }
   let clean=0;for(const h of S.habits.filter(isNeg)){let d=new Date(bornK(h)+'T00:00');for(let i=0;i<1500&&ds(d)<=today;i++,d=addDays(d,1))if(good(h,ds(d)))clean++}
   return _rpg={weeks,cur:weeks[weeks.length-1],xp,totT,totH,totS,clean};
@@ -884,7 +898,7 @@ function rpgCard(){
       <b class="rpg-name" translate="no">${m.name}</b><span class="rpg-sub">${m.title}</span>
       <div class="bar hp" role="progressbar" aria-valuemin="0" aria-valuemax="${w.hp}" aria-valuenow="${left}" aria-label="Boss HP"><span style="width:${pct}%"></span></div>
       <div class="meta"><span>${status}</span></div></div></div>
-    <div class="meta" style="margin-top:6px"><span title="Tasks">⚔️ ${w.tD}</span><span title="Habits">🔁 ${w.hD}</span>${S.cfg.student?`<span title="Study">📚 ${w.sD}</span>`:''}<span>HP ${w.hp}</span></div>
+    <div class="meta" style="margin-top:6px"><span title="Tasks">⚔️ ${w.tD}</span><span title="Habits">🔁 ${w.hD}</span>${S.cfg.student?`<span title="Study">📚 ${w.sD}</span>`:''}${w.fD?`<span title="Focus time">⏱ ${w.fD}</span>`:''}<span>HP ${w.hp}</span></div>
     <div class="rpg-hero"><b>Lv ${L}</b><div class="bar xp"><span style="width:${xpPct}%"></span></div><span>${A.xp} / ${hi} XP</span><button class="chip" data-action="open-bestiary">Bestiary →</button></div></div>`;
 }
 function viewBestiary(){
@@ -938,6 +952,42 @@ function qaHint(inp){
   h.innerHTML=bits.join(' ');h.hidden=!bits.length;
 }
 document.addEventListener('input',e=>{if(e.target.matches&&e.target.matches('form[data-form=task] input[name=title]'))qaHint(e.target)});
+/* ---------- Focus timer ---------- */
+// One session at a time, stored as timestamps so it survives screen locks, reloads and the app being closed.
+let FT=null;try{FT=JSON.parse(localStorage.getItem('gt-focus')||'null')}catch(e){}
+let ftBusy=false,ftKey='';
+const ftSave=()=>{try{FT?localStorage.setItem('gt-focus',JSON.stringify(FT)):localStorage.removeItem('gt-focus')}catch(e){}};
+const ftLeft=()=>FT?Math.max(0,FT.len-((FT.paused?FT.pausedAt:Date.now())-FT.start)):0;
+const fmtMin=n=>n>=60?`${Math.floor(n/60)}${L2('h','س')} ${n%60}${L2('m','د')}`:`${n}${L2('m','د')}`;
+function natSchedule(id,at,title,body){try{window.GTNative&&GTNative.schedule(id,at,title,body)}catch(e){}}
+function natCancel(id){try{window.GTNative&&GTNative.cancel(id)}catch(e){}}
+function ftNotify(){natCancel('focus');if(FT&&!FT.paused){const t=S.tasks.find(x=>x.id===FT.taskId);
+  natSchedule('focus',Date.now()+ftLeft(),FT.phase==='focus'?L2('Focus session done','انتهت جلسة التركيز'):L2('Break over','انتهت الاستراحة'),FT.phase==='focus'?L2('Time for a break: ','حان وقت الاستراحة: ')+(t?t.title:''):L2('Ready for another round?','مستعد لجولة أخرى؟'))}}
+function ftStart(taskId,phase){phase=phase||'focus';const min=+(phase==='focus'?S.cfg.focusLen:S.cfg.breakLen)||25;
+  FT={taskId,phase,start:Date.now(),len:min*60000,paused:false,n:(FT&&FT.n)||0};ftSave();ftNotify();ftTick(true)}
+function ftToggle(){if(!FT)return;if(FT.paused){FT.start+=Date.now()-FT.pausedAt;FT.paused=false}else{FT.paused=true;FT.pausedAt=Date.now()}ftSave();ftNotify();ftTick(true)}
+async function ftLog(id,min){const t=S.tasks.find(x=>x.id===id);if(!t||min<1)return null;(t.focusLog=t.focusLog||[]).push({at:Date.now(),m:min});t.focus=(t.focus||0)+min;await DB.put('tasks',t);return t}
+async function ftStop(){if(!FT)return;const was=FT;FT=null;ftSave();natCancel('focus');ftTick(true);
+  if(was.phase==='focus'){const min=Math.floor(((was.paused?was.pausedAt:Date.now())-was.start)/60000);
+    if(min>=5){const t=await ftLog(was.taskId,min);if(t)toast(`Logged ${min} min on "${t.title}".`)}else toast("Stopped. Sessions under 5 minutes aren't logged.")}
+  render()}
+async function ftFinish(){if(ftBusy||!FT)return;ftBusy=true;try{const was=FT;
+  if(was.phase==='focus'){const t=await ftLog(was.taskId,Math.round(was.len/60000));Sound.play('goal');
+    FT={...was,n:(was.n||0)+1};ftStart(was.taskId,'break');if(t)toast(`Focus done: ${Math.round(was.len/60000)} min on "${t.title}". Break time.`)}
+  else{FT=null;ftSave();natCancel('focus');Sound.play('habit');toast('Break over. Ready for another round?')}
+  ftTick(true);render()}finally{ftBusy=false}}
+function ftTick(full){const bar=$('#focusBar');if(!bar)return;
+  if(!FT){bar.hidden=true;ftKey='';document.body.classList.remove('ftOn');return}
+  const left=ftLeft();if(left<=0&&!FT.paused){ftFinish();return}
+  const mm=Math.floor(left/60000),ss=Math.floor(left/1000)%60,time=`${String(mm).padStart(2,'0')}:${String(ss).padStart(2,'0')}`;
+  const t=S.tasks.find(x=>x.id===FT.taskId),key=FT.phase+FT.paused+(t?t.title:'');
+  if(full||key!==ftKey||bar.hidden){ftKey=key;bar.hidden=false;bar.classList.toggle('brk',FT.phase==='break');document.body.classList.add('ftOn');
+    bar.innerHTML=`<div class="ft-main"><span class="ft-ph">${FT.phase==='focus'?'⏱ Focus':'☕ Break'}${FT.paused?` <span>· ${L2('paused','متوقف')}</span>`:''}</span><span class="ft-t" translate="no">${t?esc(t.title):''}</span></div><b class="ft-time">${time}</b>
+      <button type="button" data-action="ft-toggle" aria-label="${FT.paused?'Resume':'Pause'}" title="${FT.paused?'Resume':'Pause'}">${FT.paused?'▶':'❚❚'}</button>${FT.phase==='break'?`<button type="button" data-action="ft-skip" aria-label="Skip break" title="Skip break">⏭</button>`:''}<button type="button" data-action="ft-stop" aria-label="Stop" title="Stop">✕</button>`}
+  else{const e=bar.querySelector('.ft-time');if(e)e.textContent=time}
+}
+setInterval(()=>{if(FT)ftTick()},1000);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&FT)ftTick(true)});
 /* ---------- Coach ---------- */
 const TIERS=[{n:'Spark',i:'⚡',k:'friend'},{n:'Blaze',i:'🔥',k:'coach'},{n:'Titan',i:'⚔️',k:'beast'}];
 const lvlAt=()=>[0,Math.max(1,+S.cfg.lvl2||3),Math.max(2,+S.cfg.lvl3||5)];
@@ -1506,6 +1556,8 @@ function settingsCard(){
     ${sw('rpg','RPG game mode','A weekly pixel boss you beat by finishing tasks, habits and study. Shows damage, a hero level and a bestiary of beaten monsters',c.rpg)}
   </div>
   <div class="card settings" style="margin-top:12px"><div class="title">Tasks</div>
+    ${sel('focusLen','Focus session length',[['15','15 min'],['25','25 min'],['45','45 min'],['50','50 min']],c.focusLen)}
+    ${sel('breakLen','Break length',[['5','5 min'],['10','10 min'],['15','15 min']],c.breakLen)}
     ${sel('dueDef','Default due date for new tasks',[['today','Today'],['tomorrow','Tomorrow'],['none','No date']],c.dueDef)}
     ${sel('sortBy','Sort open tasks by',[['due','Due date'],['prio','Priority'],['new','Newest first'],['az','A to Z']],c.sortBy)}
     ${sel('defFilter','Tasks tab opens on',[['all','All'],['today','Due today'],['overdue','Overdue']],c.defFilter)}
@@ -1772,7 +1824,7 @@ function drawHabit(){
 document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('[role=button][data-action]')){e.preventDefault();e.target.click()}});
 
 /* ---------- Version ---------- */
-const APP_VERSION='0.58.0';
+const APP_VERSION='0.59.0';
 
 /* ---------- Completion sounds (synthesised, no audio files) ---------- */
 const Sound={
@@ -1803,7 +1855,7 @@ const Sound={
   }
 };
 Sound.load();
-const CFG_DEF={rpg:false,coachTone:'on',lvl2:'3',lvl3:'5',stuCompact:false,avoidHide:true,cTask:true,cGoal:true,cHabit:true,dCharts:true,dTasks:true,dGoals:true,dHabits:true,prio:'low',showDone:true,dueDef:'today',sortBy:'due',groupTags:true,autoArch:'0',defFilter:'all',showSubs:true,showNotes:true,dOverdue:false,avoidMode:'clean',student:false,lang:'en',srOn:true,srWeak:'1',srOk:'3',srLadder:'1,3,7,14,30'};
+const CFG_DEF={focusLen:'25',breakLen:'5',rpg:false,coachTone:'on',lvl2:'3',lvl3:'5',stuCompact:false,avoidHide:true,cTask:true,cGoal:true,cHabit:true,dCharts:true,dTasks:true,dGoals:true,dHabits:true,prio:'low',showDone:true,dueDef:'today',sortBy:'due',groupTags:true,autoArch:'0',defFilter:'all',showSubs:true,showNotes:true,dOverdue:false,avoidMode:'clean',student:false,lang:'en',srOn:true,srWeak:'1',srOk:'3',srLadder:'1,3,7,14,30'};
 try{S.cfg={...CFG_DEF,...JSON.parse(localStorage.getItem('gt-settings')||'{}')}}catch(e){S.cfg={...CFG_DEF}}
 S.taskFilter=S.cfg.defFilter;
 const saveCfg=()=>{try{localStorage.setItem('gt-settings',JSON.stringify(S.cfg))}catch(e){}};
@@ -1813,7 +1865,7 @@ const saveCfg=()=>{try{localStorage.setItem('gt-settings',JSON.stringify(S.cfg))
 const AYAM=n=>(n=+n,n===1?'يوم':n===2?'يومان':n>=3&&n<=10?'أيام':'يومًا');
 const HZ_AR={weekly:'أسبوعية',monthly:'شهرية',annual:'سنوية','5-year':'خمسية',sub:'فرعية'},HZ1_AR={weekly:'أسبوعي',monthly:'شهري',annual:'سنوي','5-year':'خمسي'};
 const WHY_AR={'pushing this back':'تؤجل هذه المهمة','pushing these back':'تؤجل هذه المهام','deleting work that is due':'تحذف عملًا مستحقًا'};
-const AR={'✅ Build':'✅ بناء','🛡 Avoid':'🛡 تجنّب','activity, charts, habit consistency':'النشاط، الرسوم، انتظام العادات','Decrease':'إنقاص','Increase':'زيادة','Set exact value':'تعيين قيمة دقيقة','More actions':'إجراءات أخرى','Collapse':'طيّ','Expand':'توسيع',"This week's step toward it…":'خطوة هذا الأسبوع نحوه…','No weekly goal':'بلا هدف أسبوعي','Student mode only: tighter spacing, smaller text, fewer extras, so more fits on a small screen':'لوضع الطالب فقط: مسافات أضيق ونص أصغر وإضافات أقل، ليتسع المزيد على الشاشة الصغيرة','Coach':'المدرب','Day levels and coach':'مستويات اليوم والمدرب','On':'تشغيل','Off':'إيقاف','Blaze starts at':'يبدأ اللهب عند','Titan starts at':'يبدأ الجبّار عند','⚡ Spark is a slow start and the coach is gentle. 🔥 Blaze pushes. ⚔️ Titan raises the bar: a daily quota, and you must type a reason to push back, reschedule or delete work that is due. Nothing is ever changed without you.':'⚡ الشرارة بداية هادئة والمدرب لطيف. 🔥 اللهب يدفعك. ⚔️ الجبّار يرفع السقف: حصة يومية، وعليك كتابة سبب لتأجيل أو إعادة جدولة أو حذف عمل مستحق. لا يتغير شيء دون موافقتك.','Quota':'الحصة','7-day avg':'متوسط 7 أيام','Best day':'أفضل يوم','Day streak':'سلسلة الأيام','Start a streak':'ابدأ سلسلة','Habit moved to Trash.':'نُقلت العادة إلى سلة المحذوفات.','Task moved to Trash.':'نُقلت المهمة إلى سلة المحذوفات.','Pulled into today.':'سُحبت إلى اليوم.',"Delete this forever? This can't be undone.":'حذف نهائي؟ لا يمكن التراجع.','Not applied. Titan wants a reason.':'لم يُطبَّق. الجبّار يريد سببًا.','Not saved. Titan wants a reason.':'لم يُحفظ. الجبّار يريد سببًا.','Not deleted. Titan wants a reason.':'لم يُحذف. الجبّار يريد سببًا.','(Leave empty to remove the folder. Its habits are kept.)':'(اتركه فارغًا لإزالة المجلد. تبقى عاداته.)','Replace all current data with this backup?':'استبدال كل البيانات الحالية بهذه النسخة؟',"This can't be undone. Not-completed archived tasks are kept.":'لا يمكن التراجع. تبقى المهام المؤرشفة غير المكتملة.','Week':'أسبوع','Month':'شهر','Year':'سنة','5 Years':'5 سنوات','5 Yr':'5 سنوات','+ Task':'+ مهمة','New task for this goal':'مهمة جديدة لهذا الهدف','Colour':'اللون','Black':'أسود','Black (OLED)':'أسود (OLED)','Clay':'طين','Terra':'تيرا','Ocean':'محيط','Grape':'عنب','Rose':'وردي','Graphite':'غرافيت','Game mode':'وضع اللعبة','RPG game mode':'وضع لعبة المغامرة','A weekly pixel boss you beat by finishing tasks, habits and study. Shows damage, a hero level and a bestiary of beaten monsters':'زعيم أسبوعي بالبكسل تهزمه بإنجاز المهام والعادات والدراسة. يعرض الضرر ومستوى البطل وسجل الوحوش المهزومة','Week boss':'زعيم الأسبوع','Last day':'اليوم الأخير','Bestiary':'سجل الوحوش','Hero':'البطل','Defeated':'هُزم','Escaped':'هرب','Defeated. It joins your bestiary.':'هُزم. انضم إلى سجل وحوشك.','Clean days':'أيام نظيفة','STR':'القوة','VIT':'الحيوية','INT':'الذكاء','DEF':'الدفاع','Boss HP':'صحة الزعيم','No monsters yet. Beat this week\'s boss to start your collection.':'لا وحوش بعد. اهزم زعيم هذا الأسبوع لتبدأ مجموعتك.','the Procrastinator':'المُسوِّف','the Snoozer':'النعسان','of Endless Tabs':'صاحب التبويبات اللانهائية','the Deadline Eater':'آكل المواعيد','the Doomscroller':'المُتصفّح بلا نهاية','of Unread Messages':'صاحب الرسائل غير المقروءة','the Excuse Maker':'صانع الأعذار','the Distractor':'المُشتِّت','of Tomorrow':'سيّد الغد','the Couch Golem':'غولم الأريكة','the Notification Fiend':'شيطان الإشعارات','of Half-Done Drafts':'صاحب المسودات الناقصة','the Overthinker':'كثير التفكير','the Time Thief':'سارق الوقت','the Lazy Tide':'موجة الكسل','of Later':'سيّد لاحقًا','Tap for your level calendar':'اضغط لرؤية تقويم مستوياتك','Show intro again':'عرض المقدمة مرة أخرى','Open level calendar':'فتح تقويم المستويات',
+const AR={'Focus':'تركيز','Break':'استراحة','Pause':'إيقاف مؤقت','Resume':'استئناف','Stop':'إيقاف','Skip break':'تخطي الاستراحة','Focus time':'وقت التركيز','Focus session length':'مدة جلسة التركيز','Break length':'مدة الاستراحة','Break over. Ready for another round?':'انتهت الاستراحة. مستعد لجولة أخرى؟',"Stopped. Sessions under 5 minutes aren't logged.":'توقف. الجلسات الأقل من 5 دقائق لا تُسجّل.','Stop the current focus session and start a new one?':'إيقاف جلسة التركيز الحالية وبدء جلسة جديدة؟','✅ Build':'✅ بناء','🛡 Avoid':'🛡 تجنّب','activity, charts, habit consistency':'النشاط، الرسوم، انتظام العادات','Decrease':'إنقاص','Increase':'زيادة','Set exact value':'تعيين قيمة دقيقة','More actions':'إجراءات أخرى','Collapse':'طيّ','Expand':'توسيع',"This week's step toward it…":'خطوة هذا الأسبوع نحوه…','No weekly goal':'بلا هدف أسبوعي','Student mode only: tighter spacing, smaller text, fewer extras, so more fits on a small screen':'لوضع الطالب فقط: مسافات أضيق ونص أصغر وإضافات أقل، ليتسع المزيد على الشاشة الصغيرة','Coach':'المدرب','Day levels and coach':'مستويات اليوم والمدرب','On':'تشغيل','Off':'إيقاف','Blaze starts at':'يبدأ اللهب عند','Titan starts at':'يبدأ الجبّار عند','⚡ Spark is a slow start and the coach is gentle. 🔥 Blaze pushes. ⚔️ Titan raises the bar: a daily quota, and you must type a reason to push back, reschedule or delete work that is due. Nothing is ever changed without you.':'⚡ الشرارة بداية هادئة والمدرب لطيف. 🔥 اللهب يدفعك. ⚔️ الجبّار يرفع السقف: حصة يومية، وعليك كتابة سبب لتأجيل أو إعادة جدولة أو حذف عمل مستحق. لا يتغير شيء دون موافقتك.','Quota':'الحصة','7-day avg':'متوسط 7 أيام','Best day':'أفضل يوم','Day streak':'سلسلة الأيام','Start a streak':'ابدأ سلسلة','Habit moved to Trash.':'نُقلت العادة إلى سلة المحذوفات.','Task moved to Trash.':'نُقلت المهمة إلى سلة المحذوفات.','Pulled into today.':'سُحبت إلى اليوم.',"Delete this forever? This can't be undone.":'حذف نهائي؟ لا يمكن التراجع.','Not applied. Titan wants a reason.':'لم يُطبَّق. الجبّار يريد سببًا.','Not saved. Titan wants a reason.':'لم يُحفظ. الجبّار يريد سببًا.','Not deleted. Titan wants a reason.':'لم يُحذف. الجبّار يريد سببًا.','(Leave empty to remove the folder. Its habits are kept.)':'(اتركه فارغًا لإزالة المجلد. تبقى عاداته.)','Replace all current data with this backup?':'استبدال كل البيانات الحالية بهذه النسخة؟',"This can't be undone. Not-completed archived tasks are kept.":'لا يمكن التراجع. تبقى المهام المؤرشفة غير المكتملة.','Week':'أسبوع','Month':'شهر','Year':'سنة','5 Years':'5 سنوات','5 Yr':'5 سنوات','+ Task':'+ مهمة','New task for this goal':'مهمة جديدة لهذا الهدف','Colour':'اللون','Black':'أسود','Black (OLED)':'أسود (OLED)','Clay':'طين','Terra':'تيرا','Ocean':'محيط','Grape':'عنب','Rose':'وردي','Graphite':'غرافيت','Game mode':'وضع اللعبة','RPG game mode':'وضع لعبة المغامرة','A weekly pixel boss you beat by finishing tasks, habits and study. Shows damage, a hero level and a bestiary of beaten monsters':'زعيم أسبوعي بالبكسل تهزمه بإنجاز المهام والعادات والدراسة. يعرض الضرر ومستوى البطل وسجل الوحوش المهزومة','Week boss':'زعيم الأسبوع','Last day':'اليوم الأخير','Bestiary':'سجل الوحوش','Hero':'البطل','Defeated':'هُزم','Escaped':'هرب','Defeated. It joins your bestiary.':'هُزم. انضم إلى سجل وحوشك.','Clean days':'أيام نظيفة','STR':'القوة','VIT':'الحيوية','INT':'الذكاء','DEF':'الدفاع','Boss HP':'صحة الزعيم','No monsters yet. Beat this week\'s boss to start your collection.':'لا وحوش بعد. اهزم زعيم هذا الأسبوع لتبدأ مجموعتك.','the Procrastinator':'المُسوِّف','the Snoozer':'النعسان','of Endless Tabs':'صاحب التبويبات اللانهائية','the Deadline Eater':'آكل المواعيد','the Doomscroller':'المُتصفّح بلا نهاية','of Unread Messages':'صاحب الرسائل غير المقروءة','the Excuse Maker':'صانع الأعذار','the Distractor':'المُشتِّت','of Tomorrow':'سيّد الغد','the Couch Golem':'غولم الأريكة','the Notification Fiend':'شيطان الإشعارات','of Half-Done Drafts':'صاحب المسودات الناقصة','the Overthinker':'كثير التفكير','the Time Thief':'سارق الوقت','the Lazy Tide':'موجة الكسل','of Later':'سيّد لاحقًا','Tap for your level calendar':'اضغط لرؤية تقويم مستوياتك','Show intro again':'عرض المقدمة مرة أخرى','Open level calendar':'فتح تقويم المستويات',
 'Goal Tracker':'متتبع الأهداف','Dashboard':'لوحة المتابعة','Home':'الرئيسية','Tasks':'المهام','Goals':'الأهداف','Habits':'العادات','Study':'الدراسة','Settings':'الإعدادات','Auto':'تلقائي','Light':'فاتح','Dark':'داكن',
 'Search':'بحث','Search everything…':'ابحث في كل شيء…','Type to search tasks, goals and habits.':'اكتب للبحث في المهام والأهداف والعادات.','Nothing found.':'لا توجد نتائج.','Close':'إغلاق','Cancel':'إلغاء','Save':'حفظ','Add':'إضافة','Edit':'تعديل','Delete':'حذف','Copy':'نسخ','Restore':'استعادة','Undo':'تراجع','Check off':'تم','Dismiss':'إخفاء',
 'Theme: auto (tap to change)':'السمة: تلقائي (اضغط للتغيير)','Theme: light (tap to change)':'السمة: فاتح (اضغط للتغيير)','Theme: dark (tap to change)':'السمة: داكن (اضغط للتغيير)','Theme':'السمة',
@@ -1845,7 +1897,7 @@ const AR={'✅ Build':'✅ بناء','🛡 Avoid':'🛡 تجنّب','activity, c
 'Delete this goal? Linked tasks and sub-goals are kept but unlinked.':'حذف هذا الهدف؟ تبقى المهام والأهداف الفرعية المرتبطة لكن دون ارتباط.','Delete this habit and its history?':'حذف هذه العادة وسجلها؟','Erase all tasks, goals, habits and history? This cannot be undone.':'مسح كل المهام والأهداف والعادات والسجل؟ لا يمكن التراجع.','This can\'t be undone.':'لا يمكن التراجع عن هذا.','This can\'t be undone. Tip: archive it instead to keep its history.':'لا يمكن التراجع عن هذا. نصيحة: أرشفها بدلًا من ذلك للاحتفاظ بسجلها.','Set a target number for this goal (for example 10).':'حدد رقمًا مستهدفًا لهذا الهدف (مثال: 10).','Set a target number for this goal (for example 40).':'حدد رقمًا مستهدفًا لهذا الهدف (مثال: 40).','(Leave empty to remove the folder. Its habits are kept.)':'(اتركه فارغًا لإزالة المجلد. تبقى عاداته.)','This can\'t be undone. Not-completed archived tasks are kept.':'لا يمكن التراجع. تبقى المهام المؤرشفة غير المكتملة.','Replace all current data with this backup?':'استبدال كل البيانات الحالية بهذه النسخة الاحتياطية؟',
 'None':'لا شيء','Tap a day to rate it:':'اضغط يومًا لتقييمه:','Weak':'ضعيف','Strong':'قوي','Clear':'مسح','Backfill past days to build your retrospective timetable.':'سجّل الأيام السابقة لبناء جدولك الاسترجاعي.','To review':'للمراجعة','Studied today':'درست اليوم','Days to next exam':'أيام للاختبار القادم','How did each topic feel today? Weak and untouched topics come first.':'كيف كان كل موضوع اليوم؟ المواضيع الضعيفة وغير المدروسة أولًا.','Add subject or topics':'إضافة مادة أو مواضيع','Everything has been studied today':'تمت دراسة كل شيء اليوم','Due for review':'مستحق للمراجعة','Show fewer':'عرض أقل','Share':'مشاركة','More items…':'عناصر أخرى…','today':'اليوم','Insights':'الإحصاءات','Topics studied per day':'المواضيع المدروسة يوميًا','Not studied yet':'لم تُدرس بعد','Study sessions':'جلسات الدراسة','Topics studied':'المواضيع المدروسة','Exams and quizzes this week':'اختبارات هذا الأسبوع','Spaced repetition':'التكرار المتباعد','Topics come back for review when their date arrives':'تعود المواضيع للمراجعة عند حلول موعدها','Review Weak topics after':'مراجعة المواضيع الضعيفة بعد','Review OK topics after':'مراجعة المواضيع المقبولة بعد','Review Strong topics after':'مراجعة المواضيع القوية بعد','1, 3, 7, 14, 30 days':'1، 3، 7، 14، 30 يومًا','1, 2, 4, 7, 14 days (tight)':'1، 2، 4، 7، 14 يومًا (مكثف)','2, 5, 10, 21, 45 days (relaxed)':'2، 5، 10، 21، 45 يومًا (مريح)','Due for review':'حان وقت المراجعة','Share with friends':'المشاركة مع الأصدقاء','Send habits, tasks or homework, exams and quizzes, and study topics to a friend as a small JSON file or text. Your history, check-ins and scores are never included.':'أرسل العادات أو المهام والواجبات أو الاختبارات أو مواضيع الدراسة إلى صديق كملف JSON صغير أو كنص. لا يتم إرسال سجلك أو تسجيلاتك أو درجاتك أبدًا.','Share items…':'مشاركة عناصر…','Import shared items…':'استيراد عناصر مشاركة…','Share items':'مشاركة عناصر','Tick what to send. Only titles, dates, notes and settings are shared.':'حدد ما تريد إرساله. تُشارَك العناوين والتواريخ والملاحظات والإعدادات فقط.','Tasks and homework':'المهام والواجبات','Exams and quizzes':'الاختبارات والاختبارات القصيرة','Study topics':'مواضيع الدراسة','Nothing to share yet.':'لا شيء للمشاركة بعد.','Select all':'تحديد الكل','Clear':'مسح','Save file':'حفظ ملف','Copy text':'نسخ النص','Share…':'مشاركة…','Import shared items':'استيراد عناصر مشاركة','Paste what your friend sent, or choose their .json file. You will see a preview before anything is added.':'الصق ما أرسله صديقك أو اختر ملف .json الخاص به. سترى معاينة قبل إضافة أي شيء.','Paste shared text here…':'الصق النص المشارَك هنا…','Choose file':'اختيار ملف','Preview':'معاينة','Add shared items?':'إضافة العناصر المشاركة؟','Add selected':'إضافة المحدد','Nothing usable in that file.':'لا يوجد شيء صالح في هذا الملف.','Tick at least one item first':'حدد عنصرًا واحدًا على الأقل أولًا','Could not copy on this browser. Use Save file instead.':'تعذر النسخ في هذا المتصفح. استخدم حفظ ملف بدلًا من ذلك.','Sharing is not available here. Use Copy text.':'المشاركة غير متاحة هنا. استخدم نسخ النص.','That isn\'t valid shared text. Ask your friend to share it again.':'هذا ليس نصًا مشاركًا صالحًا. اطلب من صديقك مشاركته مجددًا.','That isn\'t a shared GoalTerra file.':'هذا ليس ملف مشاركة من GoalTerra.','habits':'العادات','tasks done':'مهام منجزة','tasks missed':'مهام فائتة','Item one\nItem two':'عنصر أول\nعنصر ثانٍ'
 };
-const PAT=[[/^(\d+) of (\d+) (weekly|monthly|annual|sub) goals done(?: · (\d+) still to plan)?$/,m=>`${m[1]} من ${m[2]} أهداف ${HZ_AR[m[3]]} منجزة${m[4]?` · ${m[4]} بلا تخطيط بعد`:''}`],
+const PAT=[[/^Focus (\d+) min$/,m=>`تركيز ${m[1]} دقيقة`],[/^(\d+) min$/,m=>`${m[1]} دقيقة`],[/^Logged (\d+) min on "(.+)"\.$/,m=>`سُجّلت ${m[1]} دقيقة على "${m[2]}".`],[/^Focus done: (\d+) min on "(.+)"\. Break time\.$/,m=>`انتهى التركيز: ${m[1]} دقيقة على "${m[2]}". وقت الاستراحة.`],[/^(\d+) of (\d+) (weekly|monthly|annual|sub) goals done(?: · (\d+) still to plan)?$/,m=>`${m[1]} من ${m[2]} أهداف ${HZ_AR[m[3]]} منجزة${m[4]?` · ${m[4]} بلا تخطيط بعد`:''}`],
 [/^Supports which (weekly|monthly|annual|5-year) goal\??$/,m=>`يدعم أي هدف ${HZ1_AR[m[1]]}؟`],[/^New (monthly|annual|5-year) goal…?$/,m=>`هدف ${HZ1_AR[m[1]]} جديد…`],
 [/^How many (weekly|monthly|annual) goals\? \(default (\d+)\)$/,m=>`كم هدفًا ${HZ1_AR[m[1]]}؟ (الافتراضي ${m[2]})`],[/^Built from (weekly|monthly|annual) goals$/,m=>`مبني من أهداف ${HZ_AR[m[1]]}`],
 [/^Add this week's steps under your (.+) goals\. Each one moves its monthly goal forward\.$/,m=>`أضف خطوات هذا الأسبوع تحت أهداف ${m[1]}. كل خطوة تدفع هدفها الشهري للأمام.`],
@@ -2140,12 +2192,17 @@ const actions={
     toastUndo('Pulled into today.',async()=>{t.due=old;await DB.put('tasks',t)})},
   'task-menu'(el){const t=S.tasks.find(x=>x.id===el.dataset.id);if(!t)return false;const id=t.id;
     dlg.innerHTML=`<div class="tmenu"><h3>${esc(t.title)}</h3>
+      ${t.done?'':`<button class="ghost" data-action="tm" data-do="ft-start" data-id="${id}">⏱ Focus ${S.cfg.focusLen} min</button>`}
       <button class="ghost" data-action="tm" data-do="edit-task" data-id="${id}">✎ Edit</button>
       <button class="ghost" data-action="tm" data-do="share-item" data-k="task" data-id="${id}">${SHARE_ICON} Share</button>
       <button class="ghost" data-action="tm" data-do="archive-task" data-id="${id}">${ARCHIVE_ICON} Archive</button>
       <button class="ghost danger" data-action="tm" data-do="del-task" data-id="${id}">✕ Delete</button>
       <button class="ghost" data-action="dlg-close">Cancel</button></div>`;dlg.showModal();return false},
   async 'tm'(el){dlg.close();const r=await actions[el.dataset.do](el);return r},
+  'ft-start'(el){if(FT&&FT.phase==='focus'&&!confirm('Stop the current focus session and start a new one?'))return false;ftStart(el.dataset.id,'focus');return false},
+  'ft-toggle'(){ftToggle();return false},
+  'ft-skip'(){FT=null;ftSave();natCancel('focus');ftTick(true);return false},
+  async 'ft-stop'(){await ftStop();return false},
   'sel-mode'(el){if(S.selMode===el.dataset.k){S.selMode=null}else{S.selMode=el.dataset.k}S.sel.clear()},
   'sel-toggle'(el){const id=el.dataset.id;S.sel.has(id)?S.sel.delete(id):S.sel.add(id)},
   'sel-all'(){document.querySelectorAll('#app [data-action=sel-toggle]').forEach(e=>S.sel.add(e.dataset.id))},
@@ -2618,7 +2675,7 @@ async function autoArchive(){
 }
 (async()=>{
   applyLang();
-  await load();await autoArchive();render();
+  await load();await autoArchive();render();ftTick(true);
   if(!introSeen()){if(S.tasks.length||S.goals.length||S.habits.length)markIntro();else openIntro()}
   await checkStorage(true);if(S.view==='data')render();
 })();
