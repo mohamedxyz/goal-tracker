@@ -15,7 +15,8 @@ permissions:
 
 jobs:
   apk:
-    runs-on: ubuntu-latest
+    # ubuntu-24.04 ships the Android SDK; ubuntu-latest moved to Ubuntu 26 in October 2026.
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v5
@@ -32,7 +33,10 @@ jobs:
           java-version: 21
           cache: gradle
 
-      - uses: android-actions/setup-android@v3
+      - name: Android SDK licences
+        run: |
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
 
       - name: Install Capacitor
         working-directory: android-app
@@ -44,7 +48,17 @@ jobs:
 
       - name: Build the APK
         working-directory: android-app/android
-        run: ./gradlew assembleDebug --no-daemon --stacktrace
+        run: |
+          set -o pipefail
+          ./gradlew assembleDebug --no-daemon --stacktrace 2>&1 | tee build.log
+
+      - name: Report build errors as annotations
+        if: failure()
+        run: |
+          f=android-app/android/build.log
+          [ -f "$f" ] || { echo "::error::no build log (failed before the Gradle build)"; exit 0; }
+          grep -nE "FAILURE|What went wrong|error:|Error:|> " "$f" | head -40 | sed ':a;N;$!ba;s/\n/%0A/g' | sed 's/^/::error title=gradle::/'
+          tail -50 "$f" | sed ':a;N;$!ba;s/\n/%0A/g' | sed 's/^/::error title=tail::/'
 
       - name: Name the APK after the app version
         id: apk
