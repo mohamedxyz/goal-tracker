@@ -5,6 +5,7 @@
     PATCH = bug fix · MINOR = new feature · MAJOR = breaks old backups or data
 
   Changelog
+  0.54.0 Game mode (Settings → Game mode, off by default): every week a generated 8-bit boss appears on the Dashboard, and finishing tasks, habits and study sessions deals damage (priority, early/late, weekly-goal link, Titan crits). Its HP comes from the week you planned, so it can't be sandbagged. Hero level from lifetime XP, four stats earned from what you actually do, and a Bestiary of every boss you beat or let escape. Past weeks count straight away
   0.53.0 Task countdown: the due pill on each task now says Today, Tomorrow, 3 days left or 2 days late (amber when 3 days or less remain); dates more than a week away still show the date, and the exact date is in the tooltip
   0.52.0 New name and logo: the app is now GoalTerra, with the orbit logo in the header, the intro, the browser tab icon and the home-screen icon. Your data, backups and shared files are unaffected
   0.51.0 Level calendar: tap the day banner or the coach message to see a month calendar where every day shows its level (⚡ Spark, 🔥 Blaze, ⚔️ Titan), with monthly counts and the tasks you finished on any day you tap. New first-run intro walks through the goal ladder, day levels, habits, student mode and language; replay it from Settings
@@ -480,6 +481,29 @@ body.cmp .add{gap:6px}body.cmp .goals,body.cmp .list{gap:6px}
 .dm-top{display:flex;align-items:center;gap:10px}.dm-ico{font-size:26px}.dm-top b{display:block;font-size:15.5px}.dm-top small{color:var(--muted);font-size:12.5px}
 .dm-streak{font-size:12.5px;font-weight:600;white-space:nowrap}
 .daymode .bar{margin-top:8px}
+.rpg{margin-bottom:12px}
+.rpg-top{display:flex;gap:12px;align-items:center}
+.rpg-spr{position:relative;flex:none;width:84px;height:84px;border-radius:12px;background:color-mix(in oklab,var(--line) 55%,var(--card));display:grid;place-items:center}
+.rpg-spr svg{width:72px;height:72px;transition:transform .3s,filter .3s,opacity .3s}
+.rpg-spr.shake svg{animation:rpgshake .45s}
+@keyframes rpgshake{0%,100%{transform:none}20%{transform:translateX(-5px)}40%{transform:translateX(5px)}60%{transform:translateX(-3px)}80%{transform:translateX(2px)}}
+.rpg-dmg{position:absolute;top:-8px;inset-inline-end:-8px;font:800 16px/1 ui-monospace,Menlo,monospace;color:#b4442f;background:var(--card);border:1px solid var(--line);border-radius:7px;padding:3px 6px;animation:rpgfloat 1.5s ease-out forwards;pointer-events:none}
+.rpg-dmg.crit{color:#fff;background:#b4442f;border-color:#b4442f}
+@keyframes rpgfloat{0%{opacity:0;transform:translateY(8px) scale(.7)}15%{opacity:1;transform:translateY(0) scale(1.2)}30%{transform:scale(1)}75%{opacity:1}100%{opacity:0;transform:translateY(-16px)}}
+.rpg-name{display:block;font-weight:700;font-size:15.5px;overflow-wrap:anywhere}
+.rpg-sub{display:block;font-size:12.5px;color:var(--muted)}
+.rpg-lbl{display:flex;justify-content:space-between;gap:8px;font-size:11.5px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+.bar.hp{margin:8px 0 4px}.bar.hp span{background:#b4442f}
+.rpg.won .bar.hp span{background:var(--ok)}
+.rpg.won .rpg-spr svg,.bst.won svg{filter:grayscale(.85);opacity:.6;transform:rotate(90deg)}
+.bst.esc svg{opacity:.85}
+.rpg-hero{display:flex;align-items:center;gap:10px;margin-top:10px;padding-top:10px;border-top:1px solid var(--line);font-size:12.5px;flex-wrap:wrap}
+.rpg-hero .bar{flex:1;min-width:70px;margin:0;height:6px}.bar.xp span{background:#2E9E6B}
+.stats4{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;text-align:center;margin-top:10px}
+.stats4 div{background:var(--bg);border-radius:10px;padding:8px 4px}.stats4 b{display:block;font-size:18px}.stats4 span{font-size:11px;color:var(--muted)}
+.bst{display:flex;gap:12px;align-items:center}.bst svg{width:56px;height:56px;flex:none}
+.bst .grow{min-width:0}
+@media (prefers-reduced-motion:reduce){.rpg-spr.shake svg,.rpg-dmg{animation:none}}
 .daymode[role=button],.coach .cmsg[role=button]{cursor:pointer}
 .dm-hint{display:block;margin-top:6px;font-size:11.5px;color:var(--muted)}
 .cd.lc{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;font-size:11px}
@@ -728,6 +752,124 @@ function habitCard(h,full){
     ${full?`${mvBtns('move-habit',h.id,`data-id="${h.id}"`)}${shareBtn('habit',h.id)}<button class="icon" data-action="edit-habit" data-id="${h.id}" title="Edit" aria-label="Edit ${esc(h.name)}">✎</button><button class="icon" data-action="del-habit" data-id="${h.id}" title="Delete" aria-label="Delete ${esc(h.name)}">✕</button>`:''}
   </div>${full?`<div class="heat">${heat}</div>`:''}</div>`;
 }
+/* ---------- Game mode (RPG) ---------- */
+const rpgOn=()=>!!S.cfg.rpg;
+const PRI_DMG={low:10,med:20,high:30};
+const mondayOf=d=>{const x=new Date(d.getFullYear(),d.getMonth(),d.getDate());x.setDate(x.getDate()-((x.getDay()+6)%7));return x};
+const weekKeys=mon=>[...Array(7)].map((_,i)=>ds(addDays(mon,i)));
+const heroLv=xp=>Math.floor(Math.sqrt(xp/50))+1;
+function taskBase(t){let v=PRI_DMG[t.priority]||10;const g=t.goalId&&goalById(t.goalId);if(g&&g.horizon==='weekly')v*=1.5;return v}
+// Damage for one finished task. nth = its position among tasks finished that day (sets Blaze/Titan bonus and the 12+ taper).
+function taskDmgCalc(t,at,nth){
+  let v=taskBase(t);const k=ds(new Date(at));
+  if(t.due){if(k<t.due)v*=1.2;else if(k>t.due)v*=.5}
+  const p=(t.pushes||[]).length;if(p)v*=Math.max(.5,1-.1*p);
+  if(t.created&&at-t.created<5*60e3)v*=.5;
+  const tr=tierOf(nth);let crit=false;if(tr===1)v*=1.1;else if(tr===2){v*=1.25;crit=true}
+  if(nth>12)v*=.5;
+  return{v:Math.max(1,Math.round(v)),crit};
+}
+function freezeDmg(t){
+  if(!t.done){delete t.dmg;delete t.crit;return}
+  if(t.dmg!=null)return;const k=TODAY();
+  const n=S.tasks.filter(x=>x.done&&x.doneAt&&ds(new Date(x.doneAt))===k).length;
+  const d=taskDmgCalc(t,t.doneAt||Date.now(),Math.max(1,n));t.dmg=d.v;if(d.crit)t.crit=true;
+}
+function habitHit(h,k){let r=0,d=new Date(k+'T00:00');for(let i=0;i<35;i++){const kk=ds(d);if(good(h,kk))r++;else if(isDue(h,d))break;d=addDays(d,-1)}return 5+Math.min(5,Math.floor(r/7))}
+let _rpg=null;
+// Everything is derived from history (finished tasks, check-ins, study sessions), so nothing new is stored except each task's frozen damage.
+function rpgAll(){
+  if(_rpg)return _rpg;
+  const today=TODAY(),byDay={},tdmg=new Map();
+  for(const t of S.tasks)if(t.done&&t.doneAt){const k=ds(new Date(t.doneAt));(byDay[k]=byDay[k]||[]).push(t)}
+  for(const k in byDay)byDay[k].sort((a,b)=>a.doneAt-b.doneAt).forEach((t,i)=>tdmg.set(t.id,t.dmg!=null?{v:t.dmg,crit:!!t.crit}:taskDmgCalc(t,t.doneAt,i+1)));
+  const build=S.habits.filter(h=>!isNeg(h)),stu=!!S.cfg.student;
+  let start=today;const lo=k=>{if(k&&k<start)start=k};
+  for(const t of S.tasks){if(t.created)lo(ds(new Date(t.created)));if(t.doneAt)lo(ds(new Date(t.doneAt)))}
+  for(const id of S.logs)lo(id.slice(id.lastIndexOf('|')+1));
+  if(stu)for(const tp of S.topics)for(const se of tp.sessions||[])lo(se.d);
+  const curMon=mondayOf(new Date());let mon=mondayOf(new Date(start+'T00:00'));const min=addDays(curMon,-7*103);if(mon<min)mon=min;
+  const weeks=[],hist=[];let xp=0,totT=0,totH=0,totS=0;
+  for(let m=new Date(mon);m<=curMon;m=addDays(m,7)){
+    const keys=weekKeys(m),set=new Set(keys);let tD=0,hD=0,sD=0,best=0,planned=0;
+    for(const k of keys)for(const t of byDay[k]||[]){const d=tdmg.get(t.id);tD+=d.v;if(d.v>best)best=d.v}
+    for(const t of S.tasks)if(t.due&&set.has(t.due))planned+=taskBase(t);
+    for(const h of build){const b=bornK(h);for(const k of keys){if(k>=b&&isDue(h,new Date(k+'T00:00')))planned+=5;if(k<=today&&S.logs.has(h.id+'|'+k))hD+=habitHit(h,k)}}
+    if(stu)for(const tp of S.topics)for(const se of tp.sessions||[])if(set.has(se.d))sD+=[0,5,8,12][se.c]||0;
+    const total=tD+hD+sD,prev=hist.slice(-4).filter(x=>x>0),avg=prev.length?prev.reduce((a,b)=>a+b,0)/prev.length:0;
+    const hp=Math.max(60,Math.round(planned*.8),Math.round(avg*.9));
+    hist.push(total);xp+=total;totT+=tD;totH+=hD;totS+=sD;
+    weeks.push({key:isoWeek(m),keys,tD,hD,sD,total,hp,best,won:total>=hp});
+  }
+  let clean=0;for(const h of S.habits.filter(isNeg)){let d=new Date(bornK(h)+'T00:00');for(let i=0;i<1500&&ds(d)<=today;i++,d=addDays(d,1))if(good(h,ds(d)))clean++}
+  return _rpg={weeks,cur:weeks[weeks.length-1],xp,totT,totH,totS,clean};
+}
+function rpgTick(){
+  if(!rpgOn()){S._rpgK=null;return}
+  const w=rpgAll().cur;
+  if(S._rpgK===w.key&&w.total>S._rpgT){
+    const now=Date.now();S.rpgHit={n:w.total-S._rpgT,at:now,crit:S.tasks.some(t=>t.crit&&t.doneAt>now-3000)};
+    setTimeout(()=>Sound.play('hit'),140);
+    if(S._rpgT<w.hp&&w.total>=w.hp){const m=monster(w.key);setTimeout(()=>{Sound.play('goal');toast('🏆 '+m.name+' defeated!')},500)}
+  }
+  S._rpgK=w.key;S._rpgT=w.total;
+}
+/* Monsters: a 16x16 mirrored pixel sprite and a name, both generated from the week id, so every week is unique and repeatable. */
+function hash32(s){let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return h>>>0}
+function rng(a){return()=>{a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+const MON_A=['Grum','Zor','Blo','Kra','Mog','Vex','Sno','Dra','Plu','Thra','Gli','Bor','Qua','Fen','Ska','Nub','Wro','Yag'];
+const MON_B=['va','mo','li','ru','ka','zi','do','','','go'];
+const MON_C=['k','x','th','gor','b','ss','nar','rok','m','z','dle','mp'];
+const MON_T=['the Procrastinator','the Snoozer','of Endless Tabs','the Deadline Eater','the Doomscroller','of Unread Messages','the Excuse Maker','the Distractor','of Tomorrow','the Couch Golem','the Notification Fiend','of Half-Done Drafts','the Overthinker','the Time Thief','the Lazy Tide','of Later'];
+const _mon=new Map();
+function monster(key){
+  if(_mon.has(key))return _mon.get(key);
+  const r=rng(hash32('gt-mon:'+key)),g=[...Array(16)].map(()=>Array(16).fill(0));
+  const put=(y,x,v)=>{g[y][x]=v;g[y][15-x]=v};
+  for(let y=1;y<=14;y++)for(let x=1;x<=7;x++){const cx=(x-1)/6,cy=1-Math.abs(y-7.5)/6.5;if(r()<.55*cx+.5*cy-.12)put(y,x,1)}
+  for(let y=3;y<=12;y++)put(y,7,1);
+  for(let y=1;y<=14;y++)for(let x=1;x<=7;x++)if(g[y][x]&&!g[y-1][x]&&!g[y+1][x]&&!g[y][x-1]&&!g[y][x+1])put(y,x,0);
+  const ey=4+Math.floor(r()*3),ex=5+Math.floor(r()*2);
+  for(let y=ey-1;y<=ey+2;y++)for(let x=ex-1;x<=Math.min(7,ex+1);x++)if(!g[y][x])put(y,x,1);
+  for(let y=1;y<=14;y++)for(let x=1;x<=7;x++)if(g[y][x]===1){if(!g[y-1][x]&&r()<.7)put(y,x,3);else if(y>9&&r()<.5)put(y,x,2)}
+  put(ey,ex,5);put(ey+1,ex,6);
+  const my=ey+3;if(my<=13){const k=1+Math.floor(r()*2);for(let x=8-k;x<=7;x++){if(!g[my][x])continue;put(my,x,6)}if(r()<.5&&g[my+1][7-k+1])put(my+1,8-k,5)}
+  const o=g.map(row=>row.slice());
+  for(let y=0;y<16;y++)for(let x=0;x<16;x++)if(!g[y][x]&&[[0,1],[0,-1],[1,0],[-1,0]].some(([a,b])=>g[y+a]&&g[y+a][x+b]))o[y][x]=4;
+  const h=Math.floor(r()*360),C=[null,`hsl(${h} 58% 50%)`,`hsl(${h} 58% 36%)`,`hsl(${h} 70% 68%)`,`hsl(${h} 45% 13%)`,'#ffffff','#15110e'];
+  let rects='';for(let y=0;y<16;y++){let x=0;while(x<16){const v=o[y][x];let e=x;while(e<16&&o[y][e]===v)e++;if(v)rects+=`<rect x="${x}" y="${y}" width="${e-x}" height="1" fill="${C[v]}"/>`;x=e}}
+  const n=rng(hash32('gt-name:'+key)),pick=a=>a[Math.floor(n()*a.length)];
+  const name=pick(MON_A)+pick(MON_B)+pick(MON_C),title=pick(MON_T);
+  const m={name,title,svg:`<svg viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true">${rects}</svg>`};
+  _mon.set(key,m);return m;
+}
+function rpgCard(){
+  if(!rpgOn())return'';
+  const A=rpgAll(),w=A.cur,m=monster(w.key),left=Math.max(0,w.hp-w.total),pct=Math.max(0,Math.round(left/w.hp*100));
+  const dl=7-((new Date().getDay()+6)%7),hit=S.rpgHit&&Date.now()-S.rpgHit.at<1500?S.rpgHit:null;
+  const L=heroLv(A.xp),lo=50*(L-1)*(L-1),hi=50*L*L,xpPct=Math.round((A.xp-lo)/(hi-lo)*100);
+  const status=w.won?'Defeated. It joins your bestiary.':dl===1?`${left} HP to go. It escapes tonight.`:`${left} HP to go`;
+  return `<div class="card rpg ${w.won?'won':''}"><div class="rpg-top">
+    <div class="rpg-spr ${hit?'shake':''}">${m.svg}${hit?`<span class="rpg-dmg ${hit.crit?'crit':''}">−${hit.n}</span>`:''}</div>
+    <div class="grow" style="min-width:0"><div class="rpg-lbl"><span>Week boss</span><span>${w.won?'🏆':dl===1?'Last day':dl+' days left'}</span></div>
+      <b class="rpg-name" translate="no">${m.name}</b><span class="rpg-sub">${m.title}</span>
+      <div class="bar hp" role="progressbar" aria-valuemin="0" aria-valuemax="${w.hp}" aria-valuenow="${left}" aria-label="Boss HP"><span style="width:${pct}%"></span></div>
+      <div class="meta"><span>${status}</span></div></div></div>
+    <div class="meta" style="margin-top:6px"><span title="Tasks">⚔️ ${w.tD}</span><span title="Habits">🔁 ${w.hD}</span>${S.cfg.student?`<span title="Study">📚 ${w.sD}</span>`:''}<span>HP ${w.hp}</span></div>
+    <div class="rpg-hero"><b>Lv ${L}</b><div class="bar xp"><span style="width:${xpPct}%"></span></div><span>${A.xp} / ${hi} XP</span><button class="chip" data-action="open-bestiary">Bestiary →</button></div></div>`;
+}
+function viewBestiary(){
+  const A=rpgAll(),L=heroLv(A.xp),past=A.weeks.slice(0,-1).reverse();
+  const won=past.filter(w=>w.won).length,st=(v,a,b)=>`<div><b>${1+Math.floor(v)}</b><span>${a}</span><span style="display:block">${b}</span></div>`;
+  return `<div class="arch-head"><button class="ghost" data-action="back-dash">← Home</button><h2 style="margin:0">Bestiary</h2></div>
+  <div class="card"><div class="rpg-lbl"><span>Hero</span><span>Lv ${L}</span></div>
+    <div class="meta"><span>${A.xp} / ${50*L*L} XP</span></div>
+    <div class="stats4">${st(A.totT/100,'STR','Tasks')}${st(A.totH/100,'VIT','Habits')}${st(A.totS/100,'INT','Study')}${st(A.clean/7,'DEF','Clean days')}</div></div>
+  <div class="bar-row" style="margin:14px 0 8px"><span class="meta" style="margin:0">${won} beaten · ${past.length-won} escaped</span></div>
+  ${past.length?`<div class="goals">${past.map(w=>{const m=monster(w.key);return `<div class="card bst ${w.won?'won':'esc'}">${m.svg}<div class="grow"><b class="rpg-name" translate="no">${m.name}</b><span class="rpg-sub">${m.title}</span>
+    <div class="meta"><span class="pill ${w.won?'ok':''}">${w.won?'Defeated':'Escaped'}</span><span>${fmtDate(w.keys[0])} – ${fmtDate(w.keys[6])}</span><span>${w.total} / ${w.hp} damage</span>${w.best?`<span>Best hit ${w.best}</span>`:''}</div></div></div>`}).join('')}</div>`
+  :`<div class="empty">No monsters yet. Beat this week's boss to start your collection.</div>`}`;
+}
 /* ---------- Coach ---------- */
 const TIERS=[{n:'Spark',i:'⚡',k:'friend'},{n:'Blaze',i:'🔥',k:'coach'},{n:'Titan',i:'⚔️',k:'beast'}];
 const lvlAt=()=>[0,Math.max(1,+S.cfg.lvl2||3),Math.max(2,+S.cfg.lvl3||5)];
@@ -956,7 +1098,7 @@ function viewDash(){
   const lb=daysSince(lastBackup());
   const openSlots=planTargets().reduce((a,g)=>a+planLeft(g),0),dow=new Date().getDay();
   const planCta=!wk.length||((dow===0||dow===1)&&openSlots>0);
-  return `${dayBanner()}${backupNudge()?`<div class="card backup-cta"><div class="grow"><div class="title">${lb===null?'No backup yet':'Last backup '+agoText(lb)}</div><div class="meta">Your data lives only in this browser. Copy a backup and keep it somewhere safe.</div></div><button class="btn" data-action="backup-copy">Copy backup</button><button class="icon" data-action="backup-snooze" title="Remind me later" aria-label="Dismiss backup reminder">✕</button></div>`:''}${nRv?`<div class="card review-cta"><div class="grow"><div class="title">${nRv} goal${nRv>1?'s':''} from past periods need${nRv>1?'':'s'} a review</div><div class="meta">Hit it, missed, or carry over. About a minute.</div></div><button class="btn" data-action="open-review">Review</button></div>`:''}${planCta?`<div class="card plan-cta"><div class="grow"><div class="title">${wk.length?`${openSlots} weekly slot${openSlots>1?'s':''} still to plan`:`Plan ${currentPeriod('weekly')}`}</div><div class="meta">${wk.length?'Fill in this week\'s steps toward your monthly goals.':'No weekly goals yet. Pick this week\'s steps.'}</div></div><button class="btn" data-action="open-plan">Plan week</button></div>`:''}<div class="stats dstats">
+  return `${dayBanner()}${rpgCard()}${backupNudge()?`<div class="card backup-cta"><div class="grow"><div class="title">${lb===null?'No backup yet':'Last backup '+agoText(lb)}</div><div class="meta">Your data lives only in this browser. Copy a backup and keep it somewhere safe.</div></div><button class="btn" data-action="backup-copy">Copy backup</button><button class="icon" data-action="backup-snooze" title="Remind me later" aria-label="Dismiss backup reminder">✕</button></div>`:''}${nRv?`<div class="card review-cta"><div class="grow"><div class="title">${nRv} goal${nRv>1?'s':''} from past periods need${nRv>1?'':'s'} a review</div><div class="meta">Hit it, missed, or carry over. About a minute.</div></div><button class="btn" data-action="open-review">Review</button></div>`:''}${planCta?`<div class="card plan-cta"><div class="grow"><div class="title">${wk.length?`${openSlots} weekly slot${openSlots>1?'s':''} still to plan`:`Plan ${currentPeriod('weekly')}`}</div><div class="meta">${wk.length?'Fill in this week\'s steps toward your monthly goals.':'No weekly goals yet. Pick this week\'s steps.'}</div></div><button class="btn" data-action="open-plan">Plan week</button></div>`:''}<div class="stats dstats">
     <div class="card stat"><div class="n">${todaysDone}/${todays.length}</div><div class="l">Today's tasks done</div></div>
     <div class="card stat"><div class="n">${hd}/${dueHabits.length}</div><div class="l">Habits done today</div></div>
     <div class="card stat"><div class="n">${active}</div><div class="l">Active goals</div></div>
@@ -1247,6 +1389,9 @@ function settingsCard(){
     ${sel('lvl3','Titan starts at',[['5','5 tasks a day'],['6','6 tasks a day'],['8','8 tasks a day'],['10','10 tasks a day']],c.lvl3)}
     <p class="meta">⚡ Spark is a slow start and the coach is gentle. 🔥 Blaze pushes. ⚔️ Titan raises the bar: a daily quota, and you must type a reason to push back, reschedule or delete work that is due. Nothing is ever changed without you.</p>
   </div>
+  <div class="card settings" style="margin-top:12px"><div class="title">Game mode</div>
+    ${sw('rpg','RPG game mode','A weekly pixel boss you beat by finishing tasks, habits and study. Shows damage, a hero level and a bestiary of beaten monsters',c.rpg)}
+  </div>
   <div class="card settings" style="margin-top:12px"><div class="title">Tasks</div>
     ${sel('dueDef','Default due date for new tasks',[['today','Today'],['tomorrow','Tomorrow'],['none','No date']],c.dueDef)}
     ${sel('sortBy','Sort open tasks by',[['due','Due date'],['prio','Priority'],['new','Newest first'],['az','A to Z']],c.sortBy)}
@@ -1306,21 +1451,23 @@ function viewData(){
 }
 
 function render(){
-  _exMap=null;_srMemo=new Map();
+  _exMap=null;_srMemo=new Map();_rpg=null;
   const newly=syncGoals();
+  rpgTick();
   if(S.booted&&newly.length){Sound.play('goal');setTimeout(()=>toast('🎯 Goal complete: '+newly.map(g=>g.title).join(', ')),50)}
   S.booted=true;
   if(S.view==='study'&&!S.cfg.student)S.view='dash';
   document.querySelectorAll('[data-view=study]').forEach(b=>b.hidden=!S.cfg.student);
   if(S.selMode&&S.selMode!==S.view){S.selMode=null;S.sel.clear()}
   document.body.classList.toggle('selmode',!!S.selMode);document.body.classList.toggle('cmp',!!(S.cfg.student&&S.cfg.stuCompact));
-  const v={dash:viewDash,tasks:viewTasks,goals:viewGoals,habits:viewHabits,data:viewData,archive:viewArchive,trash:viewTrash,study:viewStudy}[S.view]||viewDash;
+  if(S.view==='bestiary'&&!rpgOn())S.view='dash';
+  const v={dash:viewDash,tasks:viewTasks,goals:viewGoals,habits:viewHabits,data:viewData,archive:viewArchive,trash:viewTrash,study:viewStudy,bestiary:viewBestiary}[S.view]||viewDash;
   $('#app').innerHTML=(S.persistent?'':`<div class="banner">This browser blocked storage — data will be lost on reload. Use Export to save it.</div>`)+v()+selBar();
   const app=$('#app'),changed=S._lv!==S.view;S._lv=S.view;
   if(changed&&!matchMedia('(prefers-reduced-motion: reduce)').matches){app.classList.remove('enter');[...app.children].forEach((c,i)=>c.style.setProperty('--i',Math.min(i,9)));void app.offsetWidth;app.classList.add('enter');clearTimeout(S._enterT);S._enterT=setTimeout(()=>app.classList.remove('enter'),1100)}
   else if(!changed){clearTimeout(S._enterT);app.classList.remove('enter')}
   if(S.popKey){const q=S.popKey;S.popKey=null;let el=null;try{el=app.querySelector(q)}catch(_){}if(el){el.classList.add('pop');setTimeout(()=>el.classList.remove('pop'),450)}}
-  const nv=(S.view==='archive'||S.view==='trash')?'data':S.view;
+  const nv=(S.view==='archive'||S.view==='trash')?'data':S.view==='bestiary'?'dash':S.view;
   document.querySelectorAll('#nav button,#tabbar button').forEach(b=>{const on=b.dataset.view===nv;b.classList.toggle('on',on);on?b.setAttribute('aria-current','page'):b.removeAttribute('aria-current')});
 }
 
@@ -1400,7 +1547,7 @@ dlg.addEventListener('submit',async e=>{
     if(beastOn()&&!t.done&&!done&&t.due&&t.due<=TODAY()&&(!v.due||v.due>t.due)){const why=askWhy('pushing this back');if(!why){toast('Not saved. Beast mode wants a reason.');return}
       (t.pushes=t.pushes||[]).push({at:Date.now(),from:t.due,to:v.due||null,why})}
     Object.assign(t,{title:v.title.trim(),due:v.due||null,priority:v.priority,goalId:v.goalId||null,notes:(v.notes||'').trim(),repeat:v.repeat||'',tag:(v.tag||'').trim(),items:parseItems(v.items,t.items)});
-    if(done!==t.done){t.done=done;t.doneAt=done?Date.now():null;Sound.play(done?'task':'undo');await onTaskDone(t)}
+    if(done!==t.done){t.done=done;t.doneAt=done?Date.now():null;freezeDmg(t);Sound.play(done?'task':'undo');await onTaskDone(t)}
     await DB.put('tasks',t)}
   if(kind==='goal'){const g=goalById(id);const old=g.horizon;
     let gk=v.kind||'check';if(gk==='rollup'&&v.horizon==='weekly')gk='check';
@@ -1512,7 +1659,7 @@ function drawHabit(){
 document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('[role=button][data-action]')){e.preventDefault();e.target.click()}});
 
 /* ---------- Version ---------- */
-const APP_VERSION='0.53.0';
+const APP_VERSION='0.54.0';
 
 /* ---------- Completion sounds (synthesised, no audio files) ---------- */
 const Sound={
@@ -1528,11 +1675,12 @@ const Sound={
       const S_={task:{n:[[1046.5,0],[1318.5,.07],[1568,.14]],len:.38,vol:.16},
                 habit:{n:[[784,0],[1174.7,.08]],len:.38,vol:.16},
                 undo:{n:[[392,0],[311.1,.16],[261.6,.32]],len:.5,vol:.13,sag:true},
-                goal:{n:[[784,0],[1046.5,.1],[1318.5,.2],[1568,.3],[2093,.42]],len:.55,vol:.15}}[kind]||null;
+                goal:{n:[[784,0],[1046.5,.1],[1318.5,.2],[1568,.3],[2093,.42]],len:.55,vol:.15},
+                hit:{n:[[196,0],[147,.06]],len:.12,vol:.06,sq:true}}[kind]||null;
       if(!S_)return;
       const t0=C.currentTime+.01;
       S_.n.forEach(([f,dt],i)=>{
-        const o=C.createOscillator(),g=C.createGain();o.type='triangle';o.frequency.setValueAtTime(f,t0+dt);
+        const o=C.createOscillator(),g=C.createGain();o.type=S_.sq?'square':'triangle';o.frequency.setValueAtTime(f,t0+dt);
         const last=i===S_.n.length-1,len=last&&S_.sag?S_.len*1.6:S_.len;
         if(last&&S_.sag)o.frequency.exponentialRampToValueAtTime(f*.82,t0+dt+len);
         g.gain.setValueAtTime(.0001,t0+dt);g.gain.exponentialRampToValueAtTime(S_.vol,t0+dt+.015);g.gain.exponentialRampToValueAtTime(.0001,t0+dt+len);
@@ -1542,14 +1690,14 @@ const Sound={
   }
 };
 Sound.load();
-const CFG_DEF={coachTone:'on',lvl2:'3',lvl3:'5',stuCompact:false,avoidHide:true,cTask:true,cGoal:true,cHabit:true,dCharts:true,dTasks:true,dGoals:true,dHabits:true,prio:'low',showDone:true,dueDef:'today',sortBy:'due',groupTags:true,autoArch:'0',defFilter:'all',showSubs:true,showNotes:true,dOverdue:false,avoidMode:'clean',student:false,lang:'en',srOn:true,srWeak:'1',srOk:'3',srLadder:'1,3,7,14,30'};
+const CFG_DEF={rpg:false,coachTone:'on',lvl2:'3',lvl3:'5',stuCompact:false,avoidHide:true,cTask:true,cGoal:true,cHabit:true,dCharts:true,dTasks:true,dGoals:true,dHabits:true,prio:'low',showDone:true,dueDef:'today',sortBy:'due',groupTags:true,autoArch:'0',defFilter:'all',showSubs:true,showNotes:true,dOverdue:false,avoidMode:'clean',student:false,lang:'en',srOn:true,srWeak:'1',srOk:'3',srLadder:'1,3,7,14,30'};
 try{S.cfg={...CFG_DEF,...JSON.parse(localStorage.getItem('gt-settings')||'{}')}}catch(e){S.cfg={...CFG_DEF}}
 S.taskFilter=S.cfg.defFilter;
 const saveCfg=()=>{try{localStorage.setItem('gt-settings',JSON.stringify(S.cfg))}catch(e){}};
 /* ---------- Language: English / العربية ---------- */
 // The app is written in English. In Arabic mode every piece of text that appears on screen is translated from this dictionary
 // as it is added to the page (and restored when you switch back), and the layout flips to right-to-left.
-const AR={'Tap for your level calendar':'اضغط لرؤية تقويم مستوياتك','Show intro again':'عرض المقدمة مرة أخرى','Open level calendar':'فتح تقويم المستويات',
+const AR={'Game mode':'وضع اللعبة','RPG game mode':'وضع لعبة المغامرة','A weekly pixel boss you beat by finishing tasks, habits and study. Shows damage, a hero level and a bestiary of beaten monsters':'زعيم أسبوعي بالبكسل تهزمه بإنجاز المهام والعادات والدراسة. يعرض الضرر ومستوى البطل وسجل الوحوش المهزومة','Week boss':'زعيم الأسبوع','Last day':'اليوم الأخير','Bestiary':'سجل الوحوش','Hero':'البطل','Defeated':'هُزم','Escaped':'هرب','Defeated. It joins your bestiary.':'هُزم. انضم إلى سجل وحوشك.','Clean days':'أيام نظيفة','STR':'القوة','VIT':'الحيوية','INT':'الذكاء','DEF':'الدفاع','Boss HP':'صحة الزعيم','No monsters yet. Beat this week\'s boss to start your collection.':'لا وحوش بعد. اهزم زعيم هذا الأسبوع لتبدأ مجموعتك.','the Procrastinator':'المُسوِّف','the Snoozer':'النعسان','of Endless Tabs':'صاحب التبويبات اللانهائية','the Deadline Eater':'آكل المواعيد','the Doomscroller':'المُتصفّح بلا نهاية','of Unread Messages':'صاحب الرسائل غير المقروءة','the Excuse Maker':'صانع الأعذار','the Distractor':'المُشتِّت','of Tomorrow':'سيّد الغد','the Couch Golem':'غولم الأريكة','the Notification Fiend':'شيطان الإشعارات','of Half-Done Drafts':'صاحب المسودات الناقصة','the Overthinker':'كثير التفكير','the Time Thief':'سارق الوقت','the Lazy Tide':'موجة الكسل','of Later':'سيّد لاحقًا','Tap for your level calendar':'اضغط لرؤية تقويم مستوياتك','Show intro again':'عرض المقدمة مرة أخرى','Open level calendar':'فتح تقويم المستويات',
 'Goal Tracker':'متتبع الأهداف','Dashboard':'لوحة المتابعة','Home':'الرئيسية','Tasks':'المهام','Goals':'الأهداف','Habits':'العادات','Study':'الدراسة','Settings':'الإعدادات','Auto':'تلقائي','Light':'فاتح','Dark':'داكن',
 'Search':'بحث','Search everything…':'ابحث في كل شيء…','Type to search tasks, goals and habits.':'اكتب للبحث في المهام والأهداف والعادات.','Nothing found.':'لا توجد نتائج.','Close':'إغلاق','Cancel':'إلغاء','Save':'حفظ','Add':'إضافة','Edit':'تعديل','Delete':'حذف','Copy':'نسخ','Restore':'استعادة','Undo':'تراجع','Check off':'تم','Dismiss':'إخفاء',
 'Theme: auto (tap to change)':'السمة: تلقائي (اضغط للتغيير)','Theme: light (tap to change)':'السمة: فاتح (اضغط للتغيير)','Theme: dark (tap to change)':'السمة: داكن (اضغط للتغيير)','Theme':'السمة',
@@ -1590,7 +1738,7 @@ const PAT=[
 [/^30-day (\d+)%$/,m=>`آخر 30 يومًا ${m[1]}%`],[/^This week (\d+\/\d+)$/,m=>`هذا الأسبوع ${m[1]}`],[/^(\d+)\/(\d+) this wk$/,m=>`${m[1]}/${m[2]} هذا الأسبوع`],
 [/^Check off (.+) for today$/,m=>`تعليم ${m[1]} لهذا اليوم`],[/^Clean today\. Tap to log a slip$/,()=>'نظيف اليوم. اضغط لتسجيل انزلاق'],[/^Slipped today\. Tap to undo$/,()=>'انزلاق اليوم. اضغط للتراجع'],
 [/^Delete (\d+) completed$/,m=>`حذف ${m[1]} مكتملة`],[/^Delete "(.+)"\?$/,m=>`حذف "${m[1]}"؟`],[/^Delete topic "(.+)" and its study log\?$/,m=>`حذف الموضوع "${m[1]}" وسجل دراسته؟`],[/^Delete (.+)$/,m=>`حذف ${m[1]}`],[/^Edit (.+)$/,m=>`تعديل ${m[1]}`],
-[/^Completed · (\d+)$/,m=>`المكتملة · ${m[1]}`],[/^Completed (.+)$/,m=>`اكتملت ${m[1]}`],[/^Done (.+)$/,m=>`أُنجزت ${m[1]}`],[/^Created (.+)$/,m=>`أُنشئت ${m[1]}`],[/^Overdue · (.+)$/,m=>`متأخرة · ${m[1]}`],[/^(\d+) days? late$/,m=>`متأخرة ${+m[1]===1?'يومًا':+m[1]===2?'يومين':m[1]+' '+(+m[1]<=10?'أيام':'يومًا')}`],[/^(\d+) days left$/,m=>`باقي ${+m[1]===2?'يومان':m[1]+' '+(+m[1]<=10?'أيام':'يومًا')}`],
+[/^Completed · (\d+)$/,m=>`المكتملة · ${m[1]}`],[/^Completed (.+)$/,m=>`اكتملت ${m[1]}`],[/^Done (.+)$/,m=>`أُنجزت ${m[1]}`],[/^Created (.+)$/,m=>`أُنشئت ${m[1]}`],[/^Overdue · (.+)$/,m=>`متأخرة · ${m[1]}`],[/^(\d+) HP to go\. It escapes tonight\.$/,m=>`باقي ${m[1]} من الصحة. يهرب الليلة.`],[/^(\d+) HP to go$/,m=>`باقي ${m[1]} من الصحة`],[/^HP (\d+)$/,m=>`الصحة ${m[1]}`],[/^Lv (\d+)$/,m=>`المستوى ${m[1]}`],[/^(\d+) \/ (\d+) XP$/,m=>`${m[1]} / ${m[2]} خبرة`],[/^(\d+) \/ (\d+) damage$/,m=>`${m[1]} / ${m[2]} ضرر`],[/^Best hit (\d+)$/,m=>`أقوى ضربة ${m[1]}`],[/^(\d+) beaten · (\d+) escaped$/,m=>`${m[1]} مهزوم · ${m[2]} هارب`],[/^🏆 (.+) defeated!$/,m=>`🏆 هُزم ${m[1]}!`],[/^(\d+) days? late$/,m=>`متأخرة ${+m[1]===1?'يومًا':+m[1]===2?'يومين':m[1]+' '+(+m[1]<=10?'أيام':'يومًا')}`],[/^(\d+) days left$/,m=>`باقي ${+m[1]===2?'يومان':m[1]+' '+(+m[1]<=10?'أيام':'يومًا')}`],
 [/^in (\d+) days$/,m=>`بعد ${m[1]} يومًا`],[/^(\d+) days? ago$/,m=>`قبل ${m[1]} يومًا`],[/^Last: (.+)$/,m=>`آخر مرة: ${trText(m[1])}`],
 [/^(Hide|Show) past \((.+)\)$/,m=>`${m[1]==='Hide'?'إخفاء':'إظهار'} السابقة (${trText(m[2])})`],[/^(\d+) · result missing$/,m=>`${m[1]} · النتيجة ناقصة`],
 [/^Plan (.+)$/,m=>`تخطيط ${m[1]}`],[/^Review (\d+) goals?$/,m=>`مراجعة ${m[1]} هدف`],[/^Carry to (.+)$/,m=>`ترحيل إلى ${m[1]}`],
@@ -1773,6 +1921,8 @@ const actions={
   'open-share-import'(){openShareImport();return false},
   'open-archive'(){S.view='archive';scrollTo(0,0)},
   'back-data'(){S.view='data';scrollTo(0,0)},
+  'open-bestiary'(){S.view='bestiary';scrollTo(0,0)},
+  'back-dash'(){S.view='dash';scrollTo(0,0)},
   async 'purge-archived'(){
     const gone=S.tasks.filter(t=>t.archived&&t.done);
     if(!gone.length||!confirm(`Permanently delete ${gone.length} completed archived task${gone.length>1?'s':''}?\n\nThis can't be undone. Not-completed archived tasks are kept.`))return false;
@@ -1795,7 +1945,7 @@ const actions={
   'edit-goal'(el){openEdit('goal',el.dataset.id);return false},
   'edit-habit'(el){openEdit('habit',el.dataset.id);return false},
   async 'toggle-sub'(el){const t=S.tasks.find(x=>x.id===el.dataset.id);const it=t&&t.items[+el.dataset.i];if(!it)return;it.done=!it.done;Sound.play(it.done?'task':'undo');await DB.put('tasks',t)},
-  async 'toggle-task'(el){const t=S.tasks.find(x=>x.id===el.dataset.id);t.done=!t.done;t.doneAt=t.done?Date.now():null;Sound.play(t.done?'task':'undo');await DB.put('tasks',t);await onTaskDone(t)},
+  async 'toggle-task'(el){const t=S.tasks.find(x=>x.id===el.dataset.id);t.done=!t.done;t.doneAt=t.done?Date.now():null;freezeDmg(t);Sound.play(t.done?'task':'undo');await DB.put('tasks',t);await onTaskDone(t)},
   'toggle-hide-done'(){S.hideDone=!S.hideDone;try{localStorage.setItem('gt-hide-done',S.hideDone?'1':'0')}catch(e){}},
   'toggle-folder'(el){const n=el.dataset.name;S.collapsed.has(n)?S.collapsed.delete(n):S.collapsed.add(n);saveCollapsed()},
   async 'rename-folder'(el){const old=el.dataset.name;
@@ -1869,7 +2019,7 @@ const actions={
   'sel-exit'(){S.selMode=null;S.sel.clear()},
   'bulk-edit'(){openBulk();return false},
   async 'bulk-done'(){const list=S.tasks.filter(t=>S.sel.has(t.id)&&!t.done);
-    for(const t of list){t.done=true;t.doneAt=Date.now();await DB.put('tasks',t);await onTaskDone(t)}
+    for(const t of list){t.done=true;t.doneAt=Date.now();freezeDmg(t);await DB.put('tasks',t);await onTaskDone(t)}
     Sound.play('task');toast(`Marked ${list.length} done.`);S.selMode=null;S.sel.clear()},
   async 'bulk-archive'(){const list=S.tasks.filter(t=>S.sel.has(t.id));
     for(const t of list){t.archived=true;t.archivedAt=Date.now();await DB.put('tasks',t)}
