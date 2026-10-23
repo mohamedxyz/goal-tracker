@@ -332,6 +332,7 @@ input.sw{appearance:none;-webkit-appearance:none;flex:none;width:46px;height:28p
 .dot.ok{background:var(--ok)} .dot.warn{background:var(--warn)} .dot.bad{background:var(--bad)}
 /* ---------- Bottom tab bar (phones) ---------- */
 #tabbar{display:none}
+html.kb #tabbar{display:none!important}html.kb main.wrap{padding-bottom:24px!important}html.kb{scroll-padding-bottom:24px!important}
 @media (max-width:720px){
   .top{padding:calc(8px + env(safe-area-inset-top)) 0 8px}
   .top h1{font-size:17px}

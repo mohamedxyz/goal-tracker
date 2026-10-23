@@ -38,3 +38,15 @@ async function autoArchive(){
 })();
 
 setInterval(autoBackupTick,60000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)autoBackupTick()});setTimeout(autoBackupTick,2500);
+
+/* Keyboard handling: hide the tab bar while typing and keep the focused field in view (no jump to blank space). */
+(()=>{const vv=window.visualViewport,vh=()=>vv?vv.height:innerHeight;let maxH=innerHeight,lastW=innerWidth;
+  const typing=()=>/^(INPUT|TEXTAREA|SELECT)$/.test((document.activeElement||{}).tagName||'');
+  const upd=()=>{if(innerWidth!==lastW){lastW=innerWidth;maxH=innerHeight}maxH=Math.max(maxH,innerHeight,vh());
+    document.documentElement.classList.toggle('kb',vh()<maxH-120&&typing())};
+  const fit=()=>{const e=document.activeElement;if(!e||!/^(INPUT|TEXTAREA)$/.test(e.tagName)||e.closest('dialog'))return;
+    const r=e.getBoundingClientRect(),H=vh();if(r.top<60||r.bottom>H-16)e.scrollIntoView({block:'center',behavior:'smooth'})};
+  document.addEventListener('focusin',()=>{upd();setTimeout(()=>{upd();fit()},350)});
+  document.addEventListener('focusout',()=>setTimeout(upd,200));
+  addEventListener('resize',()=>{upd();clearTimeout(window._kbT);window._kbT=setTimeout(fit,200)});
+  if(vv)vv.addEventListener('resize',upd)})();
