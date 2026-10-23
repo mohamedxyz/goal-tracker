@@ -5,6 +5,7 @@
     PATCH = bug fix · MINOR = new feature · MAJOR = breaks old backups or data
 
   Changelog
+  0.72.0 Declutter: the Dashboard now shows today's tasks first, with the game, stats and coach below; the game card shows just the boss and HP until you tap Details; the three goal buttons became Plan this week plus a menu; done tasks collapse under a single "N done" row and show their date once; task filters stay on one line and the add box hints at quick-add words; number goals lose the redundant tick; the Study tab shows 5 picks and starts with subjects collapsed; Habits' add form sits behind "+ New habit"; Settings groups are collapsible sections; backup has two main buttons (Back up now, Restore) with the rest under Advanced; and every confirm, prompt and alert is now an in-app dialog instead of a browser pop-up.
   0.71.1 Fix (Android app): a white strip with a squashed logo showed under the status bar on some phones. The space behind the status bar now takes the app's background colour and follows theme and palette changes
   0.71.0 Android app support: when this file runs inside the GoalTerra Android app it uses the phone directly. Backups and exports save to Documents/GoalTerra and open the share sheet, sharing with friends uses the share sheet, the back button closes dialogs and returns to Home, the status bar follows the theme, and reminders arrive as notifications (morning plan, evening check-in, classes, exams, focus timer, backup). In a browser nothing changes. Import also accepts backup files that Android labels as plain text
   0.70.0 Release candidate: a saved test suite in tests/ (development only, never part of this file) covering every screen in light, dark and Arabic, the README rewritten for GoalTerra with fresh demo screenshots, and no feature changes
@@ -36,7 +37,7 @@
   0.45.0 Tasks tab redesign to match Exams: one-line quick add with a More options drawer, due date as a pill, priority as a coloured edge, and a single ⋯ menu per task (edit, share, archive, delete)
   0.44.0 Select mode for tasks and habits (bulk date, priority, tag, goal, folder, schedule, done, archive, delete); Trash in Settings keeps deleted tasks and habits for 30 days; Student compact mode (tighter layout everywhere)
   0.43.1 Habit consistency card lists Avoid habits in their own "Staying clean" group (% clean, 🛡 streak)
-  0.43.0 Dashboard: Avoid habits get their own "Staying clean" section (clean/slipped state, Log slip button) and their own tiles; they no longer count in "Habits done today" or "Best current streak"
+  0.43.0 Dashboard: Avoid habits get their own "Staying clean" section (clean/slipped state, Log slip button) and their own tiles; they no longer count in "Habits done today" or "Best habit streak"
   0.42.0 Study: tap a day cell and pick Weak / OK / Strong / Clear from a small menu, so any rating takes two taps instead of cycling through colours
   0.41.1 Fix: screen flashed for a moment after pressing a button (the page-enter animation replayed on every redraw; it now plays only when you change tabs)
   0.41.0 Polish: redesigned Study tab (stat tiles, agenda-style exams, one-tap Weak/OK/Strong ratings on today's picks, tidier insights); smooth animations across the app (page transitions, staggered cards, press feedback, pop on tick, animated bars, dialog open); respects reduced-motion
@@ -317,6 +318,16 @@ button.danger{color:var(--bad)}
 @media (max-width:720px){.split{grid-template-columns:1fr}}
 dialog#editDlg{border:1px solid var(--line);border-radius:16px;background:var(--card);color:var(--text);padding:18px;width:min(460px,calc(100vw - 32px));box-shadow:0 18px 50px rgba(40,20,5,.25)}
 dialog#editDlg::backdrop{background:rgba(30,18,10,.45)}
+.filters.nowrap{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}.filters.nowrap .chip{flex:none;white-space:nowrap}
+.rpg:not(.open) .rpg-x{display:none}
+.hbtns{display:inline-flex;gap:6px;align-items:center}.chipmenu{position:relative;display:inline-block}.chipmenu summary{list-style:none;cursor:pointer}.chipmenu summary::-webkit-details-marker{display:none}
+.chipmenu>div{position:absolute;inset-inline-end:0;top:calc(100% + 4px);z-index:6;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:6px;display:flex;flex-direction:column;gap:6px;min-width:150px;box-shadow:0 8px 24px rgba(0,0,0,.18)}
+.setacc>.title{cursor:pointer;display:flex;justify-content:space-between;align-items:center;margin:0;min-height:30px}.setacc>.title::after{content:'▸';color:var(--muted)}.setacc.open>.title::after{content:'▾'}
+.setacc:not(.open)>*:not(.title){display:none}.setacc.open>.title{margin-bottom:8px}
+.habadd{margin-bottom:12px}
+dialog#askDlg{border:1px solid var(--line);border-radius:16px;background:var(--card);color:var(--text);padding:18px;width:min(380px,calc(100vw - 32px));box-shadow:0 18px 50px rgba(40,20,5,.25)}dialog#askDlg::backdrop{background:rgba(30,18,10,.45)}
+#askMsg{margin:0 0 12px;white-space:pre-wrap;line-height:1.45}#askDlg input{width:100%;margin-bottom:12px}#askDlg .row{justify-content:flex-end;gap:8px}
+
 .dlg h3{margin:0 0 14px;font-size:16px}
 .dlg label{display:block;font-size:12.5px;color:var(--muted);margin:10px 0 4px}
 .dlg input,.dlg select,.dlg textarea{width:100%}
@@ -618,6 +629,7 @@ body.cmp .add{gap:6px}body.cmp .goals,body.cmp .list{gap:6px}
 <div id="focusBar" role="timer" aria-live="off" hidden></div>
 <div id="toast" role="status"></div>
 <dialog id="editDlg" class="dlg"></dialog>
+<dialog id="askDlg" class="dlg"><p id="askMsg"></p><input id="askIn" type="text" hidden><div class="row"><button type="button" class="ghost" id="askNo">Cancel</button><button type="button" class="btn" id="askYes">OK</button></div></dialog>
 
 <script>
 /* ---------- Database (IndexedDB) ---------- */
@@ -791,7 +803,7 @@ function taskItem(t){
       <div class="meta">
         ${(t.items||[]).length?`<span title="Checklist">☑ ${t.items.filter(i=>i.done).length}/${t.items.length}</span>`:''}
         ${t.done&&t.doneAt?`<span>Done ${fmtWhen(t.doneAt)}</span>`:''}
-        ${t.done&&t.due?`<span>${fmtDate(t.due)}</span>`:''}
+        ${t.done&&t.due&&!(t.doneAt&&ds(new Date(t.doneAt))===t.due)?`<span>${fmtDate(t.due)}</span>`:''}
         ${t.tag?`<span class="tag">#${esc(t.tag)}</span>`:''}
         ${t.focus?`<span title="Focus time">⏱ ${fmtMin(t.focus)}</span>`:''}
         ${(t.pushes||[]).length?`<span title="Pushed back: ${esc(t.pushes[t.pushes.length-1].why)}">↻ ${t.pushes.length}×</span>`:''}
@@ -981,17 +993,17 @@ function rpgCard(){
   const dl=7-((new Date().getDay()+6)%7),hit=S.rpgHit&&Date.now()-S.rpgHit.at<1500?S.rpgHit:null;
   const L=heroLv(A.xp),lo=50*(L-1)*(L-1),hi=50*L*L,xpPct=Math.round((A.xp-lo)/(hi-lo)*100);
   const status=w.won?'Defeated. It joins your bestiary.':dl===1?`${left} HP to go. It escapes tonight.`:`${left} HP to go`;
-  return `<div class="card rpg ${w.won?'won':''}"><div class="rpg-top">
+  return `<div class="card rpg ${w.won?'won':''} ${S.rpgOpen?'open':''}"><div class="rpg-top">
     <div class="rpg-spr ${hit?'shake':''}">${m.svg}${hit?`<span class="rpg-dmg ${hit.crit?'crit':''}">−${hit.n}</span>`:''}</div>
     <div class="grow" style="min-width:0"><div class="rpg-lbl"><span>Week boss</span><span>${w.won?'🏆':dl===1?'Last day':dl+' days left'}</span></div>
       <b class="rpg-name" translate="no">${m.name}</b><span class="rpg-sub">${m.title}</span>
       <div class="bar hp" role="progressbar" aria-valuemin="0" aria-valuemax="${w.hp}" aria-valuenow="${left}" aria-label="Boss HP"><span style="width:${pct}%"></span></div>
-      <div class="meta"><span>${status}</span></div></div></div>
-    <div class="rpg-def"><span title="Shields">🛡 ${A.shields}/3</span><span title="Morale">❤ ${A.morale}%</span><span title="Rest tokens">🛌 ${A.tokens}</span>${w.ko?`<span title="Knocked out">💫 ${w.ko}</span>`:''}${isRest(TODAY())?`<span>${L2('Resting today','يوم راحة')}</span>`:A.tokens?`<button type="button" class="chip rest-btn" data-action="rest-day">🛌 Rest day</button>`:''}</div>
+      <div class="meta"><span>${status}</span><button type="button" class="chip" data-action="rpg-more" aria-expanded="${!!S.rpgOpen}">${S.rpgOpen?L2('Less','أقل'):L2('Details','تفاصيل')}</button></div></div></div>
+    <div class="rpg-def rpg-x"><span title="Shields">🛡 ${L2('Shields','الدروع')} ${A.shields}/3</span><span title="Morale">❤ ${L2('Morale','المعنويات')} ${A.morale}%</span><span title="Rest tokens">🛌 ${L2('Rest tokens','رموز الراحة')} ${A.tokens}</span>${w.ko?`<span title="Knocked out">💫 ${w.ko}</span>`:''}${isRest(TODAY())?`<span>${L2('Resting today','يوم راحة')}</span>`:A.tokens?`<button type="button" class="chip rest-btn" data-action="rest-day">🛌 Rest day</button>`:''}</div>
     ${rwLine('W:'+w.key,w.won)}
     ${!(A.dayD[TODAY()]>0)&&new Date().getHours()>=18&&!w.won?`<div class="rpg-warn">${A.shields?L2('⚠ No damage yet today. Tonight it counterattacks; a shield will block it.','⚠ لا ضرر بعد اليوم. سيهاجم الليلة، وسيصدّه درع.'):L2('⚠ No damage yet today. Tonight it counterattacks and you lose Morale.','⚠ لا ضرر بعد اليوم. سيهاجم الليلة وستخسر من معنوياتك.')}</div>`:''}
-    <div class="meta" style="margin-top:6px"><span title="Tasks">⚔️ ${w.tD}</span><span title="Habits">🔁 ${w.hD}</span>${S.cfg.student?`<span title="Study">📚 ${w.sD}</span>`:''}${w.fD?`<span title="Focus time">⏱ ${w.fD}</span>`:''}<span>HP ${w.hp}</span></div>
-    ${(()=>{const g=rpgTower().curM;return `<button type="button" class="tw-mini" data-action="open-tower"><span class="tw-spr sm">${bossSvg('M:'+g.key,1)}</span><span>${guardianTitle(g.key)}</span><b>${Math.min(g.dmg,g.hp)}/${g.hp}</b></button>`})()}${eliteLine()}
+    <div class="meta rpg-x" style="margin-top:6px"><span title="Tasks">⚔️ ${L2('Tasks','المهام')} ${w.tD}</span><span title="Habits">🔁 ${L2('Habits','العادات')} ${w.hD}</span>${S.cfg.student?`<span title="Study">📚 ${L2('Study','الدراسة')} ${w.sD}</span>`:''}${w.fD?`<span title="Focus time">⏱ ${L2('Focus','التركيز')} ${w.fD}</span>`:''}<span>${L2('Boss HP','حياة الزعيم')} ${w.hp}</span></div>
+    <div class="rpg-x">${(()=>{const g=rpgTower().curM;return `<button type="button" class="tw-mini" data-action="open-tower"><span class="tw-spr sm">${bossSvg('M:'+g.key,1)}</span><span>${guardianTitle(g.key)}</span><b>${Math.min(g.dmg,g.hp)}/${g.hp}</b></button>`})()}${eliteLine()}</div>
     <div class="rpg-hero"><b>Lv ${L}</b><div class="bar xp"><span style="width:${xpPct}%"></span></div><span>${A.xp} / ${hi} XP</span><button class="chip" data-action="open-bestiary">Bestiary →</button></div></div>`;
 }
 /* Tower: monthly guardians (weekly wins + monthly goals) and annual bosses (guardians + annual goals), derived from history. */
@@ -1186,7 +1198,7 @@ if(NATIVE)(()=>{
       BG.setColor({color:'#'+m.slice(0,3).map(x=>x.toString(16).padStart(2,'0')).join('')}).catch(()=>{})}catch(e){}},
     async allowExact(){try{await LN.changeExactNotificationSetting()}catch(e){}},
     async exactOk(){return exactOk()},
-    async testNotify(){if(!(await perm())){alert(L2('Notifications are blocked. Allow them for GoalTerra in Android settings.','الإشعارات محظورة. اسمح بها لتطبيق GoalTerra من إعدادات أندرويد.'));return}await channel();
+    async testNotify(){if(!(await perm())){askAlert(L2('Notifications are blocked. Allow them for GoalTerra in Android settings.','الإشعارات محظورة. اسمح بها لتطبيق GoalTerra من إعدادات أندرويد.'));return}await channel();
       await LN.schedule({notifications:[{id:nid('test'),title:'GoalTerra',body:L2('Notifications work.','الإشعارات تعمل.'),channelId:'gt',schedule:{at:new Date(Date.now()+3000),allowWhileIdle:true},isExactNotification:false}]})},
     async reschedule(list){const old=(()=>{try{return JSON.parse(localStorage.getItem('gt-nids')||'[]')}catch(e){return[]}})();
       if(old.length)try{await LN.cancel({notifications:old.map(id=>({id}))})}catch(e){}
@@ -1229,7 +1241,7 @@ function buildNotifications(){
   return out.sort((a,b)=>a.at-b.at).slice(0,60);
 }
 function notifCard(){if(!window.GTNative)return'';const c=S.cfg,times=[...Array(24)].map((_,h)=>String(h).padStart(2,'0')+':00');
-  return `<div class="card settings" style="margin-top:12px"><div class="title">Notifications</div>
+  return `<div class="card settings setacc ${S.setOpen&&S.setOpen.has('Notifications')?'open':''}" style="margin-top:12px"><div class="title" data-action="set-acc" data-k="Notifications" role="button" tabindex="0">Notifications</div>
     ${sw('nOn','Reminders','Morning plan, evening check-in, classes and exams, as phone notifications',c.nOn)}
     ${sel('nMorning','Morning plan at',times.slice(5,12).map(t=>[t,t]),c.nMorning)}
     ${sel('nEvening','Evening check-in at',times.slice(17,23).map(t=>[t,t]),c.nEvening)}
@@ -1251,7 +1263,18 @@ function dayBanner(){
   const tn=x=>L2(x.n,AR[x.n]),sub=nx?L2(`${d} done · ${L[T+1]-d} more to reach ${nx.n}`,`${d} منجزة · ${L[T+1]-d} أخرى للوصول إلى ${tn(nx)}`):L2(`${d} done · top level, defend it`,`${d} منجزة · أعلى مستوى، حافظ عليه`);
   return `<div class="card daymode t${T}" data-action="open-levels" role="button" tabindex="0" aria-label="Open level calendar"><div class="dm-top"><span class="dm-ico">${tr.i}</span><div class="grow"><b>${L2(`Today you're in ${tr.n} mode`,`أنت اليوم في وضع ${tn(tr)}`)}</b><small>${sub}</small></div><span class="dm-streak">${st.streak?L2('🔥 '+st.streak+'-day streak','🔥 سلسلة '+st.streak+' '+AYAM(st.streak)):L2('Start a streak','ابدأ سلسلة')}</span></div><div class="bar"><span style="width:${pct}%"></span></div><small class="dm-hint">📅 Tap for your level calendar</small></div>`;
 }
-function askWhy(what){const r=prompt(`Titan day: why are you ${what}? Type a reason.`);return r&&r.trim()?r.trim():null}
+
+/* ---------- In-app dialogs (replace confirm / prompt / alert) ---------- */
+function askUI(msg,o={}){return new Promise(res=>{
+  const d=document.getElementById('askDlg'),inp=d.querySelector('#askIn'),no=d.querySelector('#askNo'),yes=d.querySelector('#askYes');
+  d.querySelector('#askMsg').textContent=String(msg);inp.hidden=!o.input;inp.value=o.def==null?'':String(o.def);no.hidden=!!o.alertOnly;
+  let out=o.input?null:false;if(o.alertOnly)out=true;
+  const fin=()=>{d.removeEventListener('close',fin);res(out)};d.addEventListener('close',fin);
+  yes.onclick=()=>{out=o.input?inp.value:true;d.close()};no.onclick=()=>{out=o.input?null:false;d.close()};
+  inp.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();yes.click()}};
+  if(!d.open)d.showModal();if(o.input)setTimeout(()=>{inp.focus();inp.select()},40)})}
+const askConfirm=m=>askUI(m),askPrompt=(m,def)=>askUI(m,{input:true,def}),askAlert=m=>askUI(m,{alertOnly:true});
+async function askWhy(what){const r=await askPrompt(`Titan day: why are you ${what}? Type a reason.`);return r&&r.trim()?r.trim():null}
 function coachStats(){
   const cnt={};for(const t of S.tasks)if(t.done&&t.doneAt){const k=ds(new Date(t.doneAt));cnt[k]=(cnt[k]||0)+1}
   const dn=i=>cnt[ds(addDays(new Date(),-i))]||0;
@@ -1402,7 +1425,7 @@ function goalCard(g){
   return `<div class="card goal ${g.done?'isdone':''} ${missed?'ismissed':''}">
     <div class="row"><div class="grow"><div class="title">${esc(g.title)}</div>
       <div class="meta">${tags.join('')}</div></div>
-      <button class="icon" data-action="done-goal" data-id="${g.id}" title="${g.done?'Reopen':'Mark complete'}" aria-label="${g.done?'Reopen':'Mark complete'}">${g.done?'↺':'✓'}</button>
+      ${k==='number'&&!g.done?'':`<button class="icon" data-action="done-goal" data-id="${g.id}" title="${g.done?'Reopen':'Mark complete'}" aria-label="${g.done?'Reopen':'Mark complete'}">${g.done?'↺':'✓'}</button>`}
       <button class="icon" data-action="edit-goal" data-id="${g.id}" title="Edit" aria-label="Edit">✎</button>
       <button class="icon" data-action="del-goal" data-id="${g.id}" title="Delete" aria-label="Delete">✕</button></div>
     <div class="bar"><span style="width:${p}%"></span></div>
@@ -1501,21 +1524,21 @@ function viewDash(){
   const lb=daysSince(lastBackup());
   const openSlots=planTargets().reduce((a,g)=>a+planLeft(g),0),dow=new Date().getDay();
   const planCta=!wk.length||((dow===0||dow===1)&&openSlots>0);
-  return `${sampleBanner()}${dayBanner()}${rpgCard()}${backupNudge()?`<div class="card backup-cta ${backupLevel()>1?'urgent':''}"><div class="grow"><div class="title">${lb===null?'No backup yet':'Last backup '+agoText(lb)}</div><div class="meta">${backupLevel()>1?'If this browser clears its storage, everything since your last backup is gone. Back up now.':'Your data lives only in this browser. Save a backup and keep it somewhere safe.'}</div></div><button class="btn" data-action="backup-now">Back up now</button><button class="icon" data-action="backup-snooze" title="Remind me later" aria-label="Dismiss backup reminder">✕</button></div>`:''}${nRv?`<div class="card review-cta"><div class="grow"><div class="title">${nRv} goal${nRv>1?'s':''} from past periods need${nRv>1?'':'s'} a review</div><div class="meta">Hit it, missed, or carry over. About a minute.</div></div><button class="btn" data-action="open-review">Review</button></div>`:''}${planCta?`<div class="card plan-cta"><div class="grow"><div class="title">${wk.length?`${openSlots} weekly slot${openSlots>1?'s':''} still to plan`:`Plan ${currentPeriod('weekly')}`}</div><div class="meta">${wk.length?'Fill in this week\'s steps toward your monthly goals.':'No weekly goals yet. Pick this week\'s steps.'}</div></div><button class="btn" data-action="open-plan">Plan week</button></div>`:''}<div class="stats dstats">
-    <div class="card stat"><div class="n">${todaysDone}/${todays.length}</div><div class="l">Today's tasks done</div></div>
-    <div class="card stat"><div class="n">${hd}/${dueHabits.length}</div><div class="l">Habits done today</div></div>
-    <div class="card stat"><div class="n">${active}</div><div class="l">Active goals</div></div>
-    <div class="card stat"><div class="n">🔥 ${best}</div><div class="l">Best current streak</div></div>
-    ${avd.length?`<div class="card stat avoidstat"><div class="n">🛡 ${avOk}/${dueAvoid.length}</div><div class="l">Staying clean</div></div>`:''}
-  </div>
-  ${coachCard()}
-  <div class="grid2" style="margin-top:6px"><div>
+  return `${sampleBanner()}${dayBanner()}${backupNudge()?`<div class="card backup-cta ${backupLevel()>1?'urgent':''}"><div class="grow"><div class="title">${lb===null?'No backup yet':'Last backup '+agoText(lb)}</div><div class="meta">${backupLevel()>1?'If this browser clears its storage, everything since your last backup is gone. Back up now.':'Your data lives only in this browser. Save a backup and keep it somewhere safe.'}</div></div><button class="btn" data-action="backup-now">Back up now</button><button class="icon" data-action="backup-snooze" title="Remind me later" aria-label="Dismiss backup reminder">✕</button></div>`:''}${nRv?`<div class="card review-cta"><div class="grow"><div class="title">${nRv} goal${nRv>1?'s':''} from past periods need${nRv>1?'':'s'} a review</div><div class="meta">Hit it, missed, or carry over. About a minute.</div></div><button class="btn" data-action="open-review">Review</button></div>`:''}  <div class="grid2" style="margin-top:6px"><div>
     ${S.cfg.dTasks?`<h2>Today's tasks</h2>${todays.length?`<ul class="list">${todays.map(taskItem).join('')}</ul>`:`<div class="empty">Nothing due today.</div>`}
     ${overdue&&!S.cfg.dOverdue?`<button class="chip" style="margin-top:10px" data-action="see-overdue">${overdue} overdue from earlier days →</button>`:''}`:''}
-    ${S.cfg.dGoals?`<div class="h2row"><h2>This week's goals</h2><span><button class="chip" data-action="open-report">Weekly report</button> <button class="chip" data-action="open-month">Monthly review</button> <button class="chip" data-action="open-plan">Plan this week</button></span></div>${wk.length?`<div class="goals">${wk.map(goalCard).join('')}</div>`:`<div class="empty">No weekly goals for ${currentPeriod('weekly')}.</div>`}`:''}
+    ${S.cfg.dGoals?`<div class="h2row"><h2>This week's goals</h2><span class="hbtns"><button class="chip" data-action="open-plan">Plan this week</button><details class="chipmenu"><summary class="chip" aria-label="More">⋯</summary><div><button class="chip" data-action="open-report">Weekly report</button><button class="chip" data-action="open-month">Monthly review</button></div></details></span></div>${wk.length?`<div class="goals">${wk.map(goalCard).join('')}</div>`:`<div class="empty">No weekly goals for ${currentPeriod('weekly')}.</div>`}`:''}
   </div><div>
     ${S.cfg.dHabits?`<h2>Today's habits</h2>${habitList(false)}`:''}
   </div></div>
+  ${planCta?`<div class="card plan-cta"><div class="grow"><div class="title">${wk.length?`${openSlots} weekly slot${openSlots>1?'s':''} still to plan`:`Plan ${currentPeriod('weekly')}`}</div><div class="meta">${wk.length?'Fill in this week\'s steps toward your monthly goals.':'No weekly goals yet. Pick this week\'s steps.'}</div></div><button class="btn" data-action="open-plan">Plan week</button></div>`:''}${rpgCard()}<div class="stats dstats">
+    <div class="card stat"><div class="n">${todaysDone}/${todays.length}</div><div class="l">Today's tasks done</div></div>
+    <div class="card stat"><div class="n">${hd}/${dueHabits.length}</div><div class="l">Habits done today</div></div>
+    <div class="card stat"><div class="n">${active}</div><div class="l">Active goals</div></div>
+    <div class="card stat"><div class="n">🔥 ${best}</div><div class="l">Best habit streak</div></div>
+    ${avd.length?`<div class="card stat avoidstat"><div class="n">🛡 ${avOk}/${dueAvoid.length}</div><div class="l">Staying clean</div></div>`:''}
+  </div>
+  ${coachCard()}
   ${studyCard()}
   ${S.cfg.dCharts?`<button class="card insbtn" data-action="toggle-ins" aria-expanded="${!!S.insOpen}"><span>📊 Insights <small>activity, charts, habit consistency</small></span><span>${S.insOpen?'▾':'▸'}</span></button>
   ${S.insOpen?`${heatmapCard()}
@@ -1555,7 +1578,7 @@ function viewTasks(){
   const nOver=live.filter(t=>!t.done&&t.due&&t.due<today).length;
   const chip=(k,l)=>`<button class="chip ${f===k?'on':''}" data-action="task-filter" data-v="${k}">${l}</button>`;
   return `<form class="add taskadd card" data-form="task">
-    <div class="qa"><input type="text" name="title" placeholder="New task…" required autocomplete="off" aria-describedby="qaHint"><button class="btn">Add</button></div>
+    <div class="qa"><input type="text" name="title" placeholder="${L2('New task… try: tomorrow !high #uni','مهمة جديدة… جرّب كتابة «غدًا»')}" required autocomplete="off" aria-describedby="qaHint"><button class="btn">Add</button></div>
     <div class="qa-hint" id="qaHint" aria-live="polite" hidden></div>
     <details class="more"><summary>More options</summary><div class="moreg">
     <input type="date" name="due" aria-label="Due date" value="${S.cfg.dueDef==="none"?"":S.cfg.dueDef==="tomorrow"?ds(addDays(new Date(),1)):today}">
@@ -1566,9 +1589,9 @@ function viewTasks(){
     <textarea name="notes" placeholder="Notes (optional)" style="min-height:40px"></textarea>
     <textarea name="items" placeholder="Checklist (optional, one item per line)" style="min-height:40px"></textarea>
     </div></details></form>
-  ${S.tcalOn?`<div class="filters"><button class="chip" data-action="tasks-cal">☰ List</button></div>${calView()}`:`<div class="filters">${chip('all','All')}${chip('today','Due today')}${chip('overdue','Overdue'+(nOver?' · '+nOver:''))}${chip('done','Done')}<button class="chip ${selOn('tasks')?'on':''}" data-action="sel-mode" data-k="tasks" aria-pressed="${selOn('tasks')}">${selOn('tasks')?'✓ Selecting':'☑ Select'}</button><button class="chip" data-action="tasks-cal">📅 Calendar</button></div>
+  ${S.tcalOn?`<div class="filters"><button class="chip" data-action="tasks-cal">☰ List</button></div>${calView()}`:`<div class="filters nowrap">${chip('all','All')}${chip('today','Due today')}${chip('overdue','Overdue'+(nOver?' · '+nOver:''))}${chip('done','Done')}<button class="chip ${selOn('tasks')?'on':''}" data-action="sel-mode" data-k="tasks" aria-pressed="${selOn('tasks')}">${selOn('tasks')?'✓ Selecting':'☑ Select'}</button><button class="chip" data-action="tasks-cal">📅 Calendar</button></div>
   ${open.length?taskGroups(open):((done.length&&showDone)?'':`<div class="empty">No tasks here.</div>`)}
-  ${(done.length&&showDone)?`${f==='done'?'':`<div class="divider">Completed · ${done.length}</div>`}<ul class="list">${(S.doneAll?done:done.slice(0,40)).map(taskItem).join('')}</ul>${done.length>40?`<button class="chip" style="margin-top:8px" data-action="toggle-done-all">${S.doneAll?'Show fewer':'Show all '+done.length+' completed'}</button>`:''}`:''}`}`;
+  ${(done.length&&showDone)?`${f==='done'?'':`<button class="chip" style="margin-top:12px" data-action="toggle-done-list" aria-expanded="${!!S.doneOpen}">${S.doneOpen?'▾':'▸'} ${L2(done.length+' done',done.length+' منجزة')}</button>`}${(f==='done'||S.doneOpen)?`<ul class="list">${(S.doneAll?done:done.slice(0,40)).map(taskItem).join('')}</ul>`:''}${done.length>40&&(f==='done'||S.doneOpen)?`<button class="chip" style="margin-top:8px" data-action="toggle-done-all">${S.doneAll?'Show fewer':'Show all '+done.length+' completed'}</button>`:''}`:''}`}`;
 }
 /* ---------- Task calendar ---------- */
 let tcal=null;
@@ -1616,13 +1639,13 @@ function viewGoals(){
   ${ladder?(ladderView()||`<div class="empty">No goals yet. Add one above, then hang tasks under it.</div><div class="tpls" style="margin-top:12px">${templateButtons()}</div>`):list.length?`<div class="goals">${list.map(goalCard).join('')}</div>`:`<div class="empty">No ${HORIZONS[h].toLowerCase()} goals yet.</div>`}`;
 }
 function viewHabits(){
-  return `<form class="add" data-form="habit">
+  return `<details class="more habadd" ${S.habits.length?'':'open'}><summary>+ New habit</summary><form class="add" data-form="habit">
     <input type="text" name="name" placeholder="New habit (e.g. Code 1 hour, or No smoking)…" required>
     <select name="kind" aria-label="Habit type"><option value="">✅ Build: tick it when done</option><option value="avoid">${S.cfg.avoidMode==='confirm'?'🚫 Avoid: tick each clean day':'🚫 Avoid: clean unless you slip'}</option></select>
     <select name="target" title="Target days per week">${[7,6,5,4,3,2,1].map(n=>`<option value="${n}">${n}×/week</option>`).join('')}</select>
     <input type="text" name="group" list="folderListAdd" placeholder="Folder (optional), e.g. Morning routine" style="flex:1 1 200px" autocomplete="off">${folderList('folderListAdd')}
     ${dayPicker()}
-    <button class="btn">Add habit</button></form>
+    <button class="btn">Add habit</button></form></details>
   ${habitList(true)}`;
 }
 // Shared by the dashboard and Habits tab; honours the "hide done today" switch.
@@ -1750,7 +1773,7 @@ async function applyBulk(kind,f){
   if(kind==='bulktasks'){
     const lat=t=>{const m=v.dmode;return m==='tomorrow'||m==='week'||m==='plus1'||m==='none'||(m==='pick'&&v.due&&v.due>(t.due||''))};
     let why=null;
-    if(beastOn()&&ids.some(id=>{const t=S.tasks.find(x=>x.id===id);return t&&!t.done&&t.due&&t.due<=TODAY()&&lat(t)})){why=askWhy('pushing these back');if(!why){toast('Not applied. Titan wants a reason.');return false}}
+    if(beastOn()&&ids.some(id=>{const t=S.tasks.find(x=>x.id===id);return t&&!t.done&&t.due&&t.due<=TODAY()&&lat(t)})){why=await askWhy('pushing these back');if(!why){toast('Not applied. Titan wants a reason.');return false}}
     for(const id of ids){const t=S.tasks.find(x=>x.id===id);if(!t)continue;
       const m=v.dmode;if(why&&!t.done&&t.due&&t.due<=TODAY()&&lat(t))(t.pushes=t.pushes||[]).push({at:Date.now(),from:t.due,to:null,why});
       if(m==='today')t.due=TODAY();else if(m==='tomorrow')t.due=ds(addDays(new Date(),1));else if(m==='week')t.due=ds(addDays(new Date(),7));
@@ -1800,7 +1823,7 @@ const sel=(k,label,opts,cur)=>`<label class="swrow"><span>${label}</span><select
 function settingsCard(){
   const c=S.cfg;
   return `<h2>Settings</h2>
-  <div class="card settings"><div class="title">General</div>
+  <div class="card settings setacc ${S.setOpen&&S.setOpen.has('General')?'open':''}"><div class="title" data-action="set-acc" data-k="General" role="button" tabindex="0">General</div>
     ${sw('sound','Sound effects','Chimes when you finish or undo something',Sound.on)}
     ${sel('lang','Language / اللغة',[['en','English'],['ar','العربية']],c.lang)}
     ${sel('theme','Theme',[['auto','Auto'],['light','Light'],['dark','Dark'],['black','Black (OLED)']],getTheme())}
@@ -1808,7 +1831,7 @@ function settingsCard(){
     ${sel('prio','Default priority for new tasks',[['low','Low'],['med','Medium'],['high','High']],c.prio)}
     ${sw('showDone','Show completed tasks','The dimmed "Completed" list under your tasks',c.showDone)}
   </div>
-  <div class="card settings" style="margin-top:12px"><div class="title">Student mode</div>
+  <div class="card settings setacc ${S.setOpen&&S.setOpen.has('Student mode')?'open':''}" style="margin-top:12px"><div class="title" data-action="set-acc" data-k="Student mode" role="button" tabindex="0">Student mode</div>
     ${sw('srOn','Spaced repetition','Topics come back for review when their date arrives',c.srOn)}
     ${sel('srWeak','Review Weak topics after',[['1','1 day'],['2','2 days']],c.srWeak)}
     ${sel('srOk','Review OK topics after',[['2','2 days'],['3','3 days'],['4','4 days'],['5','5 days']],c.srOk)}
@@ -1816,18 +1839,18 @@ function settingsCard(){
     ${sw('stuCompact','Compact layout','Student mode only: tighter spacing, smaller text, fewer extras, so more fits on a small screen',c.stuCompact)}
     ${sw('student','Student mode','Adds a Study tab: revision timetable, today\'s picks, and exams',c.student)}
   </div>
-  <div class="card settings" style="margin-top:12px"><div class="title">Coach</div>
+  <div class="card settings setacc ${S.setOpen&&S.setOpen.has('Coach')?'open':''}" style="margin-top:12px"><div class="title" data-action="set-acc" data-k="Coach" role="button" tabindex="0">Coach</div>
     ${sel('coachTone','Day levels and coach',[['on','On'],['off','Off']],coachTone())}
     ${sel('lvl2','Blaze starts at',[['2','2 tasks a day'],['3','3 tasks a day'],['4','4 tasks a day']],c.lvl2)}
     ${sel('lvl3','Titan starts at',[['5','5 tasks a day'],['6','6 tasks a day'],['8','8 tasks a day'],['10','10 tasks a day']],c.lvl3)}
     <p class="meta">⚡ Spark is a slow start and the coach is gentle. 🔥 Blaze pushes. ⚔️ Titan raises the bar: a daily quota, and you must type a reason to push back, reschedule or delete work that is due. Nothing is ever changed without you.</p>
   </div>
-  <div class="card settings" style="margin-top:12px"><div class="title">Game mode</div>
+  <div class="card settings setacc ${S.setOpen&&S.setOpen.has('Game mode')?'open':''}" style="margin-top:12px"><div class="title" data-action="set-acc" data-k="Game mode" role="button" tabindex="0">Game mode</div>
     ${sel('eliteTarget','Exam elite is defeated at',[['50','50%'],['60','60%'],['70','70%'],['80','80%'],['90','90%']],c.eliteTarget)}
     ${sw('rpg','RPG game mode','A weekly pixel boss you beat by finishing tasks, habits and study. Shows damage, a hero level and a bestiary of beaten monsters',c.rpg)}
   </div>
   ${notifCard()}
-  <div class="card settings" style="margin-top:12px"><div class="title">Tasks</div>
+  <div class="card settings setacc ${S.setOpen&&S.setOpen.has('Tasks')?'open':''}" style="margin-top:12px"><div class="title" data-action="set-acc" data-k="Tasks" role="button" tabindex="0">Tasks</div>
     ${sel('focusLen','Focus session length',[['15','15 min'],['25','25 min'],['45','45 min'],['50','50 min']],c.focusLen)}
     ${sel('breakLen','Break length',[['5','5 min'],['10','10 min'],['15','15 min']],c.breakLen)}
     ${sel('dueDef','Default due date for new tasks',[['today','Today'],['tomorrow','Tomorrow'],['none','No date']],c.dueDef)}
@@ -1839,51 +1862,45 @@ function settingsCard(){
     ${sw('showSubs','Show checklist items on task rows','Off keeps just the 2/4 counter',c.showSubs)}
     ${sw('dOverdue','Overdue tasks on the Dashboard','Adds late tasks to Today\'s tasks',c.dOverdue)}
   </div>
-  <div class="card settings" style="margin-top:12px"><div class="title">Habits</div>
+  <div class="card settings setacc ${S.setOpen&&S.setOpen.has('Habits')?'open':''}" style="margin-top:12px"><div class="title" data-action="set-acc" data-k="Habits" role="button" tabindex="0">Habits</div>
     ${sw('hideDone','Hide habits done today','Same as the chip in the Habits tab',S.hideDone)}
     ${sw('compact','Compact habit list','One tight row per habit',S.compact)}
     ${sel('avoidMode','New avoid habits: a day counts as',[['clean','Clean unless I log a slip'],['confirm','A slip unless I tick it clean']],c.avoidMode)}
     ${sw('avoidHide','Hide avoid habits while clean','Only matters when "Hide habits done today" is on',c.avoidHide)}
   </div>
-  <div class="card settings" style="margin-top:12px"><div class="title">Ask before deleting</div>
+  <div class="card settings setacc ${S.setOpen&&S.setOpen.has('Ask before deleting')?'open':''}" style="margin-top:12px"><div class="title" data-action="set-acc" data-k="Ask before deleting" role="button" tabindex="0">Ask before deleting</div>
     ${sw('cTask','Tasks','',c.cTask)}${sw('cGoal','Goals','',c.cGoal)}${sw('cHabit','Habits','',c.cHabit)}
     <p class="meta">You always get a 6-second Undo after deleting.</p>
   </div>
-  <div class="card settings" style="margin-top:12px"><div class="title">Dashboard sections</div>
+  <div class="card settings setacc ${S.setOpen&&S.setOpen.has('Dashboard sections')?'open':''}" style="margin-top:12px"><div class="title" data-action="set-acc" data-k="Dashboard sections" role="button" tabindex="0">Dashboard sections</div>
     ${sw('dCharts','Heatmap and charts','',c.dCharts)}${sw('dTasks',"Today's tasks",'',c.dTasks)}${sw('dGoals',"This week's goals",'',c.dGoals)}${sw('dHabits',"Today's habits",'',c.dHabits)}
   </div>`;
 }
 function viewData(){
   const lb=daysSince(lastBackup()),st=S.storage;
   return `${settingsCard()}
-  <h2 style="margin-top:18px">Share with friends</h2>
-  <div class="card settings"><p class="meta">Send habits, tasks or homework, exams and quizzes, and study topics to a friend as a small JSON file or text. Your history, check-ins and scores are never included.</p>
+  <div class="card settings setacc ${S.setOpen&&S.setOpen.has('Share with friends')?'open':''}" style="margin-top:12px"><div class="title" data-action="set-acc" data-k="Share with friends" role="button" tabindex="0">Share with friends</div><p class="meta">Send habits, tasks or homework, exams and quizzes, and study topics to a friend as a small JSON file or text. Your history, check-ins and scores are never included.</p>
     <div class="row"><button class="ghost" data-action="open-share">Share items…</button><button class="ghost" data-action="open-share-import">Import shared items…</button></div></div>
-  <h2 style="margin-top:18px">Your data</h2>
-  <div class="card settings"><div class="title">Templates and sample data</div><p class="meta">Start a goal ladder from a template, or explore the app with sample data you can clear later.</p><div class="row"><button class="ghost" data-action="tpl-open">Templates</button>${hasSample()?'<button class="ghost" data-action="sample-clear">Clear sample data</button>':'<button class="ghost" data-action="sample-add">Load sample data</button>'}</div></div>
-  <div class="card settings">
-    <div class="title">Storage &amp; backup</div>
-    <div class="row" style="margin:6px 0"><button class="btn" data-action="backup-now">Back up now</button></div>
+    <div class="card settings setacc ${S.setOpen&&S.setOpen.has('Templates and sample data')?'open':''}"><div class="title" data-action="set-acc" data-k="Templates and sample data" role="button" tabindex="0">Templates and sample data</div><p class="meta">Start a goal ladder from a template, or explore the app with sample data you can clear later.</p><div class="row"><button class="ghost" data-action="tpl-open">Templates</button>${hasSample()?'<button class="ghost" data-action="sample-clear">Clear sample data</button>':'<button class="ghost" data-action="sample-add">Load sample data</button>'}</div></div>
+  <div class="card settings setacc ${S.setOpen&&S.setOpen.has('Storage & backup')?'open':''}"><div class="title" data-action="set-acc" data-k="Storage & backup" role="button" tabindex="0">Storage &amp; backup</div>
+    <div class="row" style="margin:6px 0"><button class="btn" data-action="backup-now">Back up now</button><button class="ghost" data-action="import">Restore</button></div>
     <div class="meta">${S.tasks.length} tasks · ${S.goals.length} goals · ${S.habits.length} habits · ${S.logs.size} check-ins</div>
-    <p class="meta">Stored in this browser's IndexedDB. Export regularly to back up or move to another device.</p>
+    <p class="meta">${window.GTNative?L2('Saved on this phone. Backups go to Documents/GoalTerra.','محفوظ على هذا الهاتف. النسخ الاحتياطية تُحفظ في مجلد المستندات.'):'Stored in this browser\'s IndexedDB. Export regularly to back up or move to another device.'}</p>
     <div class="kstat"><span><i class="dot ${lb===null?'bad':lb>BACKUP_STALE?'warn':'ok'}"></i>Last backup: <b>${agoText(lb)}</b></span>
       <span><i class="dot ${st==='protected'?'ok':st==='unprotected'?'warn':''}"></i>Storage: <b>${st==='protected'?'protected':st==='unprotected'?'not protected':st==='unsupported'?'unknown':'checking…'}</b></span></div>
     ${st==='unprotected'?`<p class="meta">The browser may clear this data if the phone runs low on space. Bookmarking the page or adding it to the home screen often lets it be protected. <button class="chip" data-action="storage-persist">Ask again</button></p>`:''}
     <p class="meta"><span>Version <b>${APP_VERSION}</b></span> <button class="chip" data-action="open-intro">Show intro again</button></p>
-    <div class="row">
+    <details class="more"><summary>Advanced</summary><div class="row" style="margin-top:8px">
       <button class="ghost" data-action="export">Export JSON</button>
-      <button class="ghost" data-action="import">Import JSON</button>
       <button class="ghost" data-action="backup-copy">Copy backup text</button>
       <button class="ghost" data-action="backup-paste">Paste backup text</button>
       <button class="ghost" data-action="wipe" style="color:var(--bad)">Erase everything</button>
-    </div></div>
-  <div class="card settings" style="margin-top:12px">
-    <div class="title">Archived tasks</div>
+    </div></details></div>
+  <div class="card settings setacc ${S.setOpen&&S.setOpen.has('Archived tasks')?'open':''}" style="margin-top:12px"><div class="title" data-action="set-acc" data-k="Archived tasks" role="button" tabindex="0">Archived tasks</div>
     <div class="meta">${S.tasks.filter(t=>t.archived).length} archived · ${S.tasks.filter(t=>t.archived&&t.done).length} completed</div>
     <div class="row"><button class="ghost" data-action="open-archive">View archived tasks →</button></div>
   </div>
-  <div class="card settings" style="margin-top:12px">
-    <div class="title">Trash</div>
+  <div class="card settings setacc ${S.setOpen&&S.setOpen.has('Trash')?'open':''}" style="margin-top:12px"><div class="title" data-action="set-acc" data-k="Trash" role="button" tabindex="0">Trash</div>
     <div class="meta">${S.trash.length} deleted task${S.trash.length===1?'':'s'} and habits, kept ${TRASH_DAYS} days</div>
     <div class="row"><button class="ghost" data-action="open-trash">Open trash →</button></div>
   </div>`;
@@ -1984,7 +2001,7 @@ dlg.addEventListener('submit',async e=>{
   if(kind==='bulktasks'||kind==='bulkhabits'){if((await applyBulk(kind,f))===false)return;dlg.close();render();return}
   const v=Object.fromEntries(new FormData(f));const id=f.dataset.id;
   if(kind==='task'){const t=S.tasks.find(x=>x.id===id);const done=!!v.done;
-    if(beastOn()&&!t.done&&!done&&t.due&&t.due<=TODAY()&&(!v.due||v.due>t.due)){const why=askWhy('pushing this back');if(!why){toast('Not saved. Titan wants a reason.');return}
+    if(beastOn()&&!t.done&&!done&&t.due&&t.due<=TODAY()&&(!v.due||v.due>t.due)){const why=await askWhy('pushing this back');if(!why){toast('Not saved. Titan wants a reason.');return}
       (t.pushes=t.pushes||[]).push({at:Date.now(),from:t.due,to:v.due||null,why})}
     Object.assign(t,{title:v.title.trim(),due:v.due||null,priority:v.priority,goalId:v.goalId||null,notes:(v.notes||'').trim(),repeat:v.repeat||'',tag:(v.tag||'').trim(),items:parseItems(v.items,t.items)});
     if(done!==t.done){t.done=done;t.doneAt=done?Date.now():null;freezeDmg(t);Sound.play(done?'task':'undo');await onTaskDone(t)}
@@ -2100,7 +2117,7 @@ function drawHabit(){
 document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('[role=button][data-action]')){e.preventDefault();e.target.click()}});
 
 /* ---------- Version ---------- */
-const APP_VERSION='0.71.1';
+const APP_VERSION='0.72.0';
 
 /* ---------- Completion sounds (synthesised, no audio files) ---------- */
 const Sound={
@@ -2141,13 +2158,13 @@ const saveCfg=()=>{try{localStorage.setItem('gt-settings',JSON.stringify(S.cfg))
 const AYAM=n=>(n=+n,n===1?'يوم':n===2?'يومان':n>=3&&n<=10?'أيام':'يومًا');
 const HZ_AR={weekly:'أسبوعية',monthly:'شهرية',annual:'سنوية','5-year':'خمسية',sub:'فرعية'},HZ1_AR={weekly:'أسبوعي',monthly:'شهري',annual:'سنوي','5-year':'خمسي'};
 const WHY_AR={'pushing this back':'تؤجل هذه المهمة','pushing these back':'تؤجل هذه المهام','deleting work that is due':'تحذف عملًا مستحقًا'};
-const AR={'Notifications':'الإشعارات','Reminders':'التذكيرات','Morning plan, evening check-in, classes and exams, as phone notifications':'خطة الصباح ومراجعة المساء والحصص والامتحانات كإشعارات على الهاتف','Morning plan at':'خطة الصباح الساعة','Evening check-in at':'مراجعة المساء الساعة','Class reminders':'تذكير الحصص','10 minutes before each class':'قبل كل حصة بـ10 دقائق','Exam reminders':'تذكير الامتحانات','The evening before an exam or quiz':'مساء اليوم السابق للامتحان أو الاختبار','Send a test notification':'أرسل إشعارًا تجريبيًا','Exact timers':'مؤقتات دقيقة','Exact timers let the focus timer ring on the second; without them Android may deliver it a little late.':'المؤقتات الدقيقة تجعل مؤقت التركيز يرن في وقته تمامًا؛ بدونها قد يتأخر أندرويد قليلًا.','Parent goal':'الهدف الأعلى','Monthly review':'المراجعة الشهرية','Day levels':'مستويات الأيام','Week boss':'زعيم الأسبوع','Best week':'أفضل أسبوع',"This month's goals":'أهداف هذا الشهر','Guardian':'الحارس','tasks missed':'مهام فائتة','tasks done':'مهام منجزة','habits':'العادات','Previous month':'الشهر السابق','Next month':'الشهر التالي','Back up now':'انسخ احتياطيًا الآن','Restore this backup?':'استعادة هذه النسخة؟','If this browser clears its storage, everything since your last backup is gone. Back up now.':'إذا مسح هذا المتصفح بياناته، يضيع كل شيء منذ آخر نسخة احتياطية. انسخ الآن.','Your data lives only in this browser. Save a backup and keep it somewhere safe.':'بياناتك محفوظة في هذا المتصفح فقط. احفظ نسخة احتياطية واحتفظ بها في مكان آمن.','Start from a template':'ابدأ من قالب','Everything it adds is yours to rename or delete. Or try the app with sample data first:':'كل ما يضيفه لك لتعيد تسميته أو تحذفه. أو جرّب التطبيق ببيانات تجريبية أولًا:','Load sample data':'تحميل بيانات تجريبية','Sample data is on':'البيانات التجريبية مفعّلة','Explore freely. Clearing removes only the sample items, never your own.':'استكشف بحرية. المسح يزيل العناصر التجريبية فقط، لا عناصرك.','Clear sample':'مسح التجريبي','Clear sample data':'مسح البيانات التجريبية','Templates and sample data':'القوالب والبيانات التجريبية','Start a goal ladder from a template, or explore the app with sample data you can clear later.':'ابدأ سلّم أهداف من قالب، أو استكشف التطبيق ببيانات تجريبية يمكنك مسحها لاحقًا.','Templates':'القوالب','Remove all sample items? Your own items stay.':'إزالة كل العناصر التجريبية؟ تبقى عناصرك.','🗓 Timetable':'🗓 الجدول','Week starts':'بداية الأسبوع','No classes yet. Add your weekly classes below.':'لا حصص بعد. أضف حصصك الأسبوعية أدناه.','+ Add class':'+ أضف حصة','Starts':'تبدأ','Ends':'تنتهي','Room (optional)':'القاعة (اختياري)','Add class':'أضف حصة','Day':'اليوم','Class added. Add topics for it below to get study picks.':'أُضيفت الحصة. أضف مواضيعها أدناه لتحصل على اقتراحات الدراسة.','🎁 Add a reward':'🎁 أضف مكافأة','Edit reward':'تعديل المكافأة','Rest tokens':'رموز الراحة','🛌 Rest day':'🛌 يوم راحة','Rest today':'استرح اليوم','Rest yesterday':'استرح أمس','Your reward for beating this boss (leave empty to remove):':'مكافأتك عند هزيمة هذا الزعيم (اتركها فارغة لإزالتها):','🎁 Enjoy it. You earned it.':'🎁 استمتع بها. لقد استحققتها.','🛌 Rest day set. Streaks are safe.':'🛌 تم تعيين يوم راحة. سلاسلك بأمان.','Plan week':'خطّط الأسبوع',"No weekly goals yet. Pick this week's steps.":'لا أهداف أسبوعية بعد. اختر خطوات هذا الأسبوع.','No habits yet.':'لا عادات بعد.','No habits yet. Tap a day to check it off.':'لا عادات بعد. اضغط يومًا لتعليمه.','No goals yet. Add one above, then hang tasks under it.':'لا أهداف بعد. أضف هدفًا في الأعلى، ثم علّق المهام تحته.','Shields':'الدروع','Morale':'المعنويات','Knocked out':'سقطت','Counterattacks blocked':'هجمات صُدّت','Elites':'النخبة','Log score':'سجّل الدرجة','Exam elite is defeated at':'يُهزم وحش الامتحان عند','Reopen':'إعادة فتح','Mark complete':'تعليم كمكتمل','🏰 Tower':'🏰 البرج','Final boss · your 5-year goal':'الزعيم الأخير · هدفك لخمس سنوات','Guardians':'الحرّاس','Weekly bosses this month':'زعماء الأسابيع هذا الشهر','Beat weekly bosses and finish monthly goals to hit the guardian. Guardians and annual goals hit the annual boss.':'اهزم زعماء الأسابيع وأنجز الأهداف الشهرية لتضرب الحارس. الحرّاس والأهداف السنوية تضرب زعيم العام.','📅 Calendar':'📅 التقويم','☰ List':'☰ القائمة','Add a task on this day…':'أضف مهمة في هذا اليوم…','Nothing on this day.':'لا شيء في هذا اليوم.','Focus':'تركيز','Break':'استراحة','Pause':'إيقاف مؤقت','Resume':'استئناف','Stop':'إيقاف','Skip break':'تخطي الاستراحة','Focus time':'وقت التركيز','Focus session length':'مدة جلسة التركيز','Break length':'مدة الاستراحة','Break over. Ready for another round?':'انتهت الاستراحة. مستعد لجولة أخرى؟',"Stopped. Sessions under 5 minutes aren't logged.":'توقف. الجلسات الأقل من 5 دقائق لا تُسجّل.','Stop the current focus session and start a new one?':'إيقاف جلسة التركيز الحالية وبدء جلسة جديدة؟','✅ Build':'✅ بناء','🛡 Avoid':'🛡 تجنّب','activity, charts, habit consistency':'النشاط، الرسوم، انتظام العادات','Decrease':'إنقاص','Increase':'زيادة','Set exact value':'تعيين قيمة دقيقة','More actions':'إجراءات أخرى','Collapse':'طيّ','Expand':'توسيع',"This week's step toward it…":'خطوة هذا الأسبوع نحوه…','No weekly goal':'بلا هدف أسبوعي','Student mode only: tighter spacing, smaller text, fewer extras, so more fits on a small screen':'لوضع الطالب فقط: مسافات أضيق ونص أصغر وإضافات أقل، ليتسع المزيد على الشاشة الصغيرة','Coach':'المدرب','Day levels and coach':'مستويات اليوم والمدرب','On':'تشغيل','Off':'إيقاف','Blaze starts at':'يبدأ اللهب عند','Titan starts at':'يبدأ الجبّار عند','⚡ Spark is a slow start and the coach is gentle. 🔥 Blaze pushes. ⚔️ Titan raises the bar: a daily quota, and you must type a reason to push back, reschedule or delete work that is due. Nothing is ever changed without you.':'⚡ الشرارة بداية هادئة والمدرب لطيف. 🔥 اللهب يدفعك. ⚔️ الجبّار يرفع السقف: حصة يومية، وعليك كتابة سبب لتأجيل أو إعادة جدولة أو حذف عمل مستحق. لا يتغير شيء دون موافقتك.','Quota':'الحصة','7-day avg':'متوسط 7 أيام','Best day':'أفضل يوم','Day streak':'سلسلة الأيام','Start a streak':'ابدأ سلسلة','Habit moved to Trash.':'نُقلت العادة إلى سلة المحذوفات.','Task moved to Trash.':'نُقلت المهمة إلى سلة المحذوفات.','Pulled into today.':'سُحبت إلى اليوم.',"Delete this forever? This can't be undone.":'حذف نهائي؟ لا يمكن التراجع.','Not applied. Titan wants a reason.':'لم يُطبَّق. الجبّار يريد سببًا.','Not saved. Titan wants a reason.':'لم يُحفظ. الجبّار يريد سببًا.','Not deleted. Titan wants a reason.':'لم يُحذف. الجبّار يريد سببًا.','(Leave empty to remove the folder. Its habits are kept.)':'(اتركه فارغًا لإزالة المجلد. تبقى عاداته.)','Replace all current data with this backup?':'استبدال كل البيانات الحالية بهذه النسخة؟',"This can't be undone. Not-completed archived tasks are kept.":'لا يمكن التراجع. تبقى المهام المؤرشفة غير المكتملة.','Week':'أسبوع','Month':'شهر','Year':'سنة','5 Years':'5 سنوات','5 Yr':'5 سنوات','+ Task':'+ مهمة','New task for this goal':'مهمة جديدة لهذا الهدف','Colour':'اللون','Black':'أسود','Black (OLED)':'أسود (OLED)','Clay':'طين','Terra':'تيرا','Ocean':'محيط','Grape':'عنب','Rose':'وردي','Graphite':'غرافيت','Game mode':'وضع اللعبة','RPG game mode':'وضع لعبة المغامرة','A weekly pixel boss you beat by finishing tasks, habits and study. Shows damage, a hero level and a bestiary of beaten monsters':'زعيم أسبوعي بالبكسل تهزمه بإنجاز المهام والعادات والدراسة. يعرض الضرر ومستوى البطل وسجل الوحوش المهزومة','Week boss':'زعيم الأسبوع','Last day':'اليوم الأخير','Bestiary':'سجل الوحوش','Hero':'البطل','Defeated':'هُزم','Escaped':'هرب','Defeated. It joins your bestiary.':'هُزم. انضم إلى سجل وحوشك.','Clean days':'أيام نظيفة','STR':'القوة','VIT':'الحيوية','INT':'الذكاء','DEF':'الدفاع','Boss HP':'صحة الزعيم','No monsters yet. Beat this week\'s boss to start your collection.':'لا وحوش بعد. اهزم زعيم هذا الأسبوع لتبدأ مجموعتك.','the Procrastinator':'المُسوِّف','the Snoozer':'النعسان','of Endless Tabs':'صاحب التبويبات اللانهائية','the Deadline Eater':'آكل المواعيد','the Doomscroller':'المُتصفّح بلا نهاية','of Unread Messages':'صاحب الرسائل غير المقروءة','the Excuse Maker':'صانع الأعذار','the Distractor':'المُشتِّت','of Tomorrow':'سيّد الغد','the Couch Golem':'غولم الأريكة','the Notification Fiend':'شيطان الإشعارات','of Half-Done Drafts':'صاحب المسودات الناقصة','the Overthinker':'كثير التفكير','the Time Thief':'سارق الوقت','the Lazy Tide':'موجة الكسل','of Later':'سيّد لاحقًا','Tap for your level calendar':'اضغط لرؤية تقويم مستوياتك','Show intro again':'عرض المقدمة مرة أخرى','Open level calendar':'فتح تقويم المستويات',
+const AR={'New task… try: tomorrow !high #uni':'مهمة جديدة… جرّب: غدًا !high #uni','+ New habit':'+ عادة جديدة','Advanced':'خيارات متقدمة','Restore':'استعادة','Shields':'الدروع','Morale':'المعنويات','Rest tokens':'رموز الراحة','Boss HP':'نقاط حياة الزعيم','Notifications':'الإشعارات','Reminders':'التذكيرات','Morning plan, evening check-in, classes and exams, as phone notifications':'خطة الصباح ومراجعة المساء والحصص والامتحانات كإشعارات على الهاتف','Morning plan at':'خطة الصباح الساعة','Evening check-in at':'مراجعة المساء الساعة','Class reminders':'تذكير الحصص','10 minutes before each class':'قبل كل حصة بـ10 دقائق','Exam reminders':'تذكير الامتحانات','The evening before an exam or quiz':'مساء اليوم السابق للامتحان أو الاختبار','Send a test notification':'أرسل إشعارًا تجريبيًا','Exact timers':'مؤقتات دقيقة','Exact timers let the focus timer ring on the second; without them Android may deliver it a little late.':'المؤقتات الدقيقة تجعل مؤقت التركيز يرن في وقته تمامًا؛ بدونها قد يتأخر أندرويد قليلًا.','Parent goal':'الهدف الأعلى','Monthly review':'المراجعة الشهرية','Day levels':'مستويات الأيام','Week boss':'زعيم الأسبوع','Best week':'أفضل أسبوع',"This month's goals":'أهداف هذا الشهر','Guardian':'الحارس','tasks missed':'مهام فائتة','tasks done':'مهام منجزة','habits':'العادات','Previous month':'الشهر السابق','Next month':'الشهر التالي','Back up now':'انسخ احتياطيًا الآن','Restore this backup?':'استعادة هذه النسخة؟','If this browser clears its storage, everything since your last backup is gone. Back up now.':'إذا مسح هذا المتصفح بياناته، يضيع كل شيء منذ آخر نسخة احتياطية. انسخ الآن.','Your data lives only in this browser. Save a backup and keep it somewhere safe.':'بياناتك محفوظة في هذا المتصفح فقط. احفظ نسخة احتياطية واحتفظ بها في مكان آمن.','Start from a template':'ابدأ من قالب','Everything it adds is yours to rename or delete. Or try the app with sample data first:':'كل ما يضيفه لك لتعيد تسميته أو تحذفه. أو جرّب التطبيق ببيانات تجريبية أولًا:','Load sample data':'تحميل بيانات تجريبية','Sample data is on':'البيانات التجريبية مفعّلة','Explore freely. Clearing removes only the sample items, never your own.':'استكشف بحرية. المسح يزيل العناصر التجريبية فقط، لا عناصرك.','Clear sample':'مسح التجريبي','Clear sample data':'مسح البيانات التجريبية','Templates and sample data':'القوالب والبيانات التجريبية','Start a goal ladder from a template, or explore the app with sample data you can clear later.':'ابدأ سلّم أهداف من قالب، أو استكشف التطبيق ببيانات تجريبية يمكنك مسحها لاحقًا.','Templates':'القوالب','Remove all sample items? Your own items stay.':'إزالة كل العناصر التجريبية؟ تبقى عناصرك.','🗓 Timetable':'🗓 الجدول','Week starts':'بداية الأسبوع','No classes yet. Add your weekly classes below.':'لا حصص بعد. أضف حصصك الأسبوعية أدناه.','+ Add class':'+ أضف حصة','Starts':'تبدأ','Ends':'تنتهي','Room (optional)':'القاعة (اختياري)','Add class':'أضف حصة','Day':'اليوم','Class added. Add topics for it below to get study picks.':'أُضيفت الحصة. أضف مواضيعها أدناه لتحصل على اقتراحات الدراسة.','🎁 Add a reward':'🎁 أضف مكافأة','Edit reward':'تعديل المكافأة','Rest tokens':'رموز الراحة','🛌 Rest day':'🛌 يوم راحة','Rest today':'استرح اليوم','Rest yesterday':'استرح أمس','Your reward for beating this boss (leave empty to remove):':'مكافأتك عند هزيمة هذا الزعيم (اتركها فارغة لإزالتها):','🎁 Enjoy it. You earned it.':'🎁 استمتع بها. لقد استحققتها.','🛌 Rest day set. Streaks are safe.':'🛌 تم تعيين يوم راحة. سلاسلك بأمان.','Plan week':'خطّط الأسبوع',"No weekly goals yet. Pick this week's steps.":'لا أهداف أسبوعية بعد. اختر خطوات هذا الأسبوع.','No habits yet.':'لا عادات بعد.','No habits yet. Tap a day to check it off.':'لا عادات بعد. اضغط يومًا لتعليمه.','No goals yet. Add one above, then hang tasks under it.':'لا أهداف بعد. أضف هدفًا في الأعلى، ثم علّق المهام تحته.','Shields':'الدروع','Morale':'المعنويات','Knocked out':'سقطت','Counterattacks blocked':'هجمات صُدّت','Elites':'النخبة','Log score':'سجّل الدرجة','Exam elite is defeated at':'يُهزم وحش الامتحان عند','Reopen':'إعادة فتح','Mark complete':'تعليم كمكتمل','🏰 Tower':'🏰 البرج','Final boss · your 5-year goal':'الزعيم الأخير · هدفك لخمس سنوات','Guardians':'الحرّاس','Weekly bosses this month':'زعماء الأسابيع هذا الشهر','Beat weekly bosses and finish monthly goals to hit the guardian. Guardians and annual goals hit the annual boss.':'اهزم زعماء الأسابيع وأنجز الأهداف الشهرية لتضرب الحارس. الحرّاس والأهداف السنوية تضرب زعيم العام.','📅 Calendar':'📅 التقويم','☰ List':'☰ القائمة','Add a task on this day…':'أضف مهمة في هذا اليوم…','Nothing on this day.':'لا شيء في هذا اليوم.','Focus':'تركيز','Break':'استراحة','Pause':'إيقاف مؤقت','Resume':'استئناف','Stop':'إيقاف','Skip break':'تخطي الاستراحة','Focus time':'وقت التركيز','Focus session length':'مدة جلسة التركيز','Break length':'مدة الاستراحة','Break over. Ready for another round?':'انتهت الاستراحة. مستعد لجولة أخرى؟',"Stopped. Sessions under 5 minutes aren't logged.":'توقف. الجلسات الأقل من 5 دقائق لا تُسجّل.','Stop the current focus session and start a new one?':'إيقاف جلسة التركيز الحالية وبدء جلسة جديدة؟','✅ Build':'✅ بناء','🛡 Avoid':'🛡 تجنّب','activity, charts, habit consistency':'النشاط، الرسوم، انتظام العادات','Decrease':'إنقاص','Increase':'زيادة','Set exact value':'تعيين قيمة دقيقة','More actions':'إجراءات أخرى','Collapse':'طيّ','Expand':'توسيع',"This week's step toward it…":'خطوة هذا الأسبوع نحوه…','No weekly goal':'بلا هدف أسبوعي','Student mode only: tighter spacing, smaller text, fewer extras, so more fits on a small screen':'لوضع الطالب فقط: مسافات أضيق ونص أصغر وإضافات أقل، ليتسع المزيد على الشاشة الصغيرة','Coach':'المدرب','Day levels and coach':'مستويات اليوم والمدرب','On':'تشغيل','Off':'إيقاف','Blaze starts at':'يبدأ اللهب عند','Titan starts at':'يبدأ الجبّار عند','⚡ Spark is a slow start and the coach is gentle. 🔥 Blaze pushes. ⚔️ Titan raises the bar: a daily quota, and you must type a reason to push back, reschedule or delete work that is due. Nothing is ever changed without you.':'⚡ الشرارة بداية هادئة والمدرب لطيف. 🔥 اللهب يدفعك. ⚔️ الجبّار يرفع السقف: حصة يومية، وعليك كتابة سبب لتأجيل أو إعادة جدولة أو حذف عمل مستحق. لا يتغير شيء دون موافقتك.','Quota':'الحصة','7-day avg':'متوسط 7 أيام','Best day':'أفضل يوم','Day streak':'سلسلة الأيام','Start a streak':'ابدأ سلسلة','Habit moved to Trash.':'نُقلت العادة إلى سلة المحذوفات.','Task moved to Trash.':'نُقلت المهمة إلى سلة المحذوفات.','Pulled into today.':'سُحبت إلى اليوم.',"Delete this forever? This can't be undone.":'حذف نهائي؟ لا يمكن التراجع.','Not applied. Titan wants a reason.':'لم يُطبَّق. الجبّار يريد سببًا.','Not saved. Titan wants a reason.':'لم يُحفظ. الجبّار يريد سببًا.','Not deleted. Titan wants a reason.':'لم يُحذف. الجبّار يريد سببًا.','(Leave empty to remove the folder. Its habits are kept.)':'(اتركه فارغًا لإزالة المجلد. تبقى عاداته.)','Replace all current data with this backup?':'استبدال كل البيانات الحالية بهذه النسخة؟',"This can't be undone. Not-completed archived tasks are kept.":'لا يمكن التراجع. تبقى المهام المؤرشفة غير المكتملة.','Week':'أسبوع','Month':'شهر','Year':'سنة','5 Years':'5 سنوات','5 Yr':'5 سنوات','+ Task':'+ مهمة','New task for this goal':'مهمة جديدة لهذا الهدف','Colour':'اللون','Black':'أسود','Black (OLED)':'أسود (OLED)','Clay':'طين','Terra':'تيرا','Ocean':'محيط','Grape':'عنب','Rose':'وردي','Graphite':'غرافيت','Game mode':'وضع اللعبة','RPG game mode':'وضع لعبة المغامرة','A weekly pixel boss you beat by finishing tasks, habits and study. Shows damage, a hero level and a bestiary of beaten monsters':'زعيم أسبوعي بالبكسل تهزمه بإنجاز المهام والعادات والدراسة. يعرض الضرر ومستوى البطل وسجل الوحوش المهزومة','Week boss':'زعيم الأسبوع','Last day':'اليوم الأخير','Bestiary':'سجل الوحوش','Hero':'البطل','Defeated':'هُزم','Escaped':'هرب','Defeated. It joins your bestiary.':'هُزم. انضم إلى سجل وحوشك.','Clean days':'أيام نظيفة','STR':'القوة','VIT':'الحيوية','INT':'الذكاء','DEF':'الدفاع','Boss HP':'صحة الزعيم','No monsters yet. Beat this week\'s boss to start your collection.':'لا وحوش بعد. اهزم زعيم هذا الأسبوع لتبدأ مجموعتك.','the Procrastinator':'المُسوِّف','the Snoozer':'النعسان','of Endless Tabs':'صاحب التبويبات اللانهائية','the Deadline Eater':'آكل المواعيد','the Doomscroller':'المُتصفّح بلا نهاية','of Unread Messages':'صاحب الرسائل غير المقروءة','the Excuse Maker':'صانع الأعذار','the Distractor':'المُشتِّت','of Tomorrow':'سيّد الغد','the Couch Golem':'غولم الأريكة','the Notification Fiend':'شيطان الإشعارات','of Half-Done Drafts':'صاحب المسودات الناقصة','the Overthinker':'كثير التفكير','the Time Thief':'سارق الوقت','the Lazy Tide':'موجة الكسل','of Later':'سيّد لاحقًا','Tap for your level calendar':'اضغط لرؤية تقويم مستوياتك','Show intro again':'عرض المقدمة مرة أخرى','Open level calendar':'فتح تقويم المستويات',
 'Goal Tracker':'متتبع الأهداف','Dashboard':'لوحة المتابعة','Home':'الرئيسية','Tasks':'المهام','Goals':'الأهداف','Habits':'العادات','Study':'الدراسة','Settings':'الإعدادات','Auto':'تلقائي','Light':'فاتح','Dark':'داكن',
 'Search':'بحث','Search everything…':'ابحث في كل شيء…','Type to search tasks, goals and habits.':'اكتب للبحث في المهام والأهداف والعادات.','Nothing found.':'لا توجد نتائج.','Close':'إغلاق','Cancel':'إلغاء','Save':'حفظ','Add':'إضافة','Edit':'تعديل','Delete':'حذف','Copy':'نسخ','Restore':'استعادة','Undo':'تراجع','Check off':'تم','Dismiss':'إخفاء',
 'Theme: auto (tap to change)':'السمة: تلقائي (اضغط للتغيير)','Theme: light (tap to change)':'السمة: فاتح (اضغط للتغيير)','Theme: dark (tap to change)':'السمة: داكن (اضغط للتغيير)','Theme':'السمة',
 // dashboard
 'Today':'اليوم','Tomorrow':'غدًا','yesterday':'أمس','Overdue':'متأخرة','Today\'s tasks':'مهام اليوم','Today\'s habits':'عادات اليوم','This week\'s goals':'أهداف هذا الأسبوع','Today\'s picks':'اختيارات اليوم','Today\'s tasks done':'مهام اليوم المنجزة','Habits done today':'العادات المنجزة اليوم',
-'Nothing due today.':'لا شيء مستحق اليوم.','Staying clean':'البقاء بعيداً','☑ Select':'☑ تحديد','Spark':'شرارة','Blaze':'لهب','Titan':'جبّار','🪜 Ladder':'🪜 السلّم','+ Add a task for this goal':'+ أضف مهمة لهذا الهدف','Weekly goal':'هدف أسبوعي','More options':'خيارات إضافية','Insights':'الإحصائيات','⋯':'⋯','✎ Edit':'✎ تعديل','Share':'مشاركة','✓ Selecting':'✓ جارٍ التحديد','All':'الكل','None':'لا شيء','Cancel':'إلغاء','✓ Done':'✓ تم','✎ Edit…':'✎ تعديل…','Archive':'أرشفة','🗑 Delete':'🗑 حذف','Trash':'سلة المحذوفات','Open trash →':'فتح السلة ←','Trash is empty.':'السلة فارغة.','Empty trash':'إفراغ السلة','Compact layout':'تخطيط مضغوط','Apply':'تطبيق','Staying clean today':'بعيد عنها اليوم','Longest clean streak':'أطول سلسلة امتناع','Clean so far today':'ملتزم حتى الآن اليوم','Slipped today':'زلّ اليوم','Held today':'امتنعت اليوم','Not confirmed yet':'لم يؤكَّد بعد','Log slip':'سجّل زلّة','Undo slip':'تراجع عن الزلّة','Mark avoided':'تم الامتناع','Plan this week':'خطّط هذا الأسبوع','Weekly report':'التقرير الأسبوعي','Activity':'النشاط','Activity heatmap':'خريطة النشاط','Less':'أقل','More':'أكثر','actions':'إجراءات','active days':'أيام نشطة','Last 26 weeks':'آخر 26 أسبوعًا','Last 30 days':'آخر 30 يومًا','Last 30':'آخر 30','Total days':'إجمالي الأيام','Best current streak':'أفضل سلسلة حالية','Best streak':'أفضل سلسلة','Habit consistency':'انتظام العادات','Tasks completed':'المهام المنجزة','Goal progress':'تقدم الأهداف','Active goals':'الأهداف النشطة','none yet':'لا شيء بعد','Current':'الحالية','Current periods':'الفترات الحالية','Sections':'الأقسام',
+'Nothing due today.':'لا شيء مستحق اليوم.','Staying clean':'البقاء بعيداً','☑ Select':'☑ تحديد','Spark':'شرارة','Blaze':'لهب','Titan':'جبّار','🪜 Ladder':'🪜 السلّم','+ Add a task for this goal':'+ أضف مهمة لهذا الهدف','Weekly goal':'هدف أسبوعي','More options':'خيارات إضافية','Insights':'الإحصائيات','⋯':'⋯','✎ Edit':'✎ تعديل','Share':'مشاركة','✓ Selecting':'✓ جارٍ التحديد','All':'الكل','None':'لا شيء','Cancel':'إلغاء','✓ Done':'✓ تم','✎ Edit…':'✎ تعديل…','Archive':'أرشفة','🗑 Delete':'🗑 حذف','Trash':'سلة المحذوفات','Open trash →':'فتح السلة ←','Trash is empty.':'السلة فارغة.','Empty trash':'إفراغ السلة','Compact layout':'تخطيط مضغوط','Apply':'تطبيق','Staying clean today':'بعيد عنها اليوم','Longest clean streak':'أطول سلسلة امتناع','Clean so far today':'ملتزم حتى الآن اليوم','Slipped today':'زلّ اليوم','Held today':'امتنعت اليوم','Not confirmed yet':'لم يؤكَّد بعد','Log slip':'سجّل زلّة','Undo slip':'تراجع عن الزلّة','Mark avoided':'تم الامتناع','Plan this week':'خطّط هذا الأسبوع','Weekly report':'التقرير الأسبوعي','Activity':'النشاط','Activity heatmap':'خريطة النشاط','Less':'أقل','More':'أكثر','actions':'إجراءات','active days':'أيام نشطة','Last 26 weeks':'آخر 26 أسبوعًا','Last 30 days':'آخر 30 يومًا','Last 30':'آخر 30','Total days':'إجمالي الأيام','Best habit streak':'أفضل سلسلة حالية','Best streak':'أفضل سلسلة','Habit consistency':'انتظام العادات','Tasks completed':'المهام المنجزة','Goal progress':'تقدم الأهداف','Active goals':'الأهداف النشطة','none yet':'لا شيء بعد','Current':'الحالية','Current periods':'الفترات الحالية','Sections':'الأقسام',
 'Review':'مراجعة','Hit it, missed, or carry over. About a minute.':'حققته أو فاتني أو أرحّله. دقيقة تقريبًا.','These periods have ended. Be honest. This is where the system gets smarter.':'انتهت هذه الفترات. كن صادقًا، هنا يصبح النظام أذكى.','All caught up. Reviews done ✓':'لا شيء متأخر. اكتملت المراجعات ✓','✓ Hit it':'✓ حققته','✗ Missed':'✗ فاتني','Hit it':'حققته','Missed':'فاتني','Review note (what got in the way / what worked)':'ملاحظة المراجعة (ما الذي أعاق / ما الذي نجح)','What got in the way / what worked? (optional)':'ما الذي أعاق / ما الذي نجح؟ (اختياري)',
 'No backup yet':'لا توجد نسخة احتياطية بعد','Your data lives only in this browser. Copy a backup and keep it somewhere safe.':'بياناتك محفوظة في هذا المتصفح فقط. انسخ نسخة احتياطية واحتفظ بها في مكان آمن.','Copy backup':'نسخ احتياطي','Remind me later':'ذكّرني لاحقًا','Dismiss backup reminder':'إخفاء تذكير النسخ الاحتياطي','OK →':'حسنًا →',
 // tasks
@@ -2300,7 +2317,7 @@ function drawPlan(){
 dlg.addEventListener('submit',async e=>{
   const f=e.target.closest('form[data-plan]');if(!f)return;e.preventDefault();
   const v=Object.fromEntries(new FormData(f)),k=v.kind==='number'?'number':'check',pid=f.dataset.plan;
-  if(k==='number'&&!(+v.target>0)){alert('Set a target number for this goal (for example 10).');return}
+  if(k==='number'&&!(+v.target>0)){askAlert('Set a target number for this goal (for example 10).');return}
   const g={id:uid(),title:v.title.trim(),horizon:'weekly',period:currentPeriod('weekly'),parentId:pid||null,notes:'',kind:k,target:+v.target||0,unit:(v.unit||'').trim(),value:0,expected:null,done:false,created:Date.now()};
   S.goals.push(g);await DB.put('goals',g);drawPlan();render();
   const i=dlg.querySelector(`form[data-plan="${pid}"] input[name=title]`);i&&i.focus();
@@ -2376,6 +2393,9 @@ const actions={
   async 'archive-task'(el){const t=S.tasks.find(x=>x.id===el.dataset.id);t.archived=true;t.archivedAt=Date.now();await DB.put('tasks',t)},
   async 'unarchive'(el){const t=S.tasks.find(x=>x.id===el.dataset.id);t.archived=false;t.archivedAt=null;await DB.put('tasks',t)},
   'toggle-done-all'(){S.doneAll=!S.doneAll},
+  'toggle-done-list'(){S.doneOpen=!S.doneOpen},
+  'rpg-more'(){S.rpgOpen=!S.rpgOpen},
+  'set-acc'(el){S.setOpen=S.setOpen||new Set();const k=el.dataset.k;S.setOpen.has(k)?S.setOpen.delete(k):S.setOpen.add(k)},
   'open-share'(){openShare();return false},
   'share-item'(el){openShare(el.dataset.k+':'+el.dataset.id);return false},
   'open-share-import'(){openShareImport();return false},
@@ -2388,18 +2408,18 @@ const actions={
   'tcal-day'(el){tcal.sel=el.dataset.date},
   'tcal-month'(el){const d=new Date(tcal.y,tcal.m+(+el.dataset.d),1);tcal.y=d.getFullYear();tcal.m=d.getMonth()},
   'tcal-today'(){const d=new Date();tcal={y:d.getFullYear(),m:d.getMonth(),sel:TODAY()}},
-  'rw-set'(el){const k=el.dataset.k,o=getRw(),cur=o[k]?o[k].t:'';const v=prompt('Your reward for beating this boss (leave empty to remove):',cur);if(v===null)return false;const t=v.trim();if(t)o[k]={t:t.slice(0,80),c:o[k]?o[k].c:0};else delete o[k];setRw(o)},
+  async 'rw-set'(el){const k=el.dataset.k,o=getRw(),cur=o[k]?o[k].t:'';const v=await askPrompt('Your reward for beating this boss (leave empty to remove):',cur);if(v===null)return false;const t=v.trim();if(t)o[k]={t:t.slice(0,80),c:o[k]?o[k].c:0};else delete o[k];setRw(o)},
   'rw-claim'(el){const o=getRw(),k=el.dataset.k;if(o[k]){o[k].c=1;setRw(o);Sound.play('goal');toast('🎁 Enjoy it. You earned it.')}},
   'rest-day'(){const t=TODAY(),y=ds(addDays(new Date(),-1)),A=rpgAll();
     dlg.innerHTML=`<div class="hist"><div class="hist-top"><h3>🛌 Rest day</h3><button type="button" class="icon" data-action="dlg-close" aria-label="Close">✕</button></div>
       <p class="meta">A rest day keeps every streak intact and stops the boss counterattacking. You have ${A.tokens} rest token${A.tokens===1?'':'s'}; you earn one for each weekly boss you beat.</p>
       <div class="dlg-actions"><button type="button" class="ghost" data-action="rest-use" data-d="${y}" ${isRest(y)?'disabled':''}>Rest yesterday</button><button type="button" class="btn" data-action="rest-use" data-d="${t}" ${isRest(t)?'disabled':''}>Rest today</button></div></div>`;dlg.showModal();return false},
   'rest-use'(el){const A=rpgAll();if(A.tokens<1)return false;const d=el.dataset.d,set=new Set((S.cfg.restDays||'').split(',').filter(Boolean));set.add(d);S.cfg.restDays=[...set].sort().join(',');_rest=null;saveCfg();dlg.close();toast('🛌 Rest day set. Streaks are safe.')},
-  'cls-del'(el){const a=getClasses(),c=a.find(x=>x.id===el.dataset.id);if(!c||!confirm(`Delete "${c.subject}" on ${dayName(+c.day)}?`))return false;setClasses(a.filter(x=>x.id!==c.id))},
+  async 'cls-del'(el){const a=getClasses(),c=a.find(x=>x.id===el.dataset.id);if(!c||!await askConfirm(`Delete "${c.subject}" on ${dayName(+c.day)}?`))return false;setClasses(a.filter(x=>x.id!==c.id))},
   'tpl-open'(){if(introOn){introOn=false;markIntro()}openTemplates();return false},
   async 'tpl-use'(el){const t=TEMPLATES[el.dataset.k];if(!t)return false;if(introOn){introOn=false;markIntro()}await t.run();if(dlg.open)dlg.close();S.view='goals';S.horizon='ladder';scrollTo(0,0);toast(L2('Template added: ','أُضيف القالب: ')+t.n())},
   async 'sample-add'(){if(introOn){introOn=false;markIntro()}if(hasSample()){if(dlg.open)dlg.close();return}await addSample();if(dlg.open)dlg.close();S.view='dash';scrollTo(0,0);toast(L2('Sample data loaded. Clear it any time from the banner.','حُمّلت البيانات التجريبية. امسحها متى شئت من الشريط.'))},
-  async 'sample-clear'(){if(!confirm('Remove all sample items? Your own items stay.'))return false;const n=await clearSample();toast(L2(`Removed ${n} sample items.`,`أُزيل ${n} عنصرًا تجريبيًا.`))},
+  async 'sample-clear'(){if(!await askConfirm('Remove all sample items? Your own items stay.'))return false;const n=await clearSample();toast(L2(`Removed ${n} sample items.`,`أُزيل ${n} عنصرًا تجريبيًا.`))},
   'open-month'(){mrev.off=0;drawMonth();dlg.showModal();return false},
   'mrev-nav'(el){mrev.off=Math.min(0,mrev.off+(+el.dataset.d));drawMonth();return false},
   async 'n-test'(){await GTNative.testNotify();toast(L2('A test notification arrives in a few seconds.','سيصل إشعار تجريبي خلال ثوانٍ.'));return false},
@@ -2409,7 +2429,7 @@ const actions={
   'back-dash'(){S.view='dash';scrollTo(0,0)},
   async 'purge-archived'(){
     const gone=S.tasks.filter(t=>t.archived&&t.done);
-    if(!gone.length||!confirm(`Permanently delete ${gone.length} completed archived task${gone.length>1?'s':''}?\n\nThis can't be undone. Not-completed archived tasks are kept.`))return false;
+    if(!gone.length||!await askConfirm(`Permanently delete ${gone.length} completed archived task${gone.length>1?'s':''}?\n\nThis can't be undone. Not-completed archived tasks are kept.`))return false;
     for(const t of gone)await DB.del('tasks',t.id);S.tasks=S.tasks.filter(t=>!gone.includes(t));
     toastUndo(`Deleted ${gone.length} archived task${gone.length>1?'s':''}.`,async()=>{for(const t of gone){S.tasks.push(t);await DB.put('tasks',t)}});
   },
@@ -2431,9 +2451,9 @@ const actions={
   async 'toggle-sub'(el){const t=S.tasks.find(x=>x.id===el.dataset.id);const it=t&&t.items[+el.dataset.i];if(!it)return;it.done=!it.done;if(!t.done){if(it.done){it.at=Date.now();it.dmg=Math.max(1,Math.round(taskBase(t)/t.items.length))}else{delete it.at;delete it.dmg}}Sound.play(it.done?'task':'undo');await DB.put('tasks',t)},
   async 'toggle-task'(el){const t=S.tasks.find(x=>x.id===el.dataset.id);t.done=!t.done;t.doneAt=t.done?Date.now():null;freezeDmg(t);Sound.play(t.done?'task':'undo');await DB.put('tasks',t);await onTaskDone(t)},
   'toggle-hide-done'(){S.hideDone=!S.hideDone;try{localStorage.setItem('gt-hide-done',S.hideDone?'1':'0')}catch(e){}},
-  'toggle-folder'(el){const n=el.dataset.name;S.collapsed.has(n)?S.collapsed.delete(n):S.collapsed.add(n);saveCollapsed()},
+  'toggle-folder'(el){const n=el.dataset.name;if(n.startsWith('sub:')){S.subOpen=S.subOpen||new Set();S.subOpen.has(n)?S.subOpen.delete(n):S.subOpen.add(n);return}S.collapsed.has(n)?S.collapsed.delete(n):S.collapsed.add(n);saveCollapsed()},
   async 'rename-folder'(el){const old=el.dataset.name;
-    const r=prompt(`Rename folder "${old}"\n(Leave empty to remove the folder. Its habits are kept.)`,old);if(r===null)return false;
+    const r=await askPrompt(`Rename folder "${old}"\n(Leave empty to remove the folder. Its habits are kept.)`,old);if(r===null)return false;
     const nn=r.trim();if(nn===old)return false;
     for(const h of S.habits.filter(x=>folderOf(x)===old)){h.group=nn;await DB.put('habits',h)}
     if(S.collapsed.delete(old)&&nn)S.collapsed.add(nn);saveCollapsed();S.forder=S.forder.map(x=>x===old?nn:x).filter(Boolean);saveForder()},
@@ -2455,7 +2475,7 @@ const actions={
   'add-exam'(){openEdit('exam','new');return false},
   'edit-exam'(el){openEdit('exam',el.dataset.id);return false},
   'toggle-past-exams'(){S.examsPast=!S.examsPast},
-  async 'del-exam'(el){const e=S.exams.find(x=>x.id===el.dataset.id);if(!e||!confirm(`Delete "${e.title}"?`))return false;
+  async 'del-exam'(el){const e=S.exams.find(x=>x.id===el.dataset.id);if(!e||!await askConfirm(`Delete "${e.title}"?`))return false;
     S.exams=S.exams.filter(x=>x!==e);await DB.del('exams',e.id);toastUndo('Deleted.',async()=>{S.exams.push(e);await DB.put('exams',e)})},
   async 'topic-rate'(el){const t=S.topics.find(x=>x.id===el.dataset.id);if(!t)return false;const c=+el.dataset.c,d=TODAY();
     const row=el.closest('.pick');if(row){row.classList.add('leaving');if(!matchMedia('(prefers-reduced-motion: reduce)').matches)await new Promise(r=>setTimeout(r,260))}
@@ -2463,7 +2483,7 @@ const actions={
     Sound.play(c===3?'task':'habit');await DB.put('topics',t)},
   'goto-study'(){S.view='study';scrollTo(0,0)},
   'edit-topic'(el){openEdit('topic',el.dataset.id);return false},
-  async 'del-topic'(el){const t=S.topics.find(x=>x.id===el.dataset.id);if(!t||!confirm(`Delete topic "${t.name}" and its study log?`))return false;
+  async 'del-topic'(el){const t=S.topics.find(x=>x.id===el.dataset.id);if(!t||!await askConfirm(`Delete topic "${t.name}" and its study log?`))return false;
     S.topics=S.topics.filter(x=>x!==t);await DB.del('topics',t.id);toastUndo('Topic deleted.',async()=>{S.topics.push(t);await DB.put('topics',t)})},
   'toggle-compact'(){S.compact=!S.compact;try{localStorage.setItem('gt-compact',S.compact?'1':'0')}catch(e){}},
   'set'(el){const k=el.dataset.k,v=el.type==='checkbox'?el.checked:el.value;
@@ -2475,8 +2495,8 @@ const actions={
   'toggle-sound'(){Sound.set(!Sound.on);if(Sound.on)Sound.play('task')},
   async 'del-task'(el){
     const t=S.tasks.find(x=>x.id===el.dataset.id);if(!t)return false;
-    if(S.cfg.cTask&&!confirm(`Delete "${t.title}"?\n\nIt stays in Trash (Settings) for ${TRASH_DAYS} days.${t.archived?'':' Tip: archive it instead to keep it with your tasks.'}`))return false;
-    if(beastOn()&&!t.done&&!t.archived&&t.due&&t.due<=TODAY()&&!askWhy('deleting work that is due')){toast('Not deleted. Titan wants a reason.');return false}
+    if(S.cfg.cTask&&!await askConfirm(`Delete "${t.title}"?\n\nIt stays in Trash (Settings) for ${TRASH_DAYS} days.${t.archived?'':' Tip: archive it instead to keep it with your tasks.'}`))return false;
+    if(beastOn()&&!t.done&&!t.archived&&t.due&&t.due<=TODAY()&&!(await askWhy('deleting work that is due'))){toast('Not deleted. Titan wants a reason.');return false}
     await removeTasks([t]);
     toastUndo('Task moved to Trash.',async()=>{await trashRestore('task:'+t.id)});
   },
@@ -2497,7 +2517,7 @@ const actions={
       <button class="ghost danger" data-action="tm" data-do="del-task" data-id="${id}">✕ Delete</button>
       <button class="ghost" data-action="dlg-close">Cancel</button></div>`;dlg.showModal();return false},
   async 'tm'(el){dlg.close();const r=await actions[el.dataset.do](el);return r},
-  'ft-start'(el){if(FT&&FT.phase==='focus'&&!confirm('Stop the current focus session and start a new one?'))return false;ftStart(el.dataset.id,'focus');return false},
+  async 'ft-start'(el){if(FT&&FT.phase==='focus'&&!await askConfirm('Stop the current focus session and start a new one?'))return false;ftStart(el.dataset.id,'focus');return false},
   'ft-toggle'(){ftToggle();return false},
   'ft-skip'(){FT=null;ftSave();natCancel('focus');ftTick(true);return false},
   async 'ft-stop'(){await ftStop();return false},
@@ -2514,15 +2534,15 @@ const actions={
     for(const t of list){t.archived=true;t.archivedAt=Date.now();await DB.put('tasks',t)}
     toast(`Archived ${list.length} task${list.length===1?'':'s'}.`);S.selMode=null;S.sel.clear()},
   async 'bulk-del'(){const k=S.selMode,n=S.sel.size;if(!n)return false;
-    if(!confirm(`Delete ${n} ${k==='tasks'?'task':'habit'}${n===1?'':'s'}?\n\nThey stay in Trash (Settings) for ${TRASH_DAYS} days.`))return false;
+    if(!await askConfirm(`Delete ${n} ${k==='tasks'?'task':'habit'}${n===1?'':'s'}?\n\nThey stay in Trash (Settings) for ${TRASH_DAYS} days.`))return false;
     const ids=[...S.sel];
     if(k==='tasks')await removeTasks(S.tasks.filter(t=>S.sel.has(t.id)));else await removeHabits(S.habits.filter(h=>S.sel.has(h.id)));
     S.selMode=null;S.sel.clear();
     toastUndo(`${n} moved to Trash.`,async()=>{for(const id of ids)await trashRestore((k==='tasks'?'task:':'habit:')+id)})},
   'open-trash'(){S.view='trash';scrollTo(0,0)},
   async 'trash-restore'(el){const r=S.trash.find(x=>x.id===el.dataset.id);await trashRestore(el.dataset.id);if(r)toast('Restored '+(r.kind==='task'?r.data.title:r.data.name)+'.')},
-  async 'trash-del'(el){if(!confirm('Delete this forever? This can\'t be undone.'))return false;S.trash=S.trash.filter(x=>x.id!==el.dataset.id);await DB.del('trash',el.dataset.id)},
-  async 'trash-empty'(){if(!S.trash.length||!confirm(`Delete ${S.trash.length} item${S.trash.length===1?'':'s'} in Trash forever? This can't be undone.`))return false;
+  async 'trash-del'(el){if(!await askConfirm('Delete this forever? This can\'t be undone.'))return false;S.trash=S.trash.filter(x=>x.id!==el.dataset.id);await DB.del('trash',el.dataset.id)},
+  async 'trash-empty'(){if(!S.trash.length||!await askConfirm(`Delete ${S.trash.length} item${S.trash.length===1?'':'s'} in Trash forever? This can't be undone.`))return false;
     for(const r of S.trash)await DB.del('trash',r.id);S.trash=[]},
   horizon(el){S.horizon=el.dataset.v},
   'goal-scope'(el){S.goalScope=el.dataset.v},
@@ -2532,7 +2552,7 @@ const actions={
     await DB.put('goals',g)},
   async 'goal-inc'(el){const g=goalById(el.dataset.id);g.value=+((+g.value||0)+1).toFixed(2);await DB.put('goals',g)},
   async 'goal-dec'(el){const g=goalById(el.dataset.id);g.value=Math.max(0,+((+g.value||0)-1).toFixed(2));await DB.put('goals',g)},
-  async 'goal-set'(el){const g=goalById(el.dataset.id);const r=prompt(`${g.title}\nCurrent value${g.unit?' ('+g.unit+')':''}:`,fmtNum(g.value));
+  async 'goal-set'(el){const g=goalById(el.dataset.id);const r=await askPrompt(`${g.title}\nCurrent value${g.unit?' ('+g.unit+')':''}:`,fmtNum(g.value));
     if(r===null||r.trim()===''||isNaN(+r))return false;g.value=Math.max(0,+r);await DB.put('goals',g)},
   'open-review'(){openReview();return false},
   'open-plan'(){openPlan();return false},
@@ -2543,7 +2563,7 @@ const actions={
   async 'rv-carry'(el){const g=goalById(el.dataset.id);g.carried=(g.carried||[]).concat(g.period);g.period=currentPeriod(g.horizon);g.reviewedAt=Date.now();rvNote(g);await DB.put('goals',g);drawReview()},
   async 'goal-progress'(el){const g=goalById(el.dataset.id);g.progress=+el.value;await DB.put('goals',g)},
   async 'del-goal'(el){
-    const id=el.dataset.id;if(S.cfg.cGoal&&!confirm('Delete this goal? Linked tasks and sub-goals are kept but unlinked.'))return false;
+    const id=el.dataset.id;if(S.cfg.cGoal&&!await askConfirm('Delete this goal? Linked tasks and sub-goals are kept but unlinked.'))return false;
     const gone=goalById(id);const lt=S.tasks.filter(t=>t.goalId===id),lc=S.goals.filter(c=>c.parentId===id);
     for(const t of lt){t.goalId=null;await DB.put('tasks',t)}
     for(const c of lc){c.parentId=null;await DB.put('goals',c)}
@@ -2554,14 +2574,14 @@ const actions={
   async 'toggle-log'(el){await toggleLog(el.dataset.id,el.dataset.date)},
   async 'del-habit'(el){
     const gone=S.habits.find(h=>h.id===el.dataset.id);if(!gone)return false;
-    if(S.cfg.cHabit&&!confirm(`Delete "${gone.name}" and its history?\n\nIt stays in Trash (Settings) for ${TRASH_DAYS} days.`))return false;
+    if(S.cfg.cHabit&&!await askConfirm(`Delete "${gone.name}" and its history?\n\nIt stays in Trash (Settings) for ${TRASH_DAYS} days.`))return false;
     await removeHabits([gone]);
     toastUndo('Habit moved to Trash.',async()=>{await trashRestore('habit:'+gone.id)});
   },
   'backup-now'(){return actions.export()},
   export(){
     const json=JSON.stringify(backupData());const name=`goalterra-${TODAY()}.json`;
-    if(window.GTNative&&GTNative.saveBackup){GTNative.saveBackup(name,json).then(r=>{if(r!==false){markBackup();notify(r&&r.msg||`Saved ${name}.`);render()}}).catch(e=>alert('Backup failed: '+(e&&e.message||e)));return false}
+    if(window.GTNative&&GTNative.saveBackup){GTNative.saveBackup(name,json).then(r=>{if(r!==false){markBackup();notify(r&&r.msg||`Saved ${name}.`);render()}}).catch(e=>askAlert('Backup failed: '+(e&&e.message||e)));return false}
     const url=URL.createObjectURL(new Blob([json],{type:'application/json'}));
     const a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();
     // Android saves downloads asynchronously; revoking the link too early leaves an empty file.
@@ -2574,7 +2594,7 @@ const actions={
   async 'storage-persist'(){await checkStorage(true);notify(S.storage==='protected'?'Storage is now protected ✓':'The browser declined for now. Keep regular backups.')},
   'backup-paste'(){openBackup('paste');return false},
   import(){$('#importFile').click();return false},
-  async wipe(){if(!confirm('Erase all tasks, goals, habits and history? This cannot be undone.'))return false;
+  async wipe(){if(!await askConfirm('Erase all tasks, goals, habits and history? This cannot be undone.'))return false;
     for(const s of STORES)await DB.clear(s);S.tasks=[];S.goals=[];S.habits=[];S.topics=[];S.exams=[];S.trash=[];S.logs=new Set();}
 };
 
@@ -2595,7 +2615,7 @@ document.addEventListener('submit',async e=>{
   if(kind==='task'){const q=parseQuick(v.title);const t={id:uid(),title:q.title,notes:(v.notes||'').trim(),repeat:v.repeat||'',tag:q.tag||(v.tag||'').trim(),items:parseItems(v.items),due:q.due||v.due||null,priority:q.priority||v.priority,goalId:v.goalId||null,done:false,created:Date.now()};S.tasks.push(t);await DB.put('tasks',t)}
   if(kind==='goal'){
     const hz=S.horizon==='ladder'?'weekly':S.horizon;let gk=v.kind||'check';if(gk==='rollup'&&hz==='weekly')gk='check';
-    if(gk==='number'&&!(+v.target>0)){alert('Set a target number for this goal (for example 40).');return}
+    if(gk==='number'&&!(+v.target>0)){askAlert('Set a target number for this goal (for example 40).');return}
     const g={id:uid(),title:v.title.trim(),horizon:hz,period:(v.period||currentPeriod(hz)).trim(),parentId:v.parentId||null,notes:(v.notes||'').trim(),
       kind:gk,target:+v.target||0,unit:(v.unit||'').trim(),value:0,expected:v.expected?Math.max(1,Math.round(+v.expected)):null,done:false,created:Date.now()};
     S.goals.push(g);await DB.put('goals',g)}
@@ -2733,15 +2753,15 @@ function pickRow(t){const c=topicConf(t),l=lastSess(t),due=srDue(t);
     ${due?'<span class="chip2 due">Due for review</span>':`<span class="chip2"><i class="cdot c${c}"></i>${CONF_LABEL[c]}</span>`}${l?`<span class="chip2 mute">Last: ${agoDays(l.d)}</span>`:''}</div></div>
     <div class="rate" role="group" aria-label="${esc(t.name)}"><button type="button" class="rb c1" data-action="topic-rate" data-id="${t.id}" data-c="1">Weak</button><button type="button" class="rb c2" data-action="topic-rate" data-id="${t.id}" data-c="2">OK</button><button type="button" class="rb c3" data-action="topic-rate" data-id="${t.id}" data-c="3">Strong</button></div></div>`}
 function viewStudy(){
-  const picksAll=topicPicks(),picks=picksAll.slice(0,10);const bySub=new Map();
+  const picksAll=topicPicks(),picks=picksAll.slice(0,5);const bySub=new Map();
   for(const t of S.topics){if(!bySub.has(t.subject))bySub.set(t.subject,[]);bySub.get(t.subject).push(t)}
   const row=t=>`<div class="trow"><div class="top"><div class="grow"><b>${esc(t.name)}</b><div class="meta"><span><i class="cdot c${topicConf(t)}"></i>${CONF_LABEL[topicConf(t)]}</span><span>${lastSess(t)?'Last: '+agoDays(lastSess(t).d):'Never studied'}</span>${srBadge(t)}</div></div>
     <div class="mini">${shareBtn('topic',t.id)}<button class="icon" data-action="edit-topic" data-id="${t.id}" aria-label="Edit ${esc(t.name)}">✎</button><button class="icon" data-action="del-topic" data-id="${t.id}" aria-label="Delete ${esc(t.name)}">✕</button></div></div>${topicCells(t)}</div>`;
   let sections='';
-  for(const name of [...bySub.keys()].sort()){const ts=bySub.get(name),key='sub:'+name,collapsed=S.collapsed.has(key);
+  for(const name of [...bySub.keys()].sort()){const ts=bySub.get(name),key='sub:'+name,collapsed=!(S.subOpen&&S.subOpen.has(key));
     const c=[0,0,0,0];ts.forEach(t=>c[topicConf(t)]++);const seg=(k,cls)=>c[k]?`<span class="${cls}" style="width:${c[k]/ts.length*100}%"></span>`:'';
     sections+=`<section class="hfolder ${collapsed?'collapsed':''}"><div class="hf-head"><button type="button" class="hf-toggle" data-action="toggle-folder" data-name="${esc(key)}" aria-expanded="${!collapsed}">
-      <span class="hf-chev">${collapsed?'▶':'▼'}</span><span class="hf-name">${esc(name)}</span></button><span class="hf-count">${c[3]}/${ts.length} strong</span></div>
+      <span class="hf-chev">${collapsed?'▶':'▼'}</span><span class="hf-name">${esc(name)}</span></button><span class="hf-count">${L2(ts.length+' topics · '+ts.filter(srDue).length+' due',ts.length+' مواضيع · '+ts.filter(srDue).length+' للمراجعة')}</span></div>
       <div class="stack thin">${seg(3,'s3')}${seg(2,'s2')}${seg(1,'s1')}${seg(0,'s0')}</div>
       ${collapsed?'':ts.sort((a,b)=>a.name.localeCompare(b.name)).map(row).join('')}</section>`}
   const dueN=S.topics.filter(srDue).length,nx=upcomingExams()[0],nd=nx?daysTo(nx.date):null;
@@ -2752,7 +2772,7 @@ function viewStudy(){
   ${timetableCard()}
   <div class="card scard"><div class="shead"><div class="title">Today's picks</div>${picksAll.length?`<span class="pill">${picksAll.length} to go</span>`:''}</div>
     ${picks.length?`<p class="meta" style="margin:0 0 6px">How did each topic feel today? Weak and untouched topics come first.</p>${picks.map(pickRow).join('')}`:`<div class="empty celebrate">${S.topics.length?'<span class="party">🎉</span> Everything has been studied today':'Add topics below to get daily picks.'}</div>`}</div>
-  ${(()=>{const ins=insightsCard();return ins?`<div style="margin-top:12px">${ins}</div>`:''})()}
+  ${(()=>{const ins=insightsCard();return ins?`<details class="more" style="margin-top:12px"><summary>${L2('Insights','التحليلات')}</summary>${ins}</details>`:''})()}
   <details class="card scard addtopics" ${S.topics.length?'':'open'}><summary>Add subject or topics</summary>
   <form class="add" data-form="topics" style="margin-top:10px;border:0;padding:0;background:none">
     <input type="text" name="subject" list="subjListAdd" placeholder="Subject (e.g. Biochemistry)" required autocomplete="off">${subjList('subjListAdd')}
@@ -2924,8 +2944,8 @@ function cleanShared(d){
     topics:arr(d.topics).filter(t=>t&&t.name&&t.subject).map(t=>({subject:str(t.subject,80),name:str(t.name,120)}))};
 }
 function shimpPreview(text){
-  let d;try{d=JSON.parse(String(text||'').replace(/^\uFEFF/,'').trim())}catch(e){alert("That isn't valid shared text. Ask your friend to share it again.");return}
-  if(!d||d.app!==SHARE_APP){alert("That isn't a shared GoalTerra file.");return}
+  let d;try{d=JSON.parse(String(text||'').replace(/^\uFEFF/,'').trim())}catch(e){askAlert("That isn't valid shared text. Ask your friend to share it again.");return}
+  if(!d||d.app!==SHARE_APP){askAlert("That isn't a shared GoalTerra file.");return}
   SHP=cleanShared(d);const n=SHP.habits.length+SHP.tasks.length+SHP.exams.length+SHP.topics.length;
   const rows=(k,label,arr,nm)=>arr.length?`<h2 style="margin:12px 0 4px">${label}</h2>${arr.map((x,i)=>`<label class="check"><input type="checkbox" data-shimp-item="${k}:${i}" checked> <span>${esc(nm(x))}</span></label>`).join('')}`:'';
   dlg.innerHTML=`<form method="dialog" data-shimp><h3>Add shared items?</h3>
@@ -2957,7 +2977,7 @@ dlg.addEventListener('click',e=>{
 });
 dlg.addEventListener('change',async e=>{if(e.target.id!=='shFile')return;const f=e.target.files[0];if(!f)return;let t='';try{t=await f.text()}catch(_){}shimpPreview(t)});
 /* ---------- Backup & restore ---------- */
-function notify(m){typeof toast==='function'?toast(m):alert(m)}
+function notify(m){typeof toast==='function'?toast(m):askAlert(m)}
 function backupData(){
   return{app:'goal-tracker',version:1,appVersion:APP_VERSION,exported:new Date().toISOString(),tasks:S.tasks,goals:S.goals,habits:S.habits,topics:S.topics,exams:S.exams,trash:S.trash,
     logs:[...S.logs].map(id=>{const i=id.lastIndexOf('|');return{id,habitId:id.slice(0,i),date:id.slice(i+1)}}),
@@ -3023,12 +3043,12 @@ dlg.addEventListener('submit',async e=>{
     if(e.submitter)e.submitter.textContent=ok?'Copied ✓':'Select all and copy manually';return;
   }
   try{const n=await restore(ta.value,'pasted text');if(n){dlg.close();notify('Restored '+n+'.')}}
-  catch(err){alert('Restore failed: '+err.message)}
+  catch(err){askAlert('Restore failed: '+err.message)}
 });
 $('#importFile').addEventListener('change',async e=>{
   const file=e.target.files[0];if(!file)return;
   try{const n=await restore(await file.text(),'file');if(n)notify('Imported '+n+'.')}
-  catch(err){alert('Import failed: '+err.message)}
+  catch(err){askAlert('Import failed: '+err.message)}
   finally{e.target.value=''}
 });
 

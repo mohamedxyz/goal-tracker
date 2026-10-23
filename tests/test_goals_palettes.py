@@ -24,7 +24,7 @@ async def m():
       await pg.screenshot(path=f'{SHOTS}/black-{scheme}.png',clip={'x':0,'y':0,'width':390,'height':640})
       await pg.reload();await pg.wait_for_timeout(400)
       print(scheme,'persist',await pg.evaluate("[getTheme(),getPalette(),getComputedStyle(document.body).backgroundColor]"))
-      await pg.evaluate("S.view='data';render()");await pg.wait_for_timeout(100)
+      await pg.evaluate("S.view='data';S.setOpen=new Set(['General']);render()");await pg.wait_for_timeout(100)
       await pg.click('[data-action=palette][data-v=rose]');await pg.wait_for_timeout(100)
       print(scheme,'rose click',await pg.evaluate("getPalette()"),'pressed',await pg.get_attribute('[data-action=palette][data-v=rose]','aria-pressed'))
       await pg.evaluate("S.cfg.lang='ar';saveCfg();applyLang();S.view='goals';render()");await pg.wait_for_timeout(200)

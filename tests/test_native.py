@@ -24,7 +24,7 @@ async def m():
     print('scheduled batches',len(sch),'items',len(sch[-1]) if sch else 0);print('\n'.join(sch[-1][:8]) if sch else '')
     print('exact false on reminders',await pg.evaluate("__calls.filter(c=>c[1]==='schedule').every(c=>c[2].notifications.every(n=>n.isExactNotification===false))"))
     # backup now -> writeFile to Documents + share
-    await pg.evaluate("__calls.length=0;S.view='data';render()");await pg.click('[data-action=backup-now] >> nth=0');await pg.wait_for_timeout(400)
+    await pg.evaluate("__calls.length=0;S.view='data';S.setOpen=new Set(['Storage & backup']);render()");await pg.click('[data-action=backup-now] >> nth=0');await pg.wait_for_timeout(400)
     print('backup calls',await pg.evaluate("__calls.map(c=>c[0]+'.'+c[1]+' '+(c[2]&&(c[2].path||c[2].directory||c[2].title)||''))"),'toast',await pg.inner_text('#toast'),'marked',await pg.evaluate("daysSince(lastBackup())"))
     # notifications card visible
     print('notif card',await pg.locator('text=Notifications').count(),'test btn',await pg.locator('[data-action=n-test]').count())
