@@ -3,6 +3,7 @@
 # Usage: tests/run.sh            -> every test, one summary line per check
 #        tests/run.sh qa focus   -> only the named tests (test_<name>.py)
 cd "$(dirname "$0")"
+node ../build.mjs || exit 1   # rebuild goal-tracker.html from src/
 python3 -c "
 import re;s=open('../goal-tracker.html',encoding='utf-8').read();open('out/app.js','w').write('\n'.join(re.findall(r'<script>(.*?)</script>',s,re.S)))" 2>/dev/null || { mkdir -p out; python3 -c "
 import re;s=open('../goal-tracker.html',encoding='utf-8').read();open('out/app.js','w').write('\n'.join(re.findall(r'<script>(.*?)</script>',s,re.S)))"; }

@@ -139,7 +139,7 @@ Debug builds use the fixed key in `android-app/keys/debug.keystore` (a public de
 
 ## Development
 
-The app is the single file `goal-tracker.html`. There is no build step for it (the Android app copies it as is).
+The app you run is the single file `goal-tracker.html`, and you never need a build step to use it. To work on it, edit the pieces in `src/` (`style.css`, the HTML shell, and `src/js/NN-name.js` files joined in filename order in one shared scope), then run `node build.mjs` to regenerate `goal-tracker.html`. `node build.mjs --check` fails if the generated file is stale. The Android app copies the generated file as is.
 
 A Playwright test suite (development only, never part of the app) lives in `tests/`:
 

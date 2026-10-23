@@ -5,6 +5,7 @@
     PATCH = bug fix · MINOR = new feature · MAJOR = breaks old backups or data
 
   Changelog
+  0.72.1 Tip cards: each tab shows one short, dismissible lesson the first time (day levels and Game mode on the Dashboard, quick add, goal ladder, build vs avoid habits, how Study picks work). Dismissed tips stay hidden; Settings has Show tips again.
   0.72.0 Declutter: the Dashboard now shows today's tasks first, with the game, stats and coach below; the game card shows just the boss and HP until you tap Details; the three goal buttons became Plan this week plus a menu; done tasks collapse under a single "N done" row and show their date once; task filters stay on one line and the add box hints at quick-add words; number goals lose the redundant tick; the Study tab shows 5 picks and starts with subjects collapsed; Habits' add form sits behind "+ New habit"; Settings groups are collapsible sections; backup has two main buttons (Back up now, Restore) with the rest under Advanced; and every confirm, prompt and alert is now an in-app dialog instead of a browser pop-up.
   0.71.1 Fix (Android app): a white strip with a squashed logo showed under the status bar on some phones. The space behind the status bar now takes the app's background colour and follows theme and palette changes
   0.71.0 Android app support: when this file runs inside the GoalTerra Android app it uses the phone directly. Backups and exports save to Documents/GoalTerra and open the share sheet, sharing with friends uses the share sheet, the back button closes dialogs and returns to Home, the status bar follows the theme, and reminders arrive as notifications (morning plan, evening check-in, classes, exams, focus timer, backup). In a browser nothing changes. Import also accepts backup files that Android labels as plain text
@@ -325,6 +326,7 @@ dialog#editDlg::backdrop{background:rgba(30,18,10,.45)}
 .setacc>.title{cursor:pointer;display:flex;justify-content:space-between;align-items:center;margin:0;min-height:30px}.setacc>.title::after{content:'▸';color:var(--muted)}.setacc.open>.title::after{content:'▾'}
 .setacc:not(.open)>*:not(.title){display:none}.setacc.open>.title{margin-bottom:8px}
 .habadd{margin-bottom:12px}
+.tipcard{display:flex;gap:10px;align-items:center;background:var(--soft);border-color:transparent}.tipcard p{margin:4px 0 0;font-size:13.5px;line-height:1.45;color:var(--text)}
 dialog#askDlg{border:1px solid var(--line);border-radius:16px;background:var(--card);color:var(--text);padding:18px;width:min(380px,calc(100vw - 32px));box-shadow:0 18px 50px rgba(40,20,5,.25)}dialog#askDlg::backdrop{background:rgba(30,18,10,.45)}
 #askMsg{margin:0 0 12px;white-space:pre-wrap;line-height:1.45}#askDlg input{width:100%;margin-bottom:12px}#askDlg .row{justify-content:flex-end;gap:8px}
 
@@ -1889,7 +1891,7 @@ function viewData(){
     <div class="kstat"><span><i class="dot ${lb===null?'bad':lb>BACKUP_STALE?'warn':'ok'}"></i>Last backup: <b>${agoText(lb)}</b></span>
       <span><i class="dot ${st==='protected'?'ok':st==='unprotected'?'warn':''}"></i>Storage: <b>${st==='protected'?'protected':st==='unprotected'?'not protected':st==='unsupported'?'unknown':'checking…'}</b></span></div>
     ${st==='unprotected'?`<p class="meta">The browser may clear this data if the phone runs low on space. Bookmarking the page or adding it to the home screen often lets it be protected. <button class="chip" data-action="storage-persist">Ask again</button></p>`:''}
-    <p class="meta"><span>Version <b>${APP_VERSION}</b></span> <button class="chip" data-action="open-intro">Show intro again</button></p>
+    <p class="meta"><span>Version <b>${APP_VERSION}</b></span> <button class="chip" data-action="open-intro">Show intro again</button> <button class="chip" data-action="tips-reset">${L2('Show tips again','إظهار النصائح مجددًا')}</button></p>
     <details class="more"><summary>Advanced</summary><div class="row" style="margin-top:8px">
       <button class="ghost" data-action="export">Export JSON</button>
       <button class="ghost" data-action="backup-copy">Copy backup text</button>
@@ -1906,6 +1908,19 @@ function viewData(){
   </div>`;
 }
 
+/* ---------- Tip cards: one short, dismissible lesson per tab ---------- */
+const TIPS=()=>({
+ dash:[['levels',()=>coachTone()!=='off',L2('Day levels','مستويات اليوم'),L2('Finish more tasks today to climb from Spark to Blaze to Titan. Tap the banner at the top to see a calendar of your past days.','أنجز مهامًا أكثر اليوم لترتقي من سبارك إلى بلايز إلى تايتان. اضغط على الشريط في الأعلى لترى تقويمًا لأيامك السابقة.')],
+  ['game',()=>rpgOn(),L2('Game mode','وضع اللعبة'),L2('Finished tasks, habits, study and focus deal damage to this week\'s boss (its HP is the bar). Tap Details for shields and stats. Clean days on avoid habits charge shields that block its counterattacks.','المهام والعادات والدراسة والتركيز تضرّ زعيم هذا الأسبوع (شريط حياته). اضغط تفاصيل لترى الدروع والإحصاءات. الأيام النظيفة في عادات التجنّب تشحن دروعًا تصدّ هجماته.')]],
+ tasks:[['quickadd',()=>true,L2('Quick add','إضافة سريعة'),L2('Type "Essay tomorrow !high #uni" and the date, priority and tag fill themselves. Tap a task to edit it, tick it to finish it.','اكتب «مقال غدًا» وسيُملأ التاريخ تلقائيًا. اضغط على المهمة لتعديلها، وضع علامة لإنهائها.')]],
+ goals:[['ladder',()=>true,L2('Goals that connect','أهداف مترابطة'),L2('Weekly steps roll up into monthly, annual and 5-year goals. Add a weekly goal, then link it to a bigger one to see it move.','الخطوات الأسبوعية تتجمّع في أهداف شهرية وسنوية وخمسية. أضف هدفًا أسبوعيًا ثم اربطه بهدف أكبر لتراه يتقدّم.')]],
+ habits:[['habits',()=>true,L2('Build and avoid','بناء وتجنّب'),L2('Build habits are things you tick when done. Avoid habits are things to quit: you only log a slip, and clean days build your streak.','عادات البناء تُعلّمها عند إنجازها. عادات التجنّب أشياء تريد تركها: تسجّل فقط عند الانزلاق، والأيام النظيفة تبني سلسلتك.')]],
+ study:[['study',()=>true,L2('How picks work','كيف تعمل الاختيارات'),L2('After studying, rate each topic Weak, OK or Strong. Weak and due topics come back first in Today\'s picks, and Strong ones come back later.','بعد الدراسة قيّم كل موضوع: ضعيف أو متوسط أو قوي. الضعيفة والمستحقة تعود أولًا في اختيارات اليوم والقوية لاحقًا.')]]});
+const tipSeen=()=>{try{return JSON.parse(localStorage.getItem('gt-tips')||'[]')}catch(e){return[]}};
+function tipCard(){
+  const seen=tipSeen(),t=(TIPS()[S.view]||[]).find(x=>!seen.includes(x[0])&&x[1]());
+  return t?`<div class="card tipcard" role="note"><div class="grow"><b>💡 ${t[2]}</b><p>${t[3]}</p></div><button class="chip" data-action="tip-ok" data-k="${t[0]}">${L2('Got it','فهمت')}</button></div>`:'';
+}
 function render(){
   _exMap=null;_srMemo=new Map();_rest=null;
   const newly=syncGoals();
@@ -1919,7 +1934,7 @@ function render(){
   document.body.classList.toggle('selmode',!!S.selMode);document.body.classList.toggle('cmp',!!(S.cfg.student&&S.cfg.stuCompact));
   if(S.view==='bestiary'&&!rpgOn())S.view='dash';
   const v={dash:viewDash,tasks:viewTasks,goals:viewGoals,habits:viewHabits,data:viewData,archive:viewArchive,trash:viewTrash,study:viewStudy,bestiary:viewBestiary}[S.view]||viewDash;
-  $('#app').innerHTML=(S.persistent?'':`<div class="banner">This browser blocked storage — data will be lost on reload. Use Export to save it.</div>`)+v()+selBar();
+  $('#app').innerHTML=(S.persistent?'':`<div class="banner">This browser blocked storage — data will be lost on reload. Use Export to save it.</div>`)+tipCard()+v()+selBar();
   const app=$('#app'),changed=S._lv!==S.view;S._lv=S.view;
   if(changed&&!matchMedia('(prefers-reduced-motion: reduce)').matches){app.classList.remove('enter');[...app.children].forEach((c,i)=>c.style.setProperty('--i',Math.min(i,9)));void app.offsetWidth;app.classList.add('enter');clearTimeout(S._enterT);S._enterT=setTimeout(()=>app.classList.remove('enter'),1100)}
   else if(!changed){clearTimeout(S._enterT);app.classList.remove('enter')}
@@ -2117,7 +2132,7 @@ function drawHabit(){
 document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('[role=button][data-action]')){e.preventDefault();e.target.click()}});
 
 /* ---------- Version ---------- */
-const APP_VERSION='0.72.0';
+const APP_VERSION='0.72.1';
 
 /* ---------- Completion sounds (synthesised, no audio files) ---------- */
 const Sound={
@@ -2395,6 +2410,8 @@ const actions={
   'toggle-done-all'(){S.doneAll=!S.doneAll},
   'toggle-done-list'(){S.doneOpen=!S.doneOpen},
   'rpg-more'(){S.rpgOpen=!S.rpgOpen},
+  'tip-ok'(el){try{localStorage.setItem('gt-tips',JSON.stringify([...new Set([...tipSeen(),el.dataset.k])]))}catch(e){}},
+  'tips-reset'(){try{localStorage.removeItem('gt-tips')}catch(e){}toast(L2('Tips will show again.','ستظهر النصائح مجددًا.'))},
   'set-acc'(el){S.setOpen=S.setOpen||new Set();const k=el.dataset.k;S.setOpen.has(k)?S.setOpen.delete(k):S.setOpen.add(k)},
   'open-share'(){openShare();return false},
   'share-item'(el){openShare(el.dataset.k+':'+el.dataset.id);return false},

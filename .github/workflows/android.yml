@@ -42,6 +42,8 @@ jobs:
         working-directory: android-app
         run: npm ci
 
+      - name: Check goal-tracker.html matches src/
+        run: node build.mjs --check
       - name: Copy the web app into the Android project
         working-directory: android-app
         run: npm run sync
