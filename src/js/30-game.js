@@ -155,7 +155,7 @@ function rpgCard(){
   const dl=7-((new Date().getDay()+6)%7),hit=S.rpgHit&&Date.now()-S.rpgHit.at<1500?S.rpgHit:null;
   const L=heroLv(A.xp),lo=50*(L-1)*(L-1),hi=50*L*L,xpPct=Math.round((A.xp-lo)/(hi-lo)*100);
   const status=w.won?'Defeated. It joins your bestiary.':dl===1?`${left} HP to go. It escapes tonight.`:`${left} HP to go`;
-  return `<div class="card rpg ${w.won?'won':''} ${S.rpgOpen?'open':''}"><div class="rpg-top">
+  return `<div class="card rpg ${w.won?'won':''} ${S.rpgOpen?'open':''}"><div class="rpg-top" data-action="info-boss" role="button" tabindex="0">
     <div class="rpg-spr ${hit?'shake':''}">${m.svg}${hit?`<span class="rpg-dmg ${hit.crit?'crit':''}">−${hit.n}</span>`:''}</div>
     <div class="grow" style="min-width:0"><div class="rpg-lbl"><span>Week boss</span><span>${w.won?'🏆':dl===1?'Last day':dl+' days left'}</span></div>
       <b class="rpg-name" translate="no">${m.name}</b><span class="rpg-sub">${m.title}</span>

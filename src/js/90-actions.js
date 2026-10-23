@@ -57,6 +57,9 @@ const actions={
     toastUndo(`Deleted ${gone.length} archived task${gone.length>1?'s':''}.`,async()=>{for(const t of gone){S.tasks.push(t);await DB.put('tasks',t)}});
   },
   'open-habit'(el){openHabit(el.dataset.id);return false},
+  'info-task'(el){openInfo('task',el.dataset.id);return false},
+  'info-goal'(el){openInfo('goal',el.dataset.id);return false},
+  'info-boss'(){openInfo('boss');return false},
   async 'cal-toggle'(el){await toggleLog(cal.id,el.dataset.date);drawHabit()},
   'cal-month'(el){const d=new Date(cal.y,cal.m+(+el.dataset.d),1);cal.y=d.getFullYear();cal.m=d.getMonth();drawHabit();return false},
   'dlg-close'(){dlg.close();return false},
@@ -202,6 +205,7 @@ const actions={
     toastUndo('Habit moved to Trash.',async()=>{await trashRestore('habit:'+gone.id)});
   },
   'backup-now'(){return actions.export()},
+  'backup-auto'(){try{localStorage.setItem('gt-auto-last',TODAY())}catch(e){}return actions.export()},
   export(){
     const json=JSON.stringify(backupData());const name=`goalterra-${TODAY()}.json`;
     if(window.GTNative&&GTNative.saveBackup){GTNative.saveBackup(name,json).then(r=>{if(r!==false){markBackup();notify(r&&r.msg||`Saved ${name}.`);render()}}).catch(e=>askAlert('Backup failed: '+(e&&e.message||e)));return false}
@@ -223,14 +227,25 @@ const actions={
 
 const POP=new Set(['toggle-task','toggle-log','topic-cell','toggle-sub','done-goal','goal-inc','goal-dec']);
 function markPop(el){const d=el.dataset;if(!POP.has(d.action))return;S.popKey=`[data-action="${d.action}"]`+(d.id?`[data-id="${CSS.escape(d.id)}"]`:'')+(d.date?`[data-date="${d.date}"]`:'')+(d.i!==undefined?`[data-i="${d.i}"]`:'')}
+// Long-press a task or habit to start selecting (Escape or Back leaves select mode).
+(()=>{let tm=null,fired=false,sx=0,sy=0;const cancel=()=>{clearTimeout(tm);tm=null};
+  document.addEventListener('pointerdown',e=>{cancel();if(S.selMode||(S.view!=='tasks'&&S.view!=='habits')||(e.button||0)>0||e.target.closest('input,button,select,a'))return;
+    const row=e.target.closest(S.view==='tasks'?'#app .item.trow2':'#app .goals>.card');if(!row)return;const idEl=row.querySelector('[data-id]');if(!idEl)return;
+    sx=e.clientX;sy=e.clientY;tm=setTimeout(()=>{tm=null;fired=true;S.selMode=S.view;S.sel.clear();S.sel.add(idEl.dataset.id);try{navigator.vibrate&&navigator.vibrate(15)}catch(_){}render()},520)});
+  document.addEventListener('pointermove',e=>{if(tm&&Math.hypot(e.clientX-sx,e.clientY-sy)>10)cancel()});
+  document.addEventListener('pointerup',()=>{cancel();if(fired){fired=false;S._eat=Date.now()}},true);
+  document.addEventListener('pointercancel',()=>{cancel();fired=false},true);document.addEventListener('scroll',cancel,true);
+  document.addEventListener('contextmenu',e=>{if(fired||(S.selMode&&e.target.closest('#app .item,#app .card')))e.preventDefault()});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&S.selMode&&!dlg.open){S.selMode=null;S.sel.clear();render()}})})();
 document.addEventListener('click',async e=>{
+  if(S._eat&&Date.now()-S._eat<700){S._eat=0;e.preventDefault();return}
   const nav=e.target.closest('#nav button,#tabbar button');if(nav){const same=S.view===nav.dataset.view;S.view=nav.dataset.view;render();if(!same||nav.closest('#tabbar'))scrollTo(0,0);return}
-  const el=e.target.closest('[data-action]');if(!el||el.type==='checkbox'||el.type==='range'||el.tagName==='SELECT')return;
+  const el=e.target.closest('[data-action]');if(!el||el.type==='checkbox'||el.type==='range'||el.type==='time'||el.tagName==='SELECT')return;
   markPop(el);const fn=actions[el.dataset.action];if(fn&&(await fn(el))!==false)render();
 });
 document.addEventListener('change',async e=>{
   const el=e.target.closest('[data-action]');
-  if(el&&(el.type==='checkbox'||el.type==='range'||el.tagName==='SELECT')){markPop(el);await actions[el.dataset.action](el);render()}
+  if(el&&(el.type==='checkbox'||el.type==='range'||el.type==='time'||el.tagName==='SELECT')){markPop(el);await actions[el.dataset.action](el);render()}
 });
 document.addEventListener('submit',async e=>{
   const f=e.target.closest('form[data-form]');if(!f)return;e.preventDefault();

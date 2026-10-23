@@ -4,6 +4,22 @@ function lastBackup(){try{return+localStorage.getItem('gt-last-backup')||0}catch
 function markBackup(){try{localStorage.setItem('gt-last-backup',String(Date.now()))}catch(e){}}
 const daysSince=ts=>ts?Math.round((new Date(TODAY()+'T00:00')-new Date(ds(new Date(ts))+'T00:00'))/864e5):null;
 const agoText=n=>n===null?L2('never','أبدًا'):n<=0?L2('today','اليوم'):n===1?L2('yesterday','أمس'):L2(n+' days ago',`منذ ${n} ${AYAM(n)}`);
+/* Automatic daily backup at the time the user picks */
+function autoBackupDue(){if(!S.cfg.abOn)return false;const[h,m]=String(S.cfg.abTime||'21:00').split(':').map(Number),n=new Date();
+  if(n.getHours()*60+n.getMinutes()<h*60+(m||0))return false;try{return localStorage.getItem('gt-auto-last')!==TODAY()}catch(e){return false}}
+let _abBusy=false;
+async function autoBackupTick(){
+  if(_abBusy||!S.booted||!autoBackupDue()||!(S.tasks.length+S.goals.length+S.habits.length+S.topics.length))return;
+  if(!(window.GTNative&&GTNative.autoBackup)){if(!S._abShown){S._abShown=true;render()}return}
+  _abBusy=true;
+  try{await GTNative.autoBackup(`goalterra-auto-${TODAY()}.json`,JSON.stringify(backupData()));markBackup();
+    try{localStorage.setItem('gt-auto-last',TODAY())}catch(e){}try{GTNative.cancel('ab'+TODAY())}catch(e){}
+    toast(L2('Automatic backup saved.','تم حفظ النسخة الاحتياطية تلقائيًا.'));render()}
+  catch(e){toast(L2('Automatic backup failed. Try Back up now.','فشل النسخ التلقائي. جرّب النسخ الآن.'))}
+  finally{_abBusy=false}}
+function autoCard(){
+  if(window.GTNative||!autoBackupDue())return'';
+  return `<div class="card backup-cta"><div class="grow"><div class="title">${L2('Time for your daily backup','حان وقت نسخة اليوم الاحتياطية')}</div><div class="meta">${L2('A browser cannot save files by itself, so tap to save today\'s backup.','المتصفح لا يحفظ الملفات تلقائيًا، فاضغط لحفظ نسخة اليوم.')}</div></div><button class="btn" data-action="backup-auto">${L2('Back up now','انسخ الآن')}</button></div>`}
 function backupDue(){const n=daysSince(lastBackup());return n===null||n>BACKUP_STALE}
 const backupLevel=()=>{const n=daysSince(lastBackup());return n===null?(S.tasks.length+S.goals.length+S.habits.length>20?2:1):n>30?2:n>BACKUP_STALE?1:0};
 function backupNudge(){

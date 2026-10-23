@@ -36,3 +36,5 @@ async function autoArchive(){
   if(!introSeen()){if(S.tasks.length||S.goals.length||S.habits.length)markIntro();else openIntro()}
   await checkStorage(true);if(S.view==='data')render();
 })();
+
+setInterval(autoBackupTick,60000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)autoBackupTick()});setTimeout(autoBackupTick,2500);

@@ -65,6 +65,10 @@ if(NATIVE)(()=>{
     async saveFile(name,text,share){const uri=await save('GoalTerra',name,text);if(share!==false){try{await SH.share({title:name,files:[uri],dialogTitle:L2('Save or send','احفظ أو أرسل')})}catch(e){}}
       return{msg:L2(`Saved to Documents/GoalTerra/${name}`,`حُفظ في Documents/GoalTerra/${name}`)}},
     async saveBackup(name,text){return this.saveFile(name,text,true)},
+    async autoBackup(name,text){await save('GoalTerra',name,text);
+      try{const r=await FS.readdir({path:'GoalTerra',directory:'DOCUMENTS'});const old=(r.files||[]).map(f=>f.name||f).filter(n=>/^goalterra-auto-.*\.json$/.test(n)).sort();
+        for(const n of old.slice(0,Math.max(0,old.length-7)))await FS.deleteFile({path:'GoalTerra/'+n,directory:'DOCUMENTS'})}catch(e){}
+      return true},
     async shareFile(name,text){const uri=await save('',name,text);await SH.share({title:name,files:[uri]})},
     bars(bg){try{const m=(String(bg).match(/\d+/g)||[255,255,255]).map(Number),l=(.2126*m[0]+.7152*m[1]+.0722*m[2])/255;SB.setStyle({style:l<.5?'DARK':'LIGHT'});
       BG.setColor({color:'#'+m.slice(0,3).map(x=>x.toString(16).padStart(2,'0')).join('')}).catch(()=>{})}catch(e){}},
@@ -81,16 +85,17 @@ if(NATIVE)(()=>{
   };
   APP.addListener('backButton',()=>{
     if(dlg.open){dlg.close();return}
+    if(S.selMode){S.selMode=null;S.sel.clear();render();return}
     if(typeof cellEl!=='undefined'&&cellEl){hideCellMenu();return}
     if(S.view!=='dash'){S.view='dash';render();scrollTo(0,0);return}
     APP.exitApp()});
-  APP.addListener('resume',()=>{render();ftTick(true);planNotifications(true)});
+  APP.addListener('resume',()=>{render();ftTick(true);planNotifications(true);autoBackupTick()});
   document.documentElement.classList.add('native');
 })();
 // Upcoming reminders for the next 7 days, rebuilt whenever data changes (Android app only).
 let _nTimer=null,_nKey='';
 function planNotifications(force){
-  if(!window.GTNative)return;const key=DBV+'|'+TODAY()+'|'+JSON.stringify([S.cfg.nOn,S.cfg.nMorning,S.cfg.nEvening,S.cfg.nClasses,S.cfg.nExams,S.cfg.classes,S.cfg.lang,S.cfg.rpg]);
+  if(!window.GTNative)return;const key=DBV+'|'+TODAY()+'|'+JSON.stringify([S.cfg.abOn,S.cfg.abTime,S.cfg.nOn,S.cfg.nMorning,S.cfg.nEvening,S.cfg.nClasses,S.cfg.nExams,S.cfg.classes,S.cfg.lang,S.cfg.rpg]);
   if(!force&&key===_nKey)return;_nKey=key;clearTimeout(_nTimer);_nTimer=setTimeout(()=>GTNative.reschedule(buildNotifications()),1500)}
 function buildNotifications(){
   const out=[],now=Date.now(),at=(d,hm)=>{const[h,m]=String(hm||'08:00').split(':').map(Number);const x=new Date(d);x.setHours(h,m||0,0,0);return x.getTime()};
@@ -109,6 +114,7 @@ function buildNotifications(){
       if(body)out.push({key:'e'+k,at:e,title:L2('Evening check-in','مراجعة المساء'),body})}
     if(S.cfg.nClasses)for(const c of cls){const t=at(d,c.start)-10*60000;if(t>now)out.push({key:'c'+k+c.id,at:t,title:L2(`${c.subject} at ${c.start}`,`${c.subject} الساعة ${c.start}`),body:c.room?L2('Room ','القاعة ')+c.room:L2('Class in 10 minutes','الحصة بعد 10 دقائق')})}
     if(S.cfg.nExams&&S.cfg.student)for(const x of S.exams.filter(x=>x.date===ds(addDays(d,1))&&x.score==null)){const t=at(d,'18:00');if(t>now)out.push({key:'x'+x.id,at:t,title:L2('Tomorrow: ','غدًا: ')+x.title,body:(x.time?x.time+' · ':'')+L2('A last review tonight helps.','مراجعة أخيرة الليلة تفيد.')})}}
+  if(S.cfg.abOn)for(let i=0;i<7;i++){const d=addDays(new Date(),i),t=at(d,S.cfg.abTime||'21:00');if(t>now)out.push({key:'ab'+ds(d),at:t,title:L2('Daily backup','النسخ الاحتياطي اليومي'),body:L2('Open GoalTerra to save today\'s backup.','افتح GoalTerra لحفظ نسخة اليوم.')})}
   if(backupDue()){const t=at(addDays(new Date(),1),'12:00');out.push({key:'bk',at:t,title:L2('Back up GoalTerra','انسخ GoalTerra احتياطيًا'),body:L2('Your last backup is old. Open Settings and tap Back up now.','آخر نسخة احتياطية قديمة. افتح الإعدادات واضغط انسخ احتياطيًا الآن.')})}
   return out.sort((a,b)=>a.at-b.at).slice(0,60);
 }

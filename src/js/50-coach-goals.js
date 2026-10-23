@@ -154,7 +154,7 @@ function ladderNode(g,ids,seen,ord,depth){
   const add=can?(adding?`<form class="ladd" data-form="ltask" data-goal="${g.id}"><input type="text" name="title" placeholder="New task for this goal" required autocomplete="off"><button class="chip">Add</button><button type="button" class="chip" data-action="ladd-close" aria-label="Close">✕</button></form>`:`<button type="button" class="ladd-btn" data-action="ladd-open" data-id="${g.id}">+ Task</button>`):'';
   return `<div class="lnode ${depth?'sub':''} ${g.done?'isdone':''} ${g.status==='missed'?'ismissed':''}">
     <div class="lrow">${has?`<button type="button" class="lchev" data-action="toggle-folder" data-name="${key}" aria-expanded="${!col}" aria-label="${col?'Expand':'Collapse'}">${col?'▸':'▾'}</button>`:'<span class="lchev"></span>'}
-      <div class="grow" data-action="edit-goal" data-id="${g.id}" role="button" tabindex="0"><div class="ltitle"><span class="lv">${LV_SHORT[g.horizon]}</span> <span class="title">${esc(g.title)}</span></div>${meta?`<div class="meta">${meta}</div>`:''}</div>
+      <div class="grow" data-action="info-goal" data-id="${g.id}" role="button" tabindex="0"><div class="ltitle"><span class="lv">${LV_SHORT[g.horizon]}</span> <span class="title">${esc(g.title)}</span></div>${meta?`<div class="meta">${meta}</div>`:''}</div>
       ${k!=='rollup'&&!tasks.length?`<button class="icon lck" data-action="done-goal" data-id="${g.id}" aria-label="${g.done?'Reopen':'Mark complete'}">${g.done?'↺':'✓'}</button>`:''}<b class="lpct">${g.done?'✓':p+'%'}</b></div>
     <div class="bar lbar"><span style="width:${p}%"></span></div>${num}
     ${col||!(tasks.length||kids.length||can)?'':`<div class="lkids">${tasks.map(trow).join('')}${add}${kids.map(c=>ladderNode(c,ids,seen,ord,depth+1)).join('')}</div>`}</div>`;
@@ -172,7 +172,7 @@ function goalCard(g){
     <button class="numval" data-action="goal-set" data-id="${g.id}" title="Set exact value">${fmtNum(g.value)} <span>/ ${fmtNum(g.target)} ${esc(g.unit||'')}</span></button>
     <button class="ghost" data-action="goal-inc" data-id="${g.id}" aria-label="Increase">+</button></div>`:'';
   return `<div class="card goal ${g.done?'isdone':''} ${missed?'ismissed':''}">
-    <div class="row"><div class="grow"><div class="title">${esc(g.title)}</div>
+    <div class="row"><div class="grow" data-action="info-goal" data-id="${g.id}" role="button" tabindex="0"><div class="title">${esc(g.title)}</div>
       <div class="meta">${tags.join('')}</div></div>
       ${k==='number'&&!g.done?'':`<button class="icon" data-action="done-goal" data-id="${g.id}" title="${g.done?'Reopen':'Mark complete'}" aria-label="${g.done?'Reopen':'Mark complete'}">${g.done?'↺':'✓'}</button>`}
       <button class="icon" data-action="edit-goal" data-id="${g.id}" title="Edit" aria-label="Edit">✎</button>

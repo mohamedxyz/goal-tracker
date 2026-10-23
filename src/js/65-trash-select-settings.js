@@ -26,7 +26,7 @@ const selBox=id=>`<input type="checkbox" class="selbox" data-action="sel-toggle"
 function selBar(){
   const k=S.selMode;if(!k||S.view!==k)return'';
   const n=S.sel.size,dis=n?'':'disabled';
-  return `<div class="selbar" role="toolbar" aria-label="Bulk actions"><div class="selrow"><b>${n} selected</b>
+  return `<div class="selbar" role="toolbar" aria-label="Bulk actions"><div class="selrow"><b>${n?n+' selected':L2('Tap items to select','اضغط العناصر لتحديدها')}</b>
     <button class="chip" data-action="sel-all">All</button><button class="chip" data-action="sel-none">None</button><button class="chip" data-action="sel-exit">Cancel</button></div>
     <div class="selrow">${k==='tasks'?`<button class="chip act" data-action="bulk-done" ${dis}>✓ Done</button>`:''}<button class="chip act" data-action="bulk-edit" ${dis}>✎ Edit…</button>${k==='tasks'?`<button class="chip act" data-action="bulk-archive" ${dis}>Archive</button>`:''}<button class="chip act danger" data-action="bulk-del" ${dis}>🗑 Delete</button></div></div>`;
 }
@@ -167,6 +167,8 @@ function viewData(){
     <div class="card settings setacc ${S.setOpen&&S.setOpen.has('Templates and sample data')?'open':''}"><div class="title" data-action="set-acc" data-k="Templates and sample data" role="button" tabindex="0">Templates and sample data</div><p class="meta">Start a goal ladder from a template, or explore the app with sample data you can clear later.</p><div class="row"><button class="ghost" data-action="tpl-open">Templates</button>${hasSample()?'<button class="ghost" data-action="sample-clear">Clear sample data</button>':'<button class="ghost" data-action="sample-add">Load sample data</button>'}</div></div>
   <div class="card settings setacc ${S.setOpen&&S.setOpen.has('Storage & backup')?'open':''}"><div class="title" data-action="set-acc" data-k="Storage & backup" role="button" tabindex="0">Storage &amp; backup</div>
     <div class="row" style="margin:6px 0"><button class="btn" data-action="backup-now">Back up now</button><button class="ghost" data-action="import">Restore</button></div>
+    ${sw('abOn',L2('Automatic daily backup','نسخ احتياطي يومي تلقائي'),window.GTNative?L2('Saved to Documents/GoalTerra (last 7 kept) when the app is open after this time, with a reminder at that time.','يُحفظ في مجلد المستندات (آخر 7 نسخ) عند فتح التطبيق بعد هذا الوقت، مع تذكير في ذلك الوقت.'):L2('A browser cannot save files silently, so you get a Back up now card at this time.','المتصفح لا يحفظ الملفات بصمت، فستظهر بطاقة نسخ احتياطي في هذا الوقت.'),S.cfg.abOn)}
+    ${S.cfg.abOn?`<label class="swrow"><span>${L2('Backup time','وقت النسخ')}</span><input type="time" data-action="set" data-k="abTime" value="${S.cfg.abTime||'21:00'}"></label>`:''}
     <div class="meta">${S.tasks.length} tasks · ${S.goals.length} goals · ${S.habits.length} habits · ${S.logs.size} check-ins</div>
     <p class="meta">${window.GTNative?L2('Saved on this phone. Backups go to Documents/GoalTerra.','محفوظ على هذا الهاتف. النسخ الاحتياطية تُحفظ في مجلد المستندات.'):'Stored in this browser\'s IndexedDB. Export regularly to back up or move to another device.'}</p>
     <div class="kstat"><span><i class="dot ${lb===null?'bad':lb>BACKUP_STALE?'warn':'ok'}"></i>Last backup: <b>${agoText(lb)}</b></span>

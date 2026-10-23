@@ -499,3 +499,11 @@ body.cmp .add{gap:6px}body.cmp .goals,body.cmp .list{gap:6px}
 .intro-row{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
 .intro-nav{display:flex;justify-content:space-between;align-items:center;gap:8px}
 .intro-nav .grow{flex:1}
+
+.fbar{display:flex;gap:6px;flex-wrap:nowrap;align-items:center}.fscroll{display:flex;gap:6px;overflow-x:auto;flex:1;min-width:0;scrollbar-width:none}.fscroll::-webkit-scrollbar{display:none}.fscroll .chip,.fbar>.chip{flex:none;white-space:nowrap}
+body.selmode .goals>.card button:not(.selbox),body.selmode .item .tcheck{pointer-events:none}
+body.selmode .item.trow2 .grow,body.selmode .goals>.card{cursor:pointer}
+.info .inf-sub{margin:-4px 0 10px;color:var(--muted)}.irow{display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px solid var(--line);font-size:14px}.irow span{color:var(--muted)}.irow b{text-align:end;font-weight:600}
+.inf-notes{margin:10px 0;padding:10px;border-radius:10px;background:var(--soft);white-space:pre-wrap;font-size:14px}.inf-list{margin:10px 0;font-size:14px}.inf-list>div{padding:3px 0}.inf-list .sdone{text-decoration:line-through;color:var(--muted)}
+.inf-boss{display:flex;gap:12px;align-items:center;margin-bottom:10px}.inf-boss .rpg-spr{width:64px;height:64px;flex:none}.rpg-top[data-action]{cursor:pointer}
+.info .dlg-actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:14px}

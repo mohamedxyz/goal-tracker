@@ -16,7 +16,7 @@ function taskItem(t){
   const dp=t.done?'':t.due?dueLeft(t.due):'';
   return `<li class="item trow2 pr-${t.priority||'low'} ${t.done?'done dim':''} ${sm&&S.sel.has(t.id)?'selected':''}">
     ${sm?selBox(t.id):`<input type="checkbox" data-action="toggle-task" data-id="${t.id}" ${t.done?'checked':''} aria-label="Complete">`}
-    <div class="grow" ${sm?'':`data-action="edit-task" data-id="${t.id}" role="button" tabindex="0"`}><div class="title">${esc(t.title)}</div>
+    <div class="grow" ${sm?`data-action="sel-toggle" data-id="${t.id}" role="button" tabindex="0"`:`data-action="info-task" data-id="${t.id}" role="button" tabindex="0"`}><div class="title">${esc(t.title)}</div>
       ${t.notes&&S.cfg.showNotes?`<div class="tnotes">${esc(t.notes)}</div>`:''}
       ${(t.items||[]).length&&S.cfg.showSubs?`<ul class="subs">${t.items.map((it,i)=>`<li><label class="${it.done?'sdone':''}"><input type="checkbox" data-action="toggle-sub" data-id="${t.id}" data-i="${i}" ${it.done?'checked':''}><span>${esc(it.text)}</span></label></li>`).join('')}</ul>`:''}
       <div class="meta">
@@ -41,14 +41,14 @@ function dayButtons(h,n=7){
 function habitCard(h,full){
   const s=streak(h);
   const sm=full&&selOn('habits'),cm=full&&(S.compact||(S.cfg.student&&S.cfg.stuCompact));
-  if(cm)return `<div class="card hcompact ${sm&&S.sel.has(h.id)?'selected':''}"><div class="habit">${sm?selBox(h.id):''}
-    <div class="grow habit-open" data-action="open-habit" data-id="${h.id}" role="button" tabindex="0" title="Open history"><div class="title">${hname(h)}</div>
+  if(cm)return `<div class="card hcompact ${sm&&S.sel.has(h.id)?'selected':''}" ${sm?`data-action="sel-toggle" data-id="${h.id}"`:''}><div class="habit">${sm?selBox(h.id):''}
+    <div class="grow habit-open" ${sm?'':`data-action="open-habit" data-id="${h.id}" role="button" tabindex="0" title="Open history"`}><div class="title">${hname(h)}</div>
       <div class="meta"><span class="streak">${isNeg(h)?'🛡':'🔥'}${s}</span><span>${weekCount(h)}/${weekTarget(h)} this wk</span></div></div>
     ${dayButtons(h)}
     ${mvBtns('move-habit',h.id,`data-id="${h.id}"`)}<button class="icon" data-action="edit-habit" data-id="${h.id}" title="Edit" aria-label="Edit">✎</button></div></div>`;
   let heat='';if(full){for(let i=27;i>=0;i--){const k=ds(addDays(new Date(),-i));heat+=`<i class="${good(h,k)?'on':''}" title="${k}"></i>`}}
-  return `<div class="card ${sm&&S.sel.has(h.id)?'selected':''}"><div class="habit">${sm?selBox(h.id):''}
-    <div class="grow habit-open" data-action="open-habit" data-id="${h.id}" role="button" tabindex="0" title="Open history"><div class="title">${hname(h)} <span class="chev">›</span></div>
+  return `<div class="card ${sm&&S.sel.has(h.id)?'selected':''}" ${sm?`data-action="sel-toggle" data-id="${h.id}"`:''}><div class="habit">${sm?selBox(h.id):''}
+    <div class="grow habit-open" ${sm?'':`data-action="open-habit" data-id="${h.id}" role="button" tabindex="0" title="Open history"`}><div class="title">${hname(h)} <span class="chev">›</span></div>
       <div class="meta"><span class="streak">${isNeg(h)?'🛡 '+s+' day'+(s===1?'':'s')+' clean':'🔥 '+s+' day'+(s===1?'':'s')}</span>
         <span>This week ${weekCount(h)}/${weekTarget(h)}</span>${full?`<span>30-day ${rate30(h)}%</span>`:''}${hasSched(h)?`<span>${schedText(h)}</span>`:''}</div></div>
     ${dayButtons(h)}

@@ -1,0 +1,55 @@
+import asyncio,re,os
+from playwright.async_api import async_playwright
+from helpers import *
+src=open(os.path.join(os.path.dirname(__file__),'screenshots.py')).read()
+DEMO=re.search(r'DEMO=r"""(.*?)"""',src,re.S).group(1)
+async def main():
+  async with async_playwright() as p:
+    b=await p.chromium.launch()
+    for scheme in ['light','dark']:
+      ctx=await b.new_context(viewport={'width':390,'height':844},color_scheme=scheme);pg=await ctx.new_page();errs=[]
+      pg.on('pageerror',lambda e:errs.append(str(e)))
+      await pg.goto(URL);await pg.wait_for_timeout(400)
+      if await pg.locator('[data-action=intro-done]').count():await pg.click('[data-action=intro-done] >> nth=0')
+      await pg.evaluate(DEMO);await pg.wait_for_timeout(500)
+      await pg.evaluate("localStorage.setItem('gt-tips',JSON.stringify(['levels','game','quickadd','ladder','habits','study']));S.view='dash';render()")
+      # info sheets
+      await pg.click('#app .item.trow2 .grow >> nth=0');await pg.wait_for_timeout(200)
+      print(scheme,'task info',await pg.evaluate("[document.getElementById('editDlg').open,!!document.querySelector('#editDlg .info'),document.querySelectorAll('#editDlg [data-do]').length]"))
+      await pg.screenshot(path=f'{SHOTS}/info-task-{scheme}.png');await pg.click('[data-action=dlg-close]');await pg.wait_for_timeout(100)
+      await pg.evaluate("S.view='goals';render()");await pg.wait_for_timeout(200)
+      await pg.click('#app [data-action=info-goal] >> nth=0');await pg.wait_for_timeout(200)
+      print(scheme,'goal info',await pg.evaluate("[document.getElementById('editDlg').open,!!document.querySelector('#editDlg .bar')]"));await pg.click('[data-action=dlg-close]');await pg.wait_for_timeout(100)
+      await pg.evaluate("S.view='dash';render()");await pg.wait_for_timeout(200)
+      await pg.click('#app .rpg-top .rpg-spr');await pg.wait_for_timeout(200)
+      print(scheme,'boss info',await pg.evaluate("[document.getElementById('editDlg').open,!!document.querySelector('#editDlg .inf-boss')]"));await pg.screenshot(path=f'{SHOTS}/info-boss-{scheme}.png');await pg.click('[data-action=dlg-close]');await pg.wait_for_timeout(100)
+      # select: buttons reachable, row tap, long press, back
+      await pg.evaluate("S.view='tasks';render()");await pg.wait_for_timeout(200)
+      print(scheme,'select btn in view',await pg.evaluate("(()=>{const r=document.querySelector('[data-action=sel-mode]').getBoundingClientRect();return r.left>=0&&r.right<=innerWidth})()"))
+      await pg.click('[data-action=sel-mode]');await pg.wait_for_timeout(150)
+      await pg.click('#app .item.trow2 .grow >> nth=0');await pg.wait_for_timeout(150)
+      print(scheme,'row tap selects',await pg.evaluate("S.sel.size"))
+      await pg.click('#app .item.trow2 .grow >> nth=0');await pg.wait_for_timeout(150)
+      print(scheme,'row tap unselects',await pg.evaluate("S.sel.size"))
+      await pg.click('[data-action=sel-exit]');await pg.wait_for_timeout(150)
+      box=await pg.locator('#app .item.trow2 .grow >> nth=1').bounding_box()
+      await pg.mouse.move(box['x']+40,box['y']+15);await pg.mouse.down();await pg.wait_for_timeout(750);await pg.mouse.up();await pg.wait_for_timeout(250)
+      print(scheme,'long press',await pg.evaluate("[S.selMode,S.sel.size]"))
+      await pg.keyboard.press('Escape');await pg.wait_for_timeout(150)
+      print(scheme,'escape leaves',await pg.evaluate("S.selMode"))
+      await pg.evaluate("S.view='habits';render()");await pg.wait_for_timeout(200)
+      await pg.click('[data-action=sel-mode][data-k=habits]');await pg.wait_for_timeout(150)
+      await pg.click('#app .goals>.card >> nth=0',position={'x':200,'y':20});await pg.wait_for_timeout(150)
+      print(scheme,'habit card tap selects',await pg.evaluate("S.sel.size"),'logs unchanged',await pg.evaluate("S.logs.size"))
+      await pg.click('[data-action=sel-exit]')
+      # auto backup: browser shows card, native saves silently
+      await pg.evaluate("S.cfg.abOn=true;S.cfg.abTime='00:00';saveCfg();localStorage.removeItem('gt-auto-last');S.view='dash';render()");await pg.wait_for_timeout(200)
+      print(scheme,'web card',await pg.evaluate("!!document.querySelector('[data-action=backup-auto]')"))
+      await pg.evaluate("window.GTNative={calls:[],async autoBackup(n,t){this.calls.push([n,t.length])},cancel(){},async reschedule(){},bars(){},async schedule(){}};autoBackupTick()");await pg.wait_for_timeout(400)
+      print(scheme,'native auto backup',await pg.evaluate("[GTNative.calls.length,GTNative.calls[0]&&GTNative.calls[0][0].startsWith('goalterra-auto-'),localStorage.getItem('gt-auto-last')===TODAY()]"))
+      await pg.evaluate("GTNative.calls.length=0;autoBackupTick()");await pg.wait_for_timeout(200)
+      print(scheme,'only once a day',await pg.evaluate("GTNative.calls.length"))
+      print(scheme,'ov',await overflow(pg),'errors',errs)
+      await ctx.close()
+    await b.close()
+asyncio.run(main())

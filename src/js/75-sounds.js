@@ -27,7 +27,7 @@ const Sound={
   }
 };
 Sound.load();
-const CFG_DEF={nOn:true,nMorning:'08:00',nEvening:'20:00',nClasses:true,nExams:true,classes:'',ttStart:'sun',restDays:'',rewards:'',rpgSince:'',eliteTarget:'60',focusLen:'25',breakLen:'5',rpg:false,coachTone:'on',lvl2:'3',lvl3:'5',stuCompact:false,avoidHide:true,cTask:true,cGoal:true,cHabit:true,dCharts:true,dTasks:true,dGoals:true,dHabits:true,prio:'low',showDone:true,dueDef:'today',sortBy:'due',groupTags:true,autoArch:'0',defFilter:'all',showSubs:true,showNotes:true,dOverdue:false,avoidMode:'clean',student:false,lang:'en',srOn:true,srWeak:'1',srOk:'3',srLadder:'1,3,7,14,30'};
+const CFG_DEF={nOn:true,abOn:false,abTime:'21:00',nMorning:'08:00',nEvening:'20:00',nClasses:true,nExams:true,classes:'',ttStart:'sun',restDays:'',rewards:'',rpgSince:'',eliteTarget:'60',focusLen:'25',breakLen:'5',rpg:false,coachTone:'on',lvl2:'3',lvl3:'5',stuCompact:false,avoidHide:true,cTask:true,cGoal:true,cHabit:true,dCharts:true,dTasks:true,dGoals:true,dHabits:true,prio:'low',showDone:true,dueDef:'today',sortBy:'due',groupTags:true,autoArch:'0',defFilter:'all',showSubs:true,showNotes:true,dOverdue:false,avoidMode:'clean',student:false,lang:'en',srOn:true,srWeak:'1',srOk:'3',srLadder:'1,3,7,14,30'};
 try{S.cfg={...CFG_DEF,...JSON.parse(localStorage.getItem('gt-settings')||'{}')}}catch(e){S.cfg={...CFG_DEF}}
 S.taskFilter=S.cfg.defFilter;
 const saveCfg=()=>{try{localStorage.setItem('gt-settings',JSON.stringify(S.cfg))}catch(e){}};

@@ -107,6 +107,7 @@ Settings → Language switches the whole app to Arabic with a mirrored right-to-
 
 - Everything is stored locally. Nothing is uploaded anywhere
 - **Back up now** saves a dated `goalterra-YYYY-MM-DD.json` file. Restoring shows a preview first (what the backup holds, when it was made, and how it compares with your data now) before anything is replaced
+- **Automatic daily backup** (Settings → Storage & backup): pick a time. In the Android app it saves quietly to `Documents/GoalTerra` (the last 7 are kept) when the app is open after that time, and a reminder rings at that time if it isn't. A browser can't save files by itself, so it shows a *Back up now* card instead
 - The backup reminder escalates if you go 30 days without one; older backups keep loading in newer versions
 - Clearing the browser's site data deletes your data, so keep a backup
 

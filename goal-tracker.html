@@ -5,6 +5,7 @@
     PATCH = bug fix · MINOR = new feature · MAJOR = breaks old backups or data
 
   Changelog
+  0.73.0 Info sheets and automatic backup: tap a task, a goal or the week boss to see its full details (with Edit, Done and Focus buttons); Select mode is more reliable (tap anywhere on a row, long-press a task or habit to start, Back or Escape leaves, Select and Calendar no longer scroll off screen); and Settings → Storage & backup has an automatic daily backup at a time you choose. In the Android app it saves silently to Documents/GoalTerra (last 7 kept) when the app is open after that time and rings a reminder at that time; in a browser it shows a Back up now card.
   0.72.1 Tip cards: each tab shows one short, dismissible lesson the first time (day levels and Game mode on the Dashboard, quick add, goal ladder, build vs avoid habits, how Study picks work). Dismissed tips stay hidden; Settings has Show tips again.
   0.72.0 Declutter: the Dashboard now shows today's tasks first, with the game, stats and coach below; the game card shows just the boss and HP until you tap Details; the three goal buttons became Plan this week plus a menu; done tasks collapse under a single "N done" row and show their date once; task filters stay on one line and the add box hints at quick-add words; number goals lose the redundant tick; the Study tab shows 5 picks and starts with subjects collapsed; Habits' add form sits behind "+ New habit"; Settings groups are collapsible sections; backup has two main buttons (Back up now, Restore) with the rest under Advanced; and every confirm, prompt and alert is now an in-app dialog instead of a browser pop-up.
   0.71.1 Fix (Android app): a white strip with a squashed logo showed under the status bar on some phones. The space behind the status bar now takes the app's background colour and follows theme and palette changes
@@ -603,6 +604,14 @@ body.cmp .add{gap:6px}body.cmp .goals,body.cmp .list{gap:6px}
 .intro-row{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
 .intro-nav{display:flex;justify-content:space-between;align-items:center;gap:8px}
 .intro-nav .grow{flex:1}
+
+.fbar{display:flex;gap:6px;flex-wrap:nowrap;align-items:center}.fscroll{display:flex;gap:6px;overflow-x:auto;flex:1;min-width:0;scrollbar-width:none}.fscroll::-webkit-scrollbar{display:none}.fscroll .chip,.fbar>.chip{flex:none;white-space:nowrap}
+body.selmode .goals>.card button:not(.selbox),body.selmode .item .tcheck{pointer-events:none}
+body.selmode .item.trow2 .grow,body.selmode .goals>.card{cursor:pointer}
+.info .inf-sub{margin:-4px 0 10px;color:var(--muted)}.irow{display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px solid var(--line);font-size:14px}.irow span{color:var(--muted)}.irow b{text-align:end;font-weight:600}
+.inf-notes{margin:10px 0;padding:10px;border-radius:10px;background:var(--soft);white-space:pre-wrap;font-size:14px}.inf-list{margin:10px 0;font-size:14px}.inf-list>div{padding:3px 0}.inf-list .sdone{text-decoration:line-through;color:var(--muted)}
+.inf-boss{display:flex;gap:12px;align-items:center;margin-bottom:10px}.inf-boss .rpg-spr{width:64px;height:64px;flex:none}.rpg-top[data-action]{cursor:pointer}
+.info .dlg-actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:14px}
 </style>
 </head>
 <body>
@@ -799,7 +808,7 @@ function taskItem(t){
   const dp=t.done?'':t.due?dueLeft(t.due):'';
   return `<li class="item trow2 pr-${t.priority||'low'} ${t.done?'done dim':''} ${sm&&S.sel.has(t.id)?'selected':''}">
     ${sm?selBox(t.id):`<input type="checkbox" data-action="toggle-task" data-id="${t.id}" ${t.done?'checked':''} aria-label="Complete">`}
-    <div class="grow" ${sm?'':`data-action="edit-task" data-id="${t.id}" role="button" tabindex="0"`}><div class="title">${esc(t.title)}</div>
+    <div class="grow" ${sm?`data-action="sel-toggle" data-id="${t.id}" role="button" tabindex="0"`:`data-action="info-task" data-id="${t.id}" role="button" tabindex="0"`}><div class="title">${esc(t.title)}</div>
       ${t.notes&&S.cfg.showNotes?`<div class="tnotes">${esc(t.notes)}</div>`:''}
       ${(t.items||[]).length&&S.cfg.showSubs?`<ul class="subs">${t.items.map((it,i)=>`<li><label class="${it.done?'sdone':''}"><input type="checkbox" data-action="toggle-sub" data-id="${t.id}" data-i="${i}" ${it.done?'checked':''}><span>${esc(it.text)}</span></label></li>`).join('')}</ul>`:''}
       <div class="meta">
@@ -824,14 +833,14 @@ function dayButtons(h,n=7){
 function habitCard(h,full){
   const s=streak(h);
   const sm=full&&selOn('habits'),cm=full&&(S.compact||(S.cfg.student&&S.cfg.stuCompact));
-  if(cm)return `<div class="card hcompact ${sm&&S.sel.has(h.id)?'selected':''}"><div class="habit">${sm?selBox(h.id):''}
-    <div class="grow habit-open" data-action="open-habit" data-id="${h.id}" role="button" tabindex="0" title="Open history"><div class="title">${hname(h)}</div>
+  if(cm)return `<div class="card hcompact ${sm&&S.sel.has(h.id)?'selected':''}" ${sm?`data-action="sel-toggle" data-id="${h.id}"`:''}><div class="habit">${sm?selBox(h.id):''}
+    <div class="grow habit-open" ${sm?'':`data-action="open-habit" data-id="${h.id}" role="button" tabindex="0" title="Open history"`}><div class="title">${hname(h)}</div>
       <div class="meta"><span class="streak">${isNeg(h)?'🛡':'🔥'}${s}</span><span>${weekCount(h)}/${weekTarget(h)} this wk</span></div></div>
     ${dayButtons(h)}
     ${mvBtns('move-habit',h.id,`data-id="${h.id}"`)}<button class="icon" data-action="edit-habit" data-id="${h.id}" title="Edit" aria-label="Edit">✎</button></div></div>`;
   let heat='';if(full){for(let i=27;i>=0;i--){const k=ds(addDays(new Date(),-i));heat+=`<i class="${good(h,k)?'on':''}" title="${k}"></i>`}}
-  return `<div class="card ${sm&&S.sel.has(h.id)?'selected':''}"><div class="habit">${sm?selBox(h.id):''}
-    <div class="grow habit-open" data-action="open-habit" data-id="${h.id}" role="button" tabindex="0" title="Open history"><div class="title">${hname(h)} <span class="chev">›</span></div>
+  return `<div class="card ${sm&&S.sel.has(h.id)?'selected':''}" ${sm?`data-action="sel-toggle" data-id="${h.id}"`:''}><div class="habit">${sm?selBox(h.id):''}
+    <div class="grow habit-open" ${sm?'':`data-action="open-habit" data-id="${h.id}" role="button" tabindex="0" title="Open history"`}><div class="title">${hname(h)} <span class="chev">›</span></div>
       <div class="meta"><span class="streak">${isNeg(h)?'🛡 '+s+' day'+(s===1?'':'s')+' clean':'🔥 '+s+' day'+(s===1?'':'s')}</span>
         <span>This week ${weekCount(h)}/${weekTarget(h)}</span>${full?`<span>30-day ${rate30(h)}%</span>`:''}${hasSched(h)?`<span>${schedText(h)}</span>`:''}</div></div>
     ${dayButtons(h)}
@@ -995,7 +1004,7 @@ function rpgCard(){
   const dl=7-((new Date().getDay()+6)%7),hit=S.rpgHit&&Date.now()-S.rpgHit.at<1500?S.rpgHit:null;
   const L=heroLv(A.xp),lo=50*(L-1)*(L-1),hi=50*L*L,xpPct=Math.round((A.xp-lo)/(hi-lo)*100);
   const status=w.won?'Defeated. It joins your bestiary.':dl===1?`${left} HP to go. It escapes tonight.`:`${left} HP to go`;
-  return `<div class="card rpg ${w.won?'won':''} ${S.rpgOpen?'open':''}"><div class="rpg-top">
+  return `<div class="card rpg ${w.won?'won':''} ${S.rpgOpen?'open':''}"><div class="rpg-top" data-action="info-boss" role="button" tabindex="0">
     <div class="rpg-spr ${hit?'shake':''}">${m.svg}${hit?`<span class="rpg-dmg ${hit.crit?'crit':''}">−${hit.n}</span>`:''}</div>
     <div class="grow" style="min-width:0"><div class="rpg-lbl"><span>Week boss</span><span>${w.won?'🏆':dl===1?'Last day':dl+' days left'}</span></div>
       <b class="rpg-name" translate="no">${m.name}</b><span class="rpg-sub">${m.title}</span>
@@ -1195,6 +1204,10 @@ if(NATIVE)(()=>{
     async saveFile(name,text,share){const uri=await save('GoalTerra',name,text);if(share!==false){try{await SH.share({title:name,files:[uri],dialogTitle:L2('Save or send','احفظ أو أرسل')})}catch(e){}}
       return{msg:L2(`Saved to Documents/GoalTerra/${name}`,`حُفظ في Documents/GoalTerra/${name}`)}},
     async saveBackup(name,text){return this.saveFile(name,text,true)},
+    async autoBackup(name,text){await save('GoalTerra',name,text);
+      try{const r=await FS.readdir({path:'GoalTerra',directory:'DOCUMENTS'});const old=(r.files||[]).map(f=>f.name||f).filter(n=>/^goalterra-auto-.*\.json$/.test(n)).sort();
+        for(const n of old.slice(0,Math.max(0,old.length-7)))await FS.deleteFile({path:'GoalTerra/'+n,directory:'DOCUMENTS'})}catch(e){}
+      return true},
     async shareFile(name,text){const uri=await save('',name,text);await SH.share({title:name,files:[uri]})},
     bars(bg){try{const m=(String(bg).match(/\d+/g)||[255,255,255]).map(Number),l=(.2126*m[0]+.7152*m[1]+.0722*m[2])/255;SB.setStyle({style:l<.5?'DARK':'LIGHT'});
       BG.setColor({color:'#'+m.slice(0,3).map(x=>x.toString(16).padStart(2,'0')).join('')}).catch(()=>{})}catch(e){}},
@@ -1211,16 +1224,17 @@ if(NATIVE)(()=>{
   };
   APP.addListener('backButton',()=>{
     if(dlg.open){dlg.close();return}
+    if(S.selMode){S.selMode=null;S.sel.clear();render();return}
     if(typeof cellEl!=='undefined'&&cellEl){hideCellMenu();return}
     if(S.view!=='dash'){S.view='dash';render();scrollTo(0,0);return}
     APP.exitApp()});
-  APP.addListener('resume',()=>{render();ftTick(true);planNotifications(true)});
+  APP.addListener('resume',()=>{render();ftTick(true);planNotifications(true);autoBackupTick()});
   document.documentElement.classList.add('native');
 })();
 // Upcoming reminders for the next 7 days, rebuilt whenever data changes (Android app only).
 let _nTimer=null,_nKey='';
 function planNotifications(force){
-  if(!window.GTNative)return;const key=DBV+'|'+TODAY()+'|'+JSON.stringify([S.cfg.nOn,S.cfg.nMorning,S.cfg.nEvening,S.cfg.nClasses,S.cfg.nExams,S.cfg.classes,S.cfg.lang,S.cfg.rpg]);
+  if(!window.GTNative)return;const key=DBV+'|'+TODAY()+'|'+JSON.stringify([S.cfg.abOn,S.cfg.abTime,S.cfg.nOn,S.cfg.nMorning,S.cfg.nEvening,S.cfg.nClasses,S.cfg.nExams,S.cfg.classes,S.cfg.lang,S.cfg.rpg]);
   if(!force&&key===_nKey)return;_nKey=key;clearTimeout(_nTimer);_nTimer=setTimeout(()=>GTNative.reschedule(buildNotifications()),1500)}
 function buildNotifications(){
   const out=[],now=Date.now(),at=(d,hm)=>{const[h,m]=String(hm||'08:00').split(':').map(Number);const x=new Date(d);x.setHours(h,m||0,0,0);return x.getTime()};
@@ -1239,6 +1253,7 @@ function buildNotifications(){
       if(body)out.push({key:'e'+k,at:e,title:L2('Evening check-in','مراجعة المساء'),body})}
     if(S.cfg.nClasses)for(const c of cls){const t=at(d,c.start)-10*60000;if(t>now)out.push({key:'c'+k+c.id,at:t,title:L2(`${c.subject} at ${c.start}`,`${c.subject} الساعة ${c.start}`),body:c.room?L2('Room ','القاعة ')+c.room:L2('Class in 10 minutes','الحصة بعد 10 دقائق')})}
     if(S.cfg.nExams&&S.cfg.student)for(const x of S.exams.filter(x=>x.date===ds(addDays(d,1))&&x.score==null)){const t=at(d,'18:00');if(t>now)out.push({key:'x'+x.id,at:t,title:L2('Tomorrow: ','غدًا: ')+x.title,body:(x.time?x.time+' · ':'')+L2('A last review tonight helps.','مراجعة أخيرة الليلة تفيد.')})}}
+  if(S.cfg.abOn)for(let i=0;i<7;i++){const d=addDays(new Date(),i),t=at(d,S.cfg.abTime||'21:00');if(t>now)out.push({key:'ab'+ds(d),at:t,title:L2('Daily backup','النسخ الاحتياطي اليومي'),body:L2('Open GoalTerra to save today\'s backup.','افتح GoalTerra لحفظ نسخة اليوم.')})}
   if(backupDue()){const t=at(addDays(new Date(),1),'12:00');out.push({key:'bk',at:t,title:L2('Back up GoalTerra','انسخ GoalTerra احتياطيًا'),body:L2('Your last backup is old. Open Settings and tap Back up now.','آخر نسخة احتياطية قديمة. افتح الإعدادات واضغط انسخ احتياطيًا الآن.')})}
   return out.sort((a,b)=>a.at-b.at).slice(0,60);
 }
@@ -1407,7 +1422,7 @@ function ladderNode(g,ids,seen,ord,depth){
   const add=can?(adding?`<form class="ladd" data-form="ltask" data-goal="${g.id}"><input type="text" name="title" placeholder="New task for this goal" required autocomplete="off"><button class="chip">Add</button><button type="button" class="chip" data-action="ladd-close" aria-label="Close">✕</button></form>`:`<button type="button" class="ladd-btn" data-action="ladd-open" data-id="${g.id}">+ Task</button>`):'';
   return `<div class="lnode ${depth?'sub':''} ${g.done?'isdone':''} ${g.status==='missed'?'ismissed':''}">
     <div class="lrow">${has?`<button type="button" class="lchev" data-action="toggle-folder" data-name="${key}" aria-expanded="${!col}" aria-label="${col?'Expand':'Collapse'}">${col?'▸':'▾'}</button>`:'<span class="lchev"></span>'}
-      <div class="grow" data-action="edit-goal" data-id="${g.id}" role="button" tabindex="0"><div class="ltitle"><span class="lv">${LV_SHORT[g.horizon]}</span> <span class="title">${esc(g.title)}</span></div>${meta?`<div class="meta">${meta}</div>`:''}</div>
+      <div class="grow" data-action="info-goal" data-id="${g.id}" role="button" tabindex="0"><div class="ltitle"><span class="lv">${LV_SHORT[g.horizon]}</span> <span class="title">${esc(g.title)}</span></div>${meta?`<div class="meta">${meta}</div>`:''}</div>
       ${k!=='rollup'&&!tasks.length?`<button class="icon lck" data-action="done-goal" data-id="${g.id}" aria-label="${g.done?'Reopen':'Mark complete'}">${g.done?'↺':'✓'}</button>`:''}<b class="lpct">${g.done?'✓':p+'%'}</b></div>
     <div class="bar lbar"><span style="width:${p}%"></span></div>${num}
     ${col||!(tasks.length||kids.length||can)?'':`<div class="lkids">${tasks.map(trow).join('')}${add}${kids.map(c=>ladderNode(c,ids,seen,ord,depth+1)).join('')}</div>`}</div>`;
@@ -1425,7 +1440,7 @@ function goalCard(g){
     <button class="numval" data-action="goal-set" data-id="${g.id}" title="Set exact value">${fmtNum(g.value)} <span>/ ${fmtNum(g.target)} ${esc(g.unit||'')}</span></button>
     <button class="ghost" data-action="goal-inc" data-id="${g.id}" aria-label="Increase">+</button></div>`:'';
   return `<div class="card goal ${g.done?'isdone':''} ${missed?'ismissed':''}">
-    <div class="row"><div class="grow"><div class="title">${esc(g.title)}</div>
+    <div class="row"><div class="grow" data-action="info-goal" data-id="${g.id}" role="button" tabindex="0"><div class="title">${esc(g.title)}</div>
       <div class="meta">${tags.join('')}</div></div>
       ${k==='number'&&!g.done?'':`<button class="icon" data-action="done-goal" data-id="${g.id}" title="${g.done?'Reopen':'Mark complete'}" aria-label="${g.done?'Reopen':'Mark complete'}">${g.done?'↺':'✓'}</button>`}
       <button class="icon" data-action="edit-goal" data-id="${g.id}" title="Edit" aria-label="Edit">✎</button>
@@ -1526,7 +1541,7 @@ function viewDash(){
   const lb=daysSince(lastBackup());
   const openSlots=planTargets().reduce((a,g)=>a+planLeft(g),0),dow=new Date().getDay();
   const planCta=!wk.length||((dow===0||dow===1)&&openSlots>0);
-  return `${sampleBanner()}${dayBanner()}${backupNudge()?`<div class="card backup-cta ${backupLevel()>1?'urgent':''}"><div class="grow"><div class="title">${lb===null?'No backup yet':'Last backup '+agoText(lb)}</div><div class="meta">${backupLevel()>1?'If this browser clears its storage, everything since your last backup is gone. Back up now.':'Your data lives only in this browser. Save a backup and keep it somewhere safe.'}</div></div><button class="btn" data-action="backup-now">Back up now</button><button class="icon" data-action="backup-snooze" title="Remind me later" aria-label="Dismiss backup reminder">✕</button></div>`:''}${nRv?`<div class="card review-cta"><div class="grow"><div class="title">${nRv} goal${nRv>1?'s':''} from past periods need${nRv>1?'':'s'} a review</div><div class="meta">Hit it, missed, or carry over. About a minute.</div></div><button class="btn" data-action="open-review">Review</button></div>`:''}  <div class="grid2" style="margin-top:6px"><div>
+  return `${sampleBanner()}${dayBanner()}${autoCard()}${backupNudge()?`<div class="card backup-cta ${backupLevel()>1?'urgent':''}"><div class="grow"><div class="title">${lb===null?'No backup yet':'Last backup '+agoText(lb)}</div><div class="meta">${backupLevel()>1?'If this browser clears its storage, everything since your last backup is gone. Back up now.':'Your data lives only in this browser. Save a backup and keep it somewhere safe.'}</div></div><button class="btn" data-action="backup-now">Back up now</button><button class="icon" data-action="backup-snooze" title="Remind me later" aria-label="Dismiss backup reminder">✕</button></div>`:''}${nRv?`<div class="card review-cta"><div class="grow"><div class="title">${nRv} goal${nRv>1?'s':''} from past periods need${nRv>1?'':'s'} a review</div><div class="meta">Hit it, missed, or carry over. About a minute.</div></div><button class="btn" data-action="open-review">Review</button></div>`:''}  <div class="grid2" style="margin-top:6px"><div>
     ${S.cfg.dTasks?`<h2>Today's tasks</h2>${todays.length?`<ul class="list">${todays.map(taskItem).join('')}</ul>`:`<div class="empty">Nothing due today.</div>`}
     ${overdue&&!S.cfg.dOverdue?`<button class="chip" style="margin-top:10px" data-action="see-overdue">${overdue} overdue from earlier days →</button>`:''}`:''}
     ${S.cfg.dGoals?`<div class="h2row"><h2>This week's goals</h2><span class="hbtns"><button class="chip" data-action="open-plan">Plan this week</button><details class="chipmenu"><summary class="chip" aria-label="More">⋯</summary><div><button class="chip" data-action="open-report">Weekly report</button><button class="chip" data-action="open-month">Monthly review</button></div></details></span></div>${wk.length?`<div class="goals">${wk.map(goalCard).join('')}</div>`:`<div class="empty">No weekly goals for ${currentPeriod('weekly')}.</div>`}`:''}
@@ -1580,7 +1595,7 @@ function viewTasks(){
   const nOver=live.filter(t=>!t.done&&t.due&&t.due<today).length;
   const chip=(k,l)=>`<button class="chip ${f===k?'on':''}" data-action="task-filter" data-v="${k}">${l}</button>`;
   return `<form class="add taskadd card" data-form="task">
-    <div class="qa"><input type="text" name="title" placeholder="${L2('New task… try: tomorrow !high #uni','مهمة جديدة… جرّب كتابة «غدًا»')}" required autocomplete="off" aria-describedby="qaHint"><button class="btn">Add</button></div>
+    <div class="qa"><input type="text" name="title" placeholder="${L2('New task… try: tomorrow !high','مهمة جديدة… جرّب كتابة «غدًا»')}" required autocomplete="off" aria-describedby="qaHint"><button class="btn">Add</button></div>
     <div class="qa-hint" id="qaHint" aria-live="polite" hidden></div>
     <details class="more"><summary>More options</summary><div class="moreg">
     <input type="date" name="due" aria-label="Due date" value="${S.cfg.dueDef==="none"?"":S.cfg.dueDef==="tomorrow"?ds(addDays(new Date(),1)):today}">
@@ -1591,7 +1606,7 @@ function viewTasks(){
     <textarea name="notes" placeholder="Notes (optional)" style="min-height:40px"></textarea>
     <textarea name="items" placeholder="Checklist (optional, one item per line)" style="min-height:40px"></textarea>
     </div></details></form>
-  ${S.tcalOn?`<div class="filters"><button class="chip" data-action="tasks-cal">☰ List</button></div>${calView()}`:`<div class="filters nowrap">${chip('all','All')}${chip('today','Due today')}${chip('overdue','Overdue'+(nOver?' · '+nOver:''))}${chip('done','Done')}<button class="chip ${selOn('tasks')?'on':''}" data-action="sel-mode" data-k="tasks" aria-pressed="${selOn('tasks')}">${selOn('tasks')?'✓ Selecting':'☑ Select'}</button><button class="chip" data-action="tasks-cal">📅 Calendar</button></div>
+  ${S.tcalOn?`<div class="filters"><button class="chip" data-action="tasks-cal">☰ List</button></div>${calView()}`:`<div class="filters fbar"><div class="fscroll">${chip('all','All')}${chip('today','Due today')}${chip('overdue','Overdue'+(nOver?' · '+nOver:''))}${chip('done','Done')}</div><button class="chip ${selOn('tasks')?'on':''}" data-action="sel-mode" data-k="tasks" aria-pressed="${selOn('tasks')}">${selOn('tasks')?'✓ Selecting':'☑ Select'}</button><button class="chip" data-action="tasks-cal">📅 Calendar</button></div>
   ${open.length?taskGroups(open):((done.length&&showDone)?'':`<div class="empty">No tasks here.</div>`)}
   ${(done.length&&showDone)?`${f==='done'?'':`<button class="chip" style="margin-top:12px" data-action="toggle-done-list" aria-expanded="${!!S.doneOpen}">${S.doneOpen?'▾':'▸'} ${L2(done.length+' done',done.length+' منجزة')}</button>`}${(f==='done'||S.doneOpen)?`<ul class="list">${(S.doneAll?done:done.slice(0,40)).map(taskItem).join('')}</ul>`:''}${done.length>40&&(f==='done'||S.doneOpen)?`<button class="chip" style="margin-top:8px" data-action="toggle-done-all">${S.doneAll?'Show fewer':'Show all '+done.length+' completed'}</button>`:''}`:''}`}`;
 }
@@ -1745,7 +1760,7 @@ const selBox=id=>`<input type="checkbox" class="selbox" data-action="sel-toggle"
 function selBar(){
   const k=S.selMode;if(!k||S.view!==k)return'';
   const n=S.sel.size,dis=n?'':'disabled';
-  return `<div class="selbar" role="toolbar" aria-label="Bulk actions"><div class="selrow"><b>${n} selected</b>
+  return `<div class="selbar" role="toolbar" aria-label="Bulk actions"><div class="selrow"><b>${n?n+' selected':L2('Tap items to select','اضغط العناصر لتحديدها')}</b>
     <button class="chip" data-action="sel-all">All</button><button class="chip" data-action="sel-none">None</button><button class="chip" data-action="sel-exit">Cancel</button></div>
     <div class="selrow">${k==='tasks'?`<button class="chip act" data-action="bulk-done" ${dis}>✓ Done</button>`:''}<button class="chip act" data-action="bulk-edit" ${dis}>✎ Edit…</button>${k==='tasks'?`<button class="chip act" data-action="bulk-archive" ${dis}>Archive</button>`:''}<button class="chip act danger" data-action="bulk-del" ${dis}>🗑 Delete</button></div></div>`;
 }
@@ -1886,6 +1901,8 @@ function viewData(){
     <div class="card settings setacc ${S.setOpen&&S.setOpen.has('Templates and sample data')?'open':''}"><div class="title" data-action="set-acc" data-k="Templates and sample data" role="button" tabindex="0">Templates and sample data</div><p class="meta">Start a goal ladder from a template, or explore the app with sample data you can clear later.</p><div class="row"><button class="ghost" data-action="tpl-open">Templates</button>${hasSample()?'<button class="ghost" data-action="sample-clear">Clear sample data</button>':'<button class="ghost" data-action="sample-add">Load sample data</button>'}</div></div>
   <div class="card settings setacc ${S.setOpen&&S.setOpen.has('Storage & backup')?'open':''}"><div class="title" data-action="set-acc" data-k="Storage & backup" role="button" tabindex="0">Storage &amp; backup</div>
     <div class="row" style="margin:6px 0"><button class="btn" data-action="backup-now">Back up now</button><button class="ghost" data-action="import">Restore</button></div>
+    ${sw('abOn',L2('Automatic daily backup','نسخ احتياطي يومي تلقائي'),window.GTNative?L2('Saved to Documents/GoalTerra (last 7 kept) when the app is open after this time, with a reminder at that time.','يُحفظ في مجلد المستندات (آخر 7 نسخ) عند فتح التطبيق بعد هذا الوقت، مع تذكير في ذلك الوقت.'):L2('A browser cannot save files silently, so you get a Back up now card at this time.','المتصفح لا يحفظ الملفات بصمت، فستظهر بطاقة نسخ احتياطي في هذا الوقت.'),S.cfg.abOn)}
+    ${S.cfg.abOn?`<label class="swrow"><span>${L2('Backup time','وقت النسخ')}</span><input type="time" data-action="set" data-k="abTime" value="${S.cfg.abTime||'21:00'}"></label>`:''}
     <div class="meta">${S.tasks.length} tasks · ${S.goals.length} goals · ${S.habits.length} habits · ${S.logs.size} check-ins</div>
     <p class="meta">${window.GTNative?L2('Saved on this phone. Backups go to Documents/GoalTerra.','محفوظ على هذا الهاتف. النسخ الاحتياطية تُحفظ في مجلد المستندات.'):'Stored in this browser\'s IndexedDB. Export regularly to back up or move to another device.'}</p>
     <div class="kstat"><span><i class="dot ${lb===null?'bad':lb>BACKUP_STALE?'warn':'ok'}"></i>Last backup: <b>${agoText(lb)}</b></span>
@@ -2132,8 +2149,48 @@ function drawHabit(){
 document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('[role=button][data-action]')){e.preventDefault();e.target.click()}});
 
 /* ---------- Version ---------- */
-const APP_VERSION='0.72.1';
+const APP_VERSION='0.73.0';
 
+/* ---------- Info sheets: tap a task, goal or boss for the full picture ---------- */
+const irow=(l,v)=>v?`<div class="irow"><span>${l}</span><b>${v}</b></div>`:'';
+const iBtn=(label,act,id,cls)=>`<button type="button" class="${cls||'ghost'}" data-action="tm" data-do="${act}" data-id="${id}">${label}</button>`;
+function infoShell(title,body,acts){
+  dlg.innerHTML=`<div class="hist info"><div class="hist-top"><h3>${title}</h3><button type="button" class="icon" data-action="dlg-close" aria-label="Close">✕</button></div>${body}<div class="dlg-actions">${acts}</div></div>`;
+  if(!dlg.open)dlg.showModal();
+}
+function openInfo(kind,id){
+  if(kind==='task'){const t=S.tasks.find(x=>x.id===id);if(!t)return;
+    const g=t.goalId&&goalById(t.goalId),items=t.items||[];
+    const pr={high:L2('High','عالية'),med:L2('Medium','متوسطة'),low:L2('Low','منخفضة')}[t.priority]||'';
+    const body=`<div class="inf-sub">${t.done?L2('Done','منجزة')+(t.doneAt?' · '+fmtWhen(t.doneAt):''):t.due?dueLeft(t.due):L2('No due date','بلا موعد')}</div>
+      ${irow(L2('Due','الموعد'),t.due?fmtDay(t.due):'')}${irow(L2('Priority','الأولوية'),pr)}${irow(L2('Goal','الهدف'),g?esc(g.title):'')}${irow(L2('Folder','المجلد'),t.tag?'#'+esc(t.tag):'')}
+      ${irow(L2('Repeats','التكرار'),t.repeat?REPEAT_LABEL[t.repeat]||'':'')}${irow(L2('Focus time','وقت التركيز'),t.focus?fmtMin(t.focus):'')}
+      ${irow(L2('Pushed back','أُجّلت'),(t.pushes||[]).length?(t.pushes.length+'×'):'')}${irow(L2('Created','أُنشئت'),t.created?fmtDate(ds(new Date(t.created))):'')}
+      ${t.notes?`<div class="inf-notes">${esc(t.notes)}</div>`:''}
+      ${items.length?`<div class="inf-list"><b>${L2('Checklist','القائمة')} ${items.filter(i=>i.done).length}/${items.length}</b>${items.map(i=>`<div class="${i.done?'sdone':''}">${i.done?'☑':'☐'} ${esc(i.text)}</div>`).join('')}</div>`:''}`;
+    infoShell(esc(t.title),body,iBtn(t.done?L2('Reopen','إعادة فتح'):'✓ '+L2('Done','تم'),'toggle-task',id)+(t.done?'':iBtn('⏱ '+L2('Focus','تركيز'),'ft-start',id))+iBtn('✎ '+L2('Edit','تعديل'),'edit-task',id,'btn'))}
+  else if(kind==='goal'){const g=goalById(id);if(!g)return;
+    const p=progress(g),par=g.parentId&&goalById(g.parentId),k=goalKind(g);
+    const kids=S.goals.filter(c=>c.parentId===g.id),tasks=S.tasks.filter(x=>x.goalId===g.id);
+    const kindL={check:L2('Checkbox or linked tasks','مربع أو مهام مرتبطة'),number:L2('Number target','هدف رقمي'),rollup:L2('Built from sub-goals','من أهداف فرعية')}[k]||'';
+    const st=g.done?L2('Done','منجز'):g.status==='missed'?L2('Missed','فائت'):needsReview(g)?L2('Needs review','يحتاج مراجعة'):L2('Active','نشط');
+    const body=`<div class="inf-sub">${esc(HORIZONS[g.horizon])} · ${esc(g.period)} · ${st}</div>
+      <div class="bar"><span style="width:${p}%"></span></div><div class="meta" style="margin:4px 0 8px">${p}%${goalDetail(g)?' · '+goalDetail(g):''}</div>
+      ${irow(L2('Measured by','يُقاس بـ'),kindL)}${k==='number'?irow(L2('Progress','التقدم'),`${fmtNum(g.value)} / ${fmtNum(g.target)} ${esc(g.unit||'')}`):''}${irow(L2('Supports','يدعم'),par?esc(par.title):'')}
+      ${g.notes?`<div class="inf-notes">${esc(g.notes)}</div>`:''}${g.lesson?`<div class="inf-notes">${esc(g.lesson)}</div>`:''}
+      ${kids.length?`<div class="inf-list"><b>${L2('Sub-goals','أهداف فرعية')}</b>${kids.map(c=>`<div class="${c.done?'sdone':''}">${c.done?'☑':'☐'} ${esc(c.title)} <span class="meta">${progress(c)}%</span></div>`).join('')}</div>`:''}
+      ${tasks.length?`<div class="inf-list"><b>${L2('Linked tasks','المهام المرتبطة')} ${tasks.filter(x=>x.done).length}/${tasks.length}</b>${tasks.slice(0,12).map(x=>`<div class="${x.done?'sdone':''}">${x.done?'☑':'☐'} ${esc(x.title)}</div>`).join('')}</div>`:''}`;
+    infoShell(esc(g.title),body,iBtn(g.done?L2('Reopen','إعادة فتح'):'✓ '+L2('Complete','إكمال'),'done-goal',id)+iBtn('✎ '+L2('Edit','تعديل'),'edit-goal',id,'btn'))}
+  else if(kind==='boss'){if(!rpgOn())return;
+    const A=rpgAll(),w=A.cur,m=monster(w.key),left=Math.max(0,w.hp-w.total),pct=Math.max(0,Math.round(left/w.hp*100)),dl=7-((new Date().getDay()+6)%7);
+    const src=[['⚔️',L2('Tasks','المهام'),w.tD],['🔁',L2('Habits','العادات'),w.hD],S.cfg.student?['📚',L2('Study','الدراسة'),w.sD]:null,w.fD?['⏱',L2('Focus','التركيز'),w.fD]:null].filter(Boolean);
+    const body=`<div class="inf-boss"><div class="rpg-spr">${m.svg}</div><div><b translate="no">${m.name}</b><div class="meta">${m.title}</div></div></div>
+      <div class="bar hp"><span style="width:${pct}%"></span></div><div class="meta" style="margin:4px 0 8px">${w.won?L2('Defeated','هُزم'):L2(`${left} of ${w.hp} HP left · ${dl===1?'last day':dl+' days left'}`,`تبقّى ${left} من ${w.hp} · ${dl===1?'آخر يوم':dl+' أيام'}`)}</div>
+      <div class="inf-list"><b>${L2('Damage so far','الضرر حتى الآن')}</b>${src.map(s=>`<div>${s[0]} ${s[1]} <b>${s[2]}</b></div>`).join('')}</div>
+      ${irow(L2('Shields','الدروع'),A.shields+'/3')}${irow(L2('Morale','المعنويات'),A.morale+'%')}${irow(L2('Rest tokens','رموز الراحة'),String(A.tokens))}
+      <p class="meta">${L2('Every finished task, habit, study session and focus minute hits it. High priority, finishing early and Titan days hit harder. Clean days on avoid habits charge shields that block its counterattacks.','كل مهمة أو عادة أو جلسة دراسة أو دقيقة تركيز تضربه. الأولوية العالية والإنجاز المبكر وأيام تايتان تضرب أقوى. الأيام النظيفة في عادات التجنّب تشحن دروعًا تصدّ هجماته.')}</p>`;
+    infoShell(L2('Week boss','زعيم الأسبوع'),body,iBtn('🏰 '+L2('Tower','البرج'),'open-tower','')+iBtn('📖 '+L2('Bestiary','الموسوعة'),'open-bestiary','','btn'))}
+}
 /* ---------- Completion sounds (synthesised, no audio files) ---------- */
 const Sound={
   ctx:null,on:true,
@@ -2163,7 +2220,7 @@ const Sound={
   }
 };
 Sound.load();
-const CFG_DEF={nOn:true,nMorning:'08:00',nEvening:'20:00',nClasses:true,nExams:true,classes:'',ttStart:'sun',restDays:'',rewards:'',rpgSince:'',eliteTarget:'60',focusLen:'25',breakLen:'5',rpg:false,coachTone:'on',lvl2:'3',lvl3:'5',stuCompact:false,avoidHide:true,cTask:true,cGoal:true,cHabit:true,dCharts:true,dTasks:true,dGoals:true,dHabits:true,prio:'low',showDone:true,dueDef:'today',sortBy:'due',groupTags:true,autoArch:'0',defFilter:'all',showSubs:true,showNotes:true,dOverdue:false,avoidMode:'clean',student:false,lang:'en',srOn:true,srWeak:'1',srOk:'3',srLadder:'1,3,7,14,30'};
+const CFG_DEF={nOn:true,abOn:false,abTime:'21:00',nMorning:'08:00',nEvening:'20:00',nClasses:true,nExams:true,classes:'',ttStart:'sun',restDays:'',rewards:'',rpgSince:'',eliteTarget:'60',focusLen:'25',breakLen:'5',rpg:false,coachTone:'on',lvl2:'3',lvl3:'5',stuCompact:false,avoidHide:true,cTask:true,cGoal:true,cHabit:true,dCharts:true,dTasks:true,dGoals:true,dHabits:true,prio:'low',showDone:true,dueDef:'today',sortBy:'due',groupTags:true,autoArch:'0',defFilter:'all',showSubs:true,showNotes:true,dOverdue:false,avoidMode:'clean',student:false,lang:'en',srOn:true,srWeak:'1',srOk:'3',srLadder:'1,3,7,14,30'};
 try{S.cfg={...CFG_DEF,...JSON.parse(localStorage.getItem('gt-settings')||'{}')}}catch(e){S.cfg={...CFG_DEF}}
 S.taskFilter=S.cfg.defFilter;
 const saveCfg=()=>{try{localStorage.setItem('gt-settings',JSON.stringify(S.cfg))}catch(e){}};
@@ -2292,6 +2349,22 @@ function lastBackup(){try{return+localStorage.getItem('gt-last-backup')||0}catch
 function markBackup(){try{localStorage.setItem('gt-last-backup',String(Date.now()))}catch(e){}}
 const daysSince=ts=>ts?Math.round((new Date(TODAY()+'T00:00')-new Date(ds(new Date(ts))+'T00:00'))/864e5):null;
 const agoText=n=>n===null?L2('never','أبدًا'):n<=0?L2('today','اليوم'):n===1?L2('yesterday','أمس'):L2(n+' days ago',`منذ ${n} ${AYAM(n)}`);
+/* Automatic daily backup at the time the user picks */
+function autoBackupDue(){if(!S.cfg.abOn)return false;const[h,m]=String(S.cfg.abTime||'21:00').split(':').map(Number),n=new Date();
+  if(n.getHours()*60+n.getMinutes()<h*60+(m||0))return false;try{return localStorage.getItem('gt-auto-last')!==TODAY()}catch(e){return false}}
+let _abBusy=false;
+async function autoBackupTick(){
+  if(_abBusy||!S.booted||!autoBackupDue()||!(S.tasks.length+S.goals.length+S.habits.length+S.topics.length))return;
+  if(!(window.GTNative&&GTNative.autoBackup)){if(!S._abShown){S._abShown=true;render()}return}
+  _abBusy=true;
+  try{await GTNative.autoBackup(`goalterra-auto-${TODAY()}.json`,JSON.stringify(backupData()));markBackup();
+    try{localStorage.setItem('gt-auto-last',TODAY())}catch(e){}try{GTNative.cancel('ab'+TODAY())}catch(e){}
+    toast(L2('Automatic backup saved.','تم حفظ النسخة الاحتياطية تلقائيًا.'));render()}
+  catch(e){toast(L2('Automatic backup failed. Try Back up now.','فشل النسخ التلقائي. جرّب النسخ الآن.'))}
+  finally{_abBusy=false}}
+function autoCard(){
+  if(window.GTNative||!autoBackupDue())return'';
+  return `<div class="card backup-cta"><div class="grow"><div class="title">${L2('Time for your daily backup','حان وقت نسخة اليوم الاحتياطية')}</div><div class="meta">${L2('A browser cannot save files by itself, so tap to save today\'s backup.','المتصفح لا يحفظ الملفات تلقائيًا، فاضغط لحفظ نسخة اليوم.')}</div></div><button class="btn" data-action="backup-auto">${L2('Back up now','انسخ الآن')}</button></div>`}
 function backupDue(){const n=daysSince(lastBackup());return n===null||n>BACKUP_STALE}
 const backupLevel=()=>{const n=daysSince(lastBackup());return n===null?(S.tasks.length+S.goals.length+S.habits.length>20?2:1):n>30?2:n>BACKUP_STALE?1:0};
 function backupNudge(){
@@ -2451,6 +2524,9 @@ const actions={
     toastUndo(`Deleted ${gone.length} archived task${gone.length>1?'s':''}.`,async()=>{for(const t of gone){S.tasks.push(t);await DB.put('tasks',t)}});
   },
   'open-habit'(el){openHabit(el.dataset.id);return false},
+  'info-task'(el){openInfo('task',el.dataset.id);return false},
+  'info-goal'(el){openInfo('goal',el.dataset.id);return false},
+  'info-boss'(){openInfo('boss');return false},
   async 'cal-toggle'(el){await toggleLog(cal.id,el.dataset.date);drawHabit()},
   'cal-month'(el){const d=new Date(cal.y,cal.m+(+el.dataset.d),1);cal.y=d.getFullYear();cal.m=d.getMonth();drawHabit();return false},
   'dlg-close'(){dlg.close();return false},
@@ -2596,6 +2672,7 @@ const actions={
     toastUndo('Habit moved to Trash.',async()=>{await trashRestore('habit:'+gone.id)});
   },
   'backup-now'(){return actions.export()},
+  'backup-auto'(){try{localStorage.setItem('gt-auto-last',TODAY())}catch(e){}return actions.export()},
   export(){
     const json=JSON.stringify(backupData());const name=`goalterra-${TODAY()}.json`;
     if(window.GTNative&&GTNative.saveBackup){GTNative.saveBackup(name,json).then(r=>{if(r!==false){markBackup();notify(r&&r.msg||`Saved ${name}.`);render()}}).catch(e=>askAlert('Backup failed: '+(e&&e.message||e)));return false}
@@ -2617,14 +2694,25 @@ const actions={
 
 const POP=new Set(['toggle-task','toggle-log','topic-cell','toggle-sub','done-goal','goal-inc','goal-dec']);
 function markPop(el){const d=el.dataset;if(!POP.has(d.action))return;S.popKey=`[data-action="${d.action}"]`+(d.id?`[data-id="${CSS.escape(d.id)}"]`:'')+(d.date?`[data-date="${d.date}"]`:'')+(d.i!==undefined?`[data-i="${d.i}"]`:'')}
+// Long-press a task or habit to start selecting (Escape or Back leaves select mode).
+(()=>{let tm=null,fired=false,sx=0,sy=0;const cancel=()=>{clearTimeout(tm);tm=null};
+  document.addEventListener('pointerdown',e=>{cancel();if(S.selMode||(S.view!=='tasks'&&S.view!=='habits')||(e.button||0)>0||e.target.closest('input,button,select,a'))return;
+    const row=e.target.closest(S.view==='tasks'?'#app .item.trow2':'#app .goals>.card');if(!row)return;const idEl=row.querySelector('[data-id]');if(!idEl)return;
+    sx=e.clientX;sy=e.clientY;tm=setTimeout(()=>{tm=null;fired=true;S.selMode=S.view;S.sel.clear();S.sel.add(idEl.dataset.id);try{navigator.vibrate&&navigator.vibrate(15)}catch(_){}render()},520)});
+  document.addEventListener('pointermove',e=>{if(tm&&Math.hypot(e.clientX-sx,e.clientY-sy)>10)cancel()});
+  document.addEventListener('pointerup',()=>{cancel();if(fired){fired=false;S._eat=Date.now()}},true);
+  document.addEventListener('pointercancel',()=>{cancel();fired=false},true);document.addEventListener('scroll',cancel,true);
+  document.addEventListener('contextmenu',e=>{if(fired||(S.selMode&&e.target.closest('#app .item,#app .card')))e.preventDefault()});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&S.selMode&&!dlg.open){S.selMode=null;S.sel.clear();render()}})})();
 document.addEventListener('click',async e=>{
+  if(S._eat&&Date.now()-S._eat<700){S._eat=0;e.preventDefault();return}
   const nav=e.target.closest('#nav button,#tabbar button');if(nav){const same=S.view===nav.dataset.view;S.view=nav.dataset.view;render();if(!same||nav.closest('#tabbar'))scrollTo(0,0);return}
-  const el=e.target.closest('[data-action]');if(!el||el.type==='checkbox'||el.type==='range'||el.tagName==='SELECT')return;
+  const el=e.target.closest('[data-action]');if(!el||el.type==='checkbox'||el.type==='range'||el.type==='time'||el.tagName==='SELECT')return;
   markPop(el);const fn=actions[el.dataset.action];if(fn&&(await fn(el))!==false)render();
 });
 document.addEventListener('change',async e=>{
   const el=e.target.closest('[data-action]');
-  if(el&&(el.type==='checkbox'||el.type==='range'||el.tagName==='SELECT')){markPop(el);await actions[el.dataset.action](el);render()}
+  if(el&&(el.type==='checkbox'||el.type==='range'||el.type==='time'||el.tagName==='SELECT')){markPop(el);await actions[el.dataset.action](el);render()}
 });
 document.addEventListener('submit',async e=>{
   const f=e.target.closest('form[data-form]');if(!f)return;e.preventDefault();
@@ -3107,6 +3195,8 @@ async function autoArchive(){
   if(!introSeen()){if(S.tasks.length||S.goals.length||S.habits.length)markIntro();else openIntro()}
   await checkStorage(true);if(S.view==='data')render();
 })();
+
+setInterval(autoBackupTick,60000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)autoBackupTick()});setTimeout(autoBackupTick,2500);
 </script>
 </body>
 </html>
