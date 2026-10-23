@@ -5,6 +5,7 @@
     PATCH = bug fix · MINOR = new feature · MAJOR = breaks old backups or data
 
   Changelog
+  0.70.0 Release candidate: a saved test suite in tests/ (development only, never part of this file) covering every screen in light, dark and Arabic, the README rewritten for GoalTerra with fresh demo screenshots, and no feature changes
   0.69.0 Speed and accessibility: the game engine now computes everything in one pass and reuses the result until your data changes, so the Dashboard renders about 5x faster with years of data (tested with 5,000 tasks and 3 years of check-ins: about 40 ms). Colours adjusted so every text and button passes 4.5:1 contrast in all six palettes and in light, dark and Black (Clay's orange is a little deeper). Form fields that had no label now have one for screen readers
   0.68.0 Insights 2.0: the weekly report now shows how many Spark, Blaze and Titan days you had, focus time, and (in Game mode) the week's boss and whether you beat it. New monthly review: tasks done and missed, habit rate, focus time, level days, your best week, goals finished at every level, this month's goals with progress, and the month's guardian. Open it from the Dashboard next to Weekly report
   0.67.0 Backup safety: one-tap Back up now (on the reminder card and in Settings) saves a dated goalterra-YYYY-MM-DD.json file. Restoring now shows a preview first: what the backup holds, when it was made, and how it compares with your data today, with a warning if it would remove items. The backup reminder escalates: after 30 days without a backup it turns red and can only be snoozed for a day
@@ -2021,7 +2022,7 @@ function drawHabit(){
 document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('[role=button][data-action]')){e.preventDefault();e.target.click()}});
 
 /* ---------- Version ---------- */
-const APP_VERSION='0.69.0';
+const APP_VERSION='0.70.0';
 
 /* ---------- Completion sounds (synthesised, no audio files) ---------- */
 const Sound={
