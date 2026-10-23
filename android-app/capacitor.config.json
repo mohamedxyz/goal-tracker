@@ -1,0 +1,14 @@
+{
+  "appId": "com.goalterra.app",
+  "appName": "GoalTerra",
+  "webDir": "www",
+  "android": {
+    "allowMixedContent": false,
+    "captureInput": false,
+    "webContentsDebuggingEnabled": false
+  },
+  "plugins": {
+    "SystemBars": { "insetsHandling": "css" },
+    "LocalNotifications": { "smallIcon": "ic_stat_goalterra", "iconColor": "#1F7A6D" }
+  }
+}

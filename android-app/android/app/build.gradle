@@ -1,0 +1,87 @@
+apply plugin: 'com.android.application'
+
+// The app version comes from APP_VERSION in ../goal-tracker.html, so the web app and the APK always match.
+def webVersion = { ->
+    def html = rootProject.file('../../goal-tracker.html')
+    if (!html.exists()) return [name: '0.0.0', code: 1]
+    def m = java.util.regex.Pattern.compile("const APP_VERSION='(\\d+)\\.(\\d+)\\.(\\d+)'").matcher(html.getText('UTF-8'))
+    if (!m.find()) return [name: '0.0.0', code: 1]
+    def (ma, mi, pa) = [m.group(1).toInteger(), m.group(2).toInteger(), m.group(3).toInteger()]
+    return [name: "${ma}.${mi}.${pa}", code: ma * 10000 + mi * 100 + pa]
+}()
+
+android {
+    namespace = "com.goalterra.app"
+    compileSdk = rootProject.ext.compileSdkVersion
+    defaultConfig {
+        applicationId "com.goalterra.app"
+        minSdkVersion rootProject.ext.minSdkVersion
+        targetSdkVersion rootProject.ext.targetSdkVersion
+        versionCode webVersion.code
+        versionName webVersion.name
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        aaptOptions {
+             // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
+             // Default: https://android.googlesource.com/platform/frameworks/base/+/282e181b58cf72b6ca770dc7ca5f91f135444502/tools/aapt/AaptAssets.cpp#61
+            ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
+        }
+    }
+    // Release signing comes from environment variables (set as GitHub Actions secrets), never from the repo.
+    signingConfigs {
+        // A fixed debug key, so every debug APK has the same signature and updates install over the old app
+        // (keeping your data). It is a public debug key: never use it for a Play Store release.
+        debug {
+            storeFile rootProject.file('../keys/debug.keystore')
+            storePassword 'android'
+            keyAlias 'androiddebugkey'
+            keyPassword 'android'
+        }
+        release {
+            if (System.getenv('GT_KEYSTORE')) {
+                storeFile file(System.getenv('GT_KEYSTORE'))
+                storePassword System.getenv('GT_KEYSTORE_PASSWORD')
+                keyAlias System.getenv('GT_KEY_ALIAS')
+                keyPassword System.getenv('GT_KEY_PASSWORD')
+            }
+        }
+    }
+    buildTypes {
+        debug {
+            signingConfig signingConfigs.debug
+        }
+        release {
+            if (System.getenv('GT_KEYSTORE')) { signingConfig signingConfigs.release }
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+
+repositories {
+    flatDir{
+        dirs '../capacitor-cordova-android-plugins/src/main/libs', 'libs'
+    }
+}
+
+dependencies {
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+    implementation "androidx.appcompat:appcompat:$androidxAppCompatVersion"
+    implementation "androidx.coordinatorlayout:coordinatorlayout:$androidxCoordinatorLayoutVersion"
+    implementation "androidx.core:core-splashscreen:$coreSplashScreenVersion"
+    implementation project(':capacitor-android')
+    testImplementation "junit:junit:$junitVersion"
+    androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
+    androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"
+    implementation project(':capacitor-cordova-android-plugins')
+}
+
+apply from: 'capacitor.build.gradle'
+
+try {
+    def servicesJSON = file('google-services.json')
+    if (servicesJSON.text) {
+        apply plugin: 'com.google.gms.google-services'
+    }
+} catch(Exception e) {
+    logger.info("google-services.json not found, google-services plugin not applied. Push Notifications won't work")
+}

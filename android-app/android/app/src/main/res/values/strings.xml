@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">GoalTerra</string>
+    <string name="title_activity_main">GoalTerra</string>
+    <string name="package_name">com.goalterra.app</string>
+    <string name="custom_url_scheme">com.goalterra.app</string>
+</resources>
