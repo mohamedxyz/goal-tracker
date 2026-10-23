@@ -44,6 +44,10 @@ async def m():
     # theme -> bars
     await pg.evaluate("__calls.length=0;setTheme('dark')");print('bars',await pg.evaluate("__calls.filter(c=>c[0]==='SystemBars').map(c=>c[2].style)"))
     await pg.evaluate("setTheme('light')");print('bars',await pg.evaluate("__calls.filter(c=>c[0]==='SystemBars').map(c=>c[2].style)"))
+    await pg.evaluate("__calls.length=0;setTheme('dark');setPalette('ocean')")
+    bg=await pg.evaluate("[__calls.filter(c=>c[0]==='ThemeBg').map(c=>c[2].color),getComputedStyle(document.body).backgroundColor]");print('native bg',bg)
+    if not bg[0] or bg[0][-1]!='#0f141c':print('FAIL native background does not follow the theme')
+    await pg.evaluate("setPalette('clay');setTheme('light')")
     await pg.evaluate("dlg.close();S.cfg.lang='ar';saveCfg();applyLang();S.view='data';render()");await pg.wait_for_timeout(200)
     import re as _re
     print('ar latin',[x for x in await latin(pg) if _re.search(r'[A-Za-z]{2,}',_re.sub(r'\b(GoalTerra|JSON|OLED|IndexedDB|Language)\b','',x))],'ov',await overflow(pg))

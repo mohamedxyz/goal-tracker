@@ -5,6 +5,7 @@
     PATCH = bug fix · MINOR = new feature · MAJOR = breaks old backups or data
 
   Changelog
+  0.71.1 Fix (Android app): a white strip with a squashed logo showed under the status bar on some phones. The space behind the status bar now takes the app's background colour and follows theme and palette changes
   0.71.0 Android app support: when this file runs inside the GoalTerra Android app it uses the phone directly. Backups and exports save to Documents/GoalTerra and open the share sheet, sharing with friends uses the share sheet, the back button closes dialogs and returns to Home, the status bar follows the theme, and reminders arrive as notifications (morning plan, evening check-in, classes, exams, focus timer, backup). In a browser nothing changes. Import also accepts backup files that Android labels as plain text
   0.70.0 Release candidate: a saved test suite in tests/ (development only, never part of this file) covering every screen in light, dark and Arabic, the README rewritten for GoalTerra with fresh demo screenshots, and no feature changes
   0.69.0 Speed and accessibility: the game engine now computes everything in one pass and reuses the result until your data changes, so the Dashboard renders about 5x faster with years of data (tested with 5,000 tasks and 3 years of check-ins: about 40 ms). Colours adjusted so every text and button passes 4.5:1 contrast in all six palettes and in light, dark and Black (Clay's orange is a little deeper). Form fields that had no label now have one for screen readers
@@ -1166,7 +1167,7 @@ function sampleBanner(){return hasSample()?`<div class="card sample-cta"><div cl
    Active only inside the Capacitor Android app (window.Capacitor is native there). In a browser this block does nothing. */
 const NATIVE=!!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform()&&Capacitor.registerPlugin);
 if(NATIVE)(()=>{
-  const P=n=>Capacitor.registerPlugin(n),LN=P('LocalNotifications'),FS=P('Filesystem'),SH=P('Share'),APP=P('App'),SB=P('SystemBars');
+  const P=n=>Capacitor.registerPlugin(n),LN=P('LocalNotifications'),FS=P('Filesystem'),SH=P('Share'),APP=P('App'),SB=P('SystemBars'),BG=P('ThemeBg');
   const nid=s=>{let h=7;for(const c of String(s))h=(h*31+c.charCodeAt(0))|0;return Math.abs(h)%2000000000+1};
   let permAsked=false,chan=false;
   const perm=async()=>{try{let r=await LN.checkPermissions();if(r.display!=='granted'&&!permAsked){permAsked=true;r=await LN.requestPermissions()}return r.display==='granted'}catch(e){return false}};
@@ -1181,7 +1182,8 @@ if(NATIVE)(()=>{
       return{msg:L2(`Saved to Documents/GoalTerra/${name}`,`حُفظ في Documents/GoalTerra/${name}`)}},
     async saveBackup(name,text){return this.saveFile(name,text,true)},
     async shareFile(name,text){const uri=await save('',name,text);await SH.share({title:name,files:[uri]})},
-    bars(bg){try{const m=String(bg).match(/\d+/g)||[255,255,255],l=(.2126*m[0]+.7152*m[1]+.0722*m[2])/255;SB.setStyle({style:l<.5?'DARK':'LIGHT'})}catch(e){}},
+    bars(bg){try{const m=(String(bg).match(/\d+/g)||[255,255,255]).map(Number),l=(.2126*m[0]+.7152*m[1]+.0722*m[2])/255;SB.setStyle({style:l<.5?'DARK':'LIGHT'});
+      BG.setColor({color:'#'+m.slice(0,3).map(x=>x.toString(16).padStart(2,'0')).join('')}).catch(()=>{})}catch(e){}},
     async allowExact(){try{await LN.changeExactNotificationSetting()}catch(e){}},
     async exactOk(){return exactOk()},
     async testNotify(){if(!(await perm())){alert(L2('Notifications are blocked. Allow them for GoalTerra in Android settings.','الإشعارات محظورة. اسمح بها لتطبيق GoalTerra من إعدادات أندرويد.'));return}await channel();
@@ -2098,7 +2100,7 @@ function drawHabit(){
 document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('[role=button][data-action]')){e.preventDefault();e.target.click()}});
 
 /* ---------- Version ---------- */
-const APP_VERSION='0.71.0';
+const APP_VERSION='0.71.1';
 
 /* ---------- Completion sounds (synthesised, no audio files) ---------- */
 const Sound={
