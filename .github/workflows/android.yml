@@ -11,7 +11,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   apk:
@@ -74,3 +74,16 @@ jobs:
           name: GoalTerra-${{ steps.apk.outputs.version }}-apk
           path: ${{ steps.apk.outputs.file }}
           retention-days: 30
+
+      - name: Publish as a GitHub release (download the APK on your phone)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          V=${{ steps.apk.outputs.version }}
+          TAG="android-v$V"
+          NOTES="GoalTerra $V for Android. Install GoalTerra-$V.apk (allow installs from your browser or Files app the first time). Updates install over the old version and keep your data."
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" "${{ steps.apk.outputs.file }}" --clobber
+          else
+            gh release create "$TAG" "${{ steps.apk.outputs.file }}" --title "GoalTerra $V (Android)" --notes "$NOTES" --target "$GITHUB_SHA"
+          fi
