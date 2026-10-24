@@ -146,15 +146,27 @@ setTimeout(autoBackupTick, 2500);
     m.style.transform = 'translateZ(0)';
     requestAnimationFrame(() => requestAnimationFrame(() => (m.style.transform = '')));
   };
+  /* Where the page was scrolled just before the tap that opened the keyboard. */
+  let y0 = scrollY;
+  const remember = () => {
+    if (!document.documentElement.classList.contains('kb')) y0 = scrollY;
+  };
+  addEventListener('touchstart', remember, { passive: true, capture: true });
+  addEventListener('mousedown', remember, { capture: true });
+  /* Keep the page where it was, and move it only as far as needed so the field
+     stays visible just above the keyboard (never jump to the end of the page). */
   const fit = () => {
     const e = document.activeElement;
     if (!e || !/^(INPUT|TEXTAREA)$/.test(e.tagName) || e.closest('dialog')) return;
-    const de = document.documentElement,
-      max = Math.max(0, de.scrollHeight - innerHeight);
-    if (scrollY > max) scrollTo(0, max);
-    const r = e.getBoundingClientRect(),
-      H = vh();
-    if (r.top < 70 || r.bottom > H - 16) scrollTo(0, Math.max(0, Math.min(max, scrollY + r.top - H * 0.35)));
+    const max = Math.max(0, document.documentElement.scrollHeight - innerHeight),
+      H = vh(),
+      r = e.getBoundingClientRect(),
+      at = (y) => ({ top: r.top + scrollY - y, bottom: r.bottom + scrollY - y });
+    let y = Math.min(y0, max);
+    const p = at(y);
+    if (p.bottom > H - 40) y += p.bottom - (H - 40);
+    if (at(y).top < 90) y -= 90 - at(y).top;
+    scrollTo(0, Math.max(0, Math.min(max, y)));
     repaint();
   };
   let settle;
