@@ -122,12 +122,19 @@ document.addEventListener('visibilitychange', () => {
 });
 setTimeout(autoBackupTick, 2500);
 
-/* Keyboard handling: hide the tab bar while typing and keep the focused field in view (no jump to blank space). */
+/* Keyboard handling.
+   Tapping a text field inside a form docks that form to the bottom edge, right above the keyboard
+   (like a chat box). The field is then always visible and the page behind it is never scrolled, so
+   there is no jump to the end of the page. The tab bar is hidden while typing. */
 (() => {
   const vv = window.visualViewport,
-    vh = () => (vv ? vv.height : innerHeight);
+    vh = () => (vv ? vv.height : innerHeight),
+    root = document.documentElement;
   let maxH = innerHeight,
-    lastW = innerWidth;
+    lastW = innerWidth,
+    docked = null,
+    spacer = null,
+    undockT;
   const typing = () => /^(INPUT|TEXTAREA|SELECT)$/.test((document.activeElement || {}).tagName || '');
   const upd = () => {
     if (innerWidth !== lastW) {
@@ -135,59 +142,39 @@ setTimeout(autoBackupTick, 2500);
       maxH = innerHeight;
     }
     maxH = Math.max(maxH, innerHeight, vh());
-    document.documentElement.classList.toggle('kb', vh() < maxH - 120 && typing());
+    root.classList.toggle('kb', vh() < maxH - 120 && typing());
   };
-  /* Wait until the keyboard has finished resizing the view, then scroll once, instantly.
-     (A smooth scroll that runs while the keyboard is still animating leaves the WebView
-     scrolled past the content, which shows as a blank page above the keyboard.) */
-  const repaint = () => {
-    const m = document.querySelector('main');
-    if (!m) return;
-    m.style.transform = 'translateZ(0)';
-    requestAnimationFrame(() => requestAnimationFrame(() => (m.style.transform = '')));
+  const undock = () => {
+    if (docked) docked.classList.remove('kbdock');
+    if (spacer) spacer.remove();
+    docked = spacer = null;
   };
-  /* Where the page was scrolled just before the tap that opened the keyboard. */
-  let y0 = scrollY;
-  const remember = () => {
-    if (!document.documentElement.classList.contains('kb')) y0 = scrollY;
+  const dock = (form) => {
+    clearTimeout(undockT);
+    if (docked === form) return;
+    undock();
+    spacer = document.createElement('div');
+    spacer.style.height = form.offsetHeight + 'px';
+    form.before(spacer);
+    form.classList.add('kbdock');
+    docked = form;
   };
-  addEventListener('touchstart', remember, { passive: true, capture: true });
-  addEventListener('mousedown', remember, { capture: true });
-  /* Keep the page where it was, and move it only as far as needed so the field
-     stays visible just above the keyboard (never jump to the end of the page). */
-  const fit = () => {
-    const e = document.activeElement;
-    if (!e || !/^(INPUT|TEXTAREA)$/.test(e.tagName) || e.closest('dialog')) return;
-    const max = Math.max(0, document.documentElement.scrollHeight - innerHeight),
-      H = vh(),
-      r = e.getBoundingClientRect(),
-      at = (y) => ({ top: r.top + scrollY - y, bottom: r.bottom + scrollY - y });
-    let y = Math.min(y0, max);
-    const p = at(y);
-    if (p.bottom > H - 40) y += p.bottom - (H - 40);
-    if (at(y).top < 90) y -= 90 - at(y).top;
-    scrollTo(0, Math.max(0, Math.min(max, y)));
-    repaint();
-  };
-  let settle;
-  const later = (ms) => {
-    clearTimeout(settle);
-    settle = setTimeout(() => {
-      upd();
-      fit();
-    }, ms);
-  };
-  document.addEventListener('focusin', () => {
+  document.addEventListener('focusin', (ev) => {
+    const e = ev.target,
+      form = e.closest && e.closest('form');
+    if (/^(INPUT|TEXTAREA)$/.test(e.tagName) && form && !e.closest('dialog, header, .top')) dock(form);
+    else if (docked && !docked.contains(e)) undock();
     upd();
-    later(450);
   });
-  document.addEventListener('focusout', () => {
+  document.addEventListener('focusout', (ev) => {
+    if (docked && !docked.contains(ev.relatedTarget)) {
+      clearTimeout(undockT);
+      undockT = setTimeout(() => {
+        if (!docked || !docked.contains(document.activeElement)) undock();
+      }, 350);
+    }
     setTimeout(upd, 200);
-    later(450);
   });
-  addEventListener('resize', () => {
-    upd();
-    later(300);
-  });
-  if (vv) vv.addEventListener('resize', () => (upd(), later(300)));
+  addEventListener('resize', upd);
+  if (vv) vv.addEventListener('resize', upd);
 })();
