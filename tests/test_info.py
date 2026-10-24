@@ -49,6 +49,13 @@ async def main():
       print(scheme,'native auto backup',await pg.evaluate("[GTNative.calls.length,GTNative.calls[0]&&GTNative.calls[0][0].startsWith('goalterra-auto-'),localStorage.getItem('gt-auto-last')===TODAY()]"))
       await pg.evaluate("GTNative.calls.length=0;autoBackupTick()");await pg.wait_for_timeout(200)
       print(scheme,'only once a day',await pg.evaluate("GTNative.calls.length"))
+      # icons: pick one in the edit dialog, see it on the row, keep it after a reload
+      await pg.evaluate("S.view='tasks';render()");await pg.wait_for_timeout(150)
+      await pg.evaluate("openEdit('task',S.tasks.find(t=>!t.done).id)");await pg.wait_for_timeout(200)
+      await pg.click('[data-action=icon-toggle]');await pg.click('[data-action=icon-pick][data-i="🔥"]');await pg.click('#editDlg button[value=save]');await pg.wait_for_timeout(300)
+      print(scheme,'icon shown',await pg.evaluate("[...document.querySelectorAll('#app .item.trow2 .title')].some(e=>e.textContent.includes('🔥'))"))
+      await pg.reload();await pg.wait_for_timeout(500);await pg.evaluate("S.view='tasks';render()");await pg.wait_for_timeout(200)
+      print(scheme,'icon kept',await pg.evaluate("S.tasks.some(t=>t.icon==='🔥')"))
       print(scheme,'ov',await overflow(pg),'errors',errs)
       await ctx.close()
     await b.close()
