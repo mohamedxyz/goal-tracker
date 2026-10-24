@@ -25,6 +25,10 @@ A goal, habit, task and study tracker. The app you run is ONE generated file, `g
 - Android bridge: `window.GTNative` exists only inside the app. Real-device behaviour cannot be tested in the cloud sandbox; ask for screenshots.
 - In the cloud sandbox the Android/Gradle hosts are blocked, so the APK only builds on GitHub Actions. With a local Android SDK you can run `cd android-app && npm ci && npm run build:debug`.
 
+## Keyboard / insets history (Android)
+Capacitor's SystemBars `insetsHandling: css` padded the window by the keyboard AND passed the IME inset on to the WebView, which can shrink the page twice (blank band above the keyboard, field scrolled away). Since 0.76.0 `insetsHandling` is `disable` and `MainActivity.applyInsets()` pads the decor view once (status bar, and the taller of nav bar / keyboard) and consumes the insets. CSS and JS keyboard tweaks (`--sab`, `form.kbdock`) are kept but are secondary. Unverified on a real device at the time of writing: ask for a screenshot or screen recording.
+Note: `main` once held a 0.75.0 rollback to the 0.71.1 app; 0.76.0 supersedes it.
+
 ## Known to-do (not yet done)
 - README is out of date: "Import" is now "Restore", screenshots predate 0.72, no mention of info sheets, tip cards or auto backup. `tests/screenshots.py` needs tips dismissed and Settings sections opened before it will give good images.
 - Game: after a weekly boss is beaten, counterattacks still replay for later days and a knockout can un-win a barely-won week. Planned fix: stop counterattacks after a win, turn overkill into a small bonus, cap how much one week can raise the next boss.
