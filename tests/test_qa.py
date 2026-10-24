@@ -10,8 +10,6 @@ CASES=[('Essay tomorrow !high #uni','Essay','2026-10-24','high','uni'),('Read to
 async def m():
   async with async_playwright() as p:
     b,pg,errs=await page(p);bad=0
-    # The expected dates below assume today is Friday 23 Oct 2026, so freeze the clock.
-    await pg.clock.set_fixed_time('2026-10-23T10:00:00')
     for raw,title,due,pri,tag in CASES:
       r=await pg.evaluate("x=>parseQuick(x)",raw)
       ok=r['title']==title and r['due']==due and r['priority']==pri and r['tag']==tag

@@ -55,7 +55,7 @@ async def run(scheme):
     print(scheme,'ar levels overflow',await ov())
     await pg.click('[data-action=dlg-close]')
     # settings replay
-    await pg.evaluate("S.view='data';S.setOpen=new Set(['Storage & backup']);render()");await pg.click('[data-action=open-intro]')
+    await pg.evaluate("S.view='data';render()");await pg.click('[data-action=open-intro]')
     assert await pg.locator('#editDlg[open] .intro').count()==1
     await pg.keyboard.press('Escape')
     print(scheme,'errors',errs)
