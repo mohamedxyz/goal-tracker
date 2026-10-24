@@ -5,6 +5,7 @@
     PATCH = bug fix · MINOR = new feature · MAJOR = breaks old backups or data
 
   Changelog
+  0.74.2 Fixes the Android install ("package appears to be invalid"): the 0.74.0 and 0.74.1 APKs were stamped with version 0.0.0 by mistake, so Android refused them as a downgrade. No change inside the app.
   0.74.1 Fixes the Android download: the release was published as "GoalTerra-.apk" because the build could not read the app version after the code was reformatted. No change inside the app.
   0.74.0 Icons and cleanup: pick an icon for any task, goal or habit (Edit → Icon) and see it next to the name; fixes a large blank gap at the bottom of the page while the keyboard is open in the Android app (the app now uses the safe-area value Capacitor provides, which is zero while the keyboard is open); and a code tidy-up for readers (documented files, consistent formatting) with no change in behaviour.
   0.73.1 Fix: typing with the on-screen keyboard could scroll the page to the blank space at the end. The layout now resizes with the keyboard, the bottom tab bar hides while you type, and the field you are typing in is kept in view.

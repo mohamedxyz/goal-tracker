@@ -3,9 +3,9 @@ apply plugin: 'com.android.application'
 // The app version comes from APP_VERSION in ../goal-tracker.html, so the web app and the APK always match.
 def webVersion = { ->
     def html = rootProject.file('../../goal-tracker.html')
-    if (!html.exists()) return [name: '0.0.0', code: 1]
-    def m = java.util.regex.Pattern.compile("const APP_VERSION='(\\d+)\\.(\\d+)\\.(\\d+)'").matcher(html.getText('UTF-8'))
-    if (!m.find()) return [name: '0.0.0', code: 1]
+    if (!html.exists()) throw new GradleException('APP_VERSION not found in goal-tracker.html')
+    def m = java.util.regex.Pattern.compile("APP_VERSION\\s*=\\s*['\\\"](\\d+)\\.(\\d+)\\.(\\d+)['\\\"]").matcher(html.getText('UTF-8'))
+    if (!m.find()) throw new GradleException('APP_VERSION not found in goal-tracker.html')
     def (ma, mi, pa) = [m.group(1).toInteger(), m.group(2).toInteger(), m.group(3).toInteger()]
     return [name: "${ma}.${mi}.${pa}", code: ma * 10000 + mi * 100 + pa]
 }()
