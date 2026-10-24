@@ -137,25 +137,45 @@ setTimeout(autoBackupTick, 2500);
     maxH = Math.max(maxH, innerHeight, vh());
     document.documentElement.classList.toggle('kb', vh() < maxH - 120 && typing());
   };
+  /* Wait until the keyboard has finished resizing the view, then scroll once, instantly.
+     (A smooth scroll that runs while the keyboard is still animating leaves the WebView
+     scrolled past the content, which shows as a blank page above the keyboard.) */
+  const repaint = () => {
+    const m = document.querySelector('main');
+    if (!m) return;
+    m.style.transform = 'translateZ(0)';
+    requestAnimationFrame(() => requestAnimationFrame(() => (m.style.transform = '')));
+  };
   const fit = () => {
     const e = document.activeElement;
     if (!e || !/^(INPUT|TEXTAREA)$/.test(e.tagName) || e.closest('dialog')) return;
+    const de = document.documentElement,
+      max = Math.max(0, de.scrollHeight - innerHeight);
+    if (scrollY > max) scrollTo(0, max);
     const r = e.getBoundingClientRect(),
       H = vh();
-    if (r.top < 60 || r.bottom > H - 16) e.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    if (r.top < 70 || r.bottom > H - 16) scrollTo(0, Math.max(0, Math.min(max, scrollY + r.top - H * 0.35)));
+    repaint();
+  };
+  let settle;
+  const later = (ms) => {
+    clearTimeout(settle);
+    settle = setTimeout(() => {
+      upd();
+      fit();
+    }, ms);
   };
   document.addEventListener('focusin', () => {
     upd();
-    setTimeout(() => {
-      upd();
-      fit();
-    }, 350);
+    later(450);
   });
-  document.addEventListener('focusout', () => setTimeout(upd, 200));
+  document.addEventListener('focusout', () => {
+    setTimeout(upd, 200);
+    later(450);
+  });
   addEventListener('resize', () => {
     upd();
-    clearTimeout(window._kbT);
-    window._kbT = setTimeout(fit, 200);
+    later(300);
   });
-  if (vv) vv.addEventListener('resize', upd);
+  if (vv) vv.addEventListener('resize', () => (upd(), later(300)));
 })();
