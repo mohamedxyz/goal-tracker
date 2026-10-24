@@ -13,5 +13,5 @@ if (!html.includes(tag)) html = html.replace('<meta charset="utf-8">', '<meta ch
 if (!html.includes(tag)) throw new Error('could not insert the Capacitor runtime tag');
 writeFileSync(join(www, 'index.html'), html);
 copyFileSync(join(root, 'node_modules', '@capacitor', 'core', 'dist', 'capacitor.js'), join(www, 'capacitor.js'));
-const v = (html.match(/const APP_VERSION='([^']+)'/) || [])[1];
+const v = (html.match(/APP_VERSION\s*=\s*['"]([^'"]+)['"]/) || [])[1];
 console.log(`www/index.html written (GoalTerra ${v}, ${(html.length / 1024).toFixed(0)} KB)`);
