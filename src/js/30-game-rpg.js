@@ -389,7 +389,8 @@ function eliteLine() {
 }
 /* Badges: derived from your history, then remembered once earned (S.cfg.ach) so they never disappear. */
 function badges() {
-  const A = rpgAll(),
+  const hb = S.habits.filter((h) => !isNeg(h)).reduce((m, h) => Math.max(m, bestStreak(h)), 0),
+    A = rpgAll(),
     done = S.tasks.filter((t) => t.done).length,
     B = (id, icon, en, ar, den, dar, ok) => ({ id, icon, name: L2(en, ar), desc: L2(den, dar), ok });
   return [
@@ -460,6 +461,42 @@ function badges() {
     ),
     B('l5', '⭐', 'Level 5', 'المستوى 5', 'Reach hero level 5.', 'بلغ مستوى البطل 5.', heroLv(A.xp) >= 5),
     B('l10', '🌟', 'Level 10', 'المستوى 10', 'Reach hero level 10.', 'بلغ مستوى البطل 10.', heroLv(A.xp) >= 10),
+    B(
+      'hs7',
+      '🔗',
+      'Week of votes',
+      'أسبوع من الأصوات',
+      'A 7-day streak on one habit.',
+      'سلسلة 7 أيام على عادة واحدة.',
+      hb >= 7
+    ),
+    B(
+      'hs30',
+      '⛓',
+      'Month of votes',
+      'شهر من الأصوات',
+      'A 30-day streak on one habit.',
+      'سلسلة 30 يومًا على عادة واحدة.',
+      hb >= 30
+    ),
+    B(
+      'hs100',
+      '💎',
+      'Hundred votes',
+      'مئة صوت',
+      'A 100-day streak on one habit.',
+      'سلسلة 100 يوم على عادة واحدة.',
+      hb >= 100
+    ),
+    B(
+      'pd',
+      '🎉',
+      'Perfect day',
+      'يوم مثالي',
+      'Finish every habit due in one day.',
+      'أنجز كل العادات المستحقة في يوم واحد.',
+      perfectDays() > 0
+    ),
   ];
 }
 const earned = () => new Set((S.cfg.ach || '').split(',').filter(Boolean));

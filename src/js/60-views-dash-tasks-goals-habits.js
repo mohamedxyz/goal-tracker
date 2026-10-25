@@ -170,7 +170,7 @@ function viewDash() {
     }
     ${S.cfg.dGoals ? `<div class="h2row"><h2>This week's goals</h2><span class="hbtns"><button class="chip" data-action="open-plan">Plan this week</button><details class="chipmenu"><summary class="chip" aria-label="More">⋯</summary><div><button class="chip" data-action="open-report">Weekly report</button><button class="chip" data-action="open-month">Monthly review</button></div></details></span></div>${wk.length ? `<div class="goals">${wk.map(goalCard).join('')}</div>` : `<div class="empty">No weekly goals for ${currentPeriod('weekly')}.</div>`}` : ''}
   </div><div>
-    ${S.cfg.dHabits ? `<h2>Today's habits</h2>${habitList(false)}` : ''}
+    ${S.cfg.dHabits ? `${habitRing()}<h2>Today's habits</h2>${habitList(false)}` : ''}
   </div></div>
   ${planCta ? `<div class="card plan-cta"><div class="grow"><div class="title">${wk.length ? L2(`${openSlots} weekly slot${openSlots > 1 ? 's' : ''} still to plan`, `${openSlots} خانات أسبوعية للتخطيط`) : `Plan ${currentPeriod('weekly')}`}</div><div class="meta">${wk.length ? L2("Fill in this week's steps toward your monthly goals.", 'املأ خطوات هذا الأسبوع نحو أهدافك الشهرية.') : L2("No weekly goals yet. Pick this week's steps.", 'لا أهداف أسبوعية بعد. اختر خطوات هذا الأسبوع.')}</div></div><button class="btn" data-action="open-plan">Plan week</button></div>` : ''}${rpgCard()}<div class="stats dstats">
     <div class="card stat"><div class="n">${todaysDone}/${todays.length}</div><div class="l">Today's tasks done</div></div>
@@ -371,9 +371,10 @@ function viewHabits() {
     <select name="kind" aria-label="Habit type"><option value="">✅ Build: tick it when done</option><option value="avoid">${S.cfg.avoidMode === 'confirm' ? '🚫 Avoid: tick each clean day' : '🚫 Avoid: clean unless you slip'}</option></select>
     <select name="target" title="Target days per week">${[7, 6, 5, 4, 3, 2, 1].map((n) => `<option value="${n}">${n}×/week</option>`).join('')}</select>
     <input type="text" name="group" list="folderListAdd" placeholder="Folder (optional), e.g. Morning routine" style="flex:1 1 200px" autocomplete="off">${folderList('folderListAdd')}
-    ${dayPicker()}
+    ${dayPicker()}${stickFields()}
     <button class="btn">Add habit</button></form></details>
-  ${habitList(true)}`;
+  <div class="row" style="margin:6px 0"><button class="chip" data-action="info-habits">ⓘ ${L2('How habits work', 'كيف تعمل العادات')}</button></div>
+  ${easierCard()}${habitList(true)}`;
 }
 // Shared by the dashboard and Habits tab; honours the "hide done today" switch.
 // Dashboard row: just today — one big check button, streak and weekly progress.
@@ -382,20 +383,20 @@ function habitToday(h) {
     on = good(h, k),
     s = streak(h);
   return `<li class="item ${on ? 'done' : ''}">
-    <button class="tcheck ${on ? 'on' : ''}" data-action="toggle-log" data-id="${h.id}" data-date="${k}" aria-pressed="${on}" aria-label="${slipMode(h) ? (on ? 'Clean today. Tap to log a slip' : 'Slipped today. Tap to undo') : (on ? 'Undo' : 'Check off') + ' ' + esc(h.name) + ' for today'}">${slipMode(h) && !on ? '✗' : '✓'}</button>
+    <button class="tcheck ${on ? 'on' : ''}" data-action="toggle-log" data-id="${h.id}" data-date="${k}" aria-pressed="${on}" aria-label="${slipMode(h) ? (on ? 'Clean today. Tap to log a slip' : 'Slipped today. Tap to undo') : (on ? L2('Undo', 'تراجع') : L2('Check off', 'إنجاز')) + ' ' + esc(h.name) + L2(' for today', ' لهذا اليوم')}">${slipMode(h) && !on ? '✗' : '✓'}</button>
     <div class="grow habit-open" data-action="open-habit" data-id="${h.id}" role="button" tabindex="0" title="Open history">
       <div class="title">${hname(h)} <span class="chev">›</span></div>
-      <div class="meta"><span>${isNeg(h) ? '🛡 ' + s + ' day' + (s === 1 ? '' : 's') + ' clean' : '🔥 ' + s + ' day' + (s === 1 ? '' : 's')}</span><span>This week ${weekCount(h)}/${weekTarget(h)}</span></div></div></li>`;
+      <div class="meta"><span>${isNeg(h) ? '🛡 ' + s + ' day' + (s === 1 ? '' : 's') + ' clean' : '🔥 ' + s + ' day' + (s === 1 ? '' : 's')}</span><span>This week ${weekCount(h)}/${weekTarget(h)}</span></div>${habitHint(h)}</div></li>`;
 }
 function habitList(full) {
   const hideIt = (h) => S.hideDone && !(isNeg(h) && !S.cfg.avoidHide) && good(h, TODAY());
   if (!S.habits.length) return `<div class="empty">No habits yet.${full ? ' Tap a day to check it off.' : ''}</div>`;
   const today = TODAY(),
-    dueAll0 = sortedHabits().filter(dueToday),
+    dueAll0 = stackOrder(sortedHabits()).filter(dueToday),
     dueAll = full ? dueAll0 : dueAll0.filter((h) => !isNeg(h)),
     doneToday = dueAll.filter((h) => good(h, today)).length;
   const avoids = full ? [] : dueAll0.filter(isNeg);
-  const pool = full ? sortedHabits() : dueAll,
+  const pool = full ? stackOrder(sortedHabits()) : dueAll,
     offToday = S.habits.length - dueAll0.length;
   if (!pool.length && avoids.length) return avoidSection(avoids);
   if (!pool.length)

@@ -5,6 +5,7 @@
     PATCH = bug fix · MINOR = new feature · MAJOR = breaks old backups or data
 
   Changelog
+  0.83.0 Habits built on Atomic Habits: a +XP pop-up when you tick a habit, a daily ring with a Perfect day celebration, milestones at 3, 7, 14, 30, 60 and 100 days, and four new badges; never miss twice (one missed day no longer resets a streak, two in a row do) with a Best streak on each card and a Missed yesterday nudge; an optional Make it stick section per habit (identity votes, two-minute version with a ½ tick, stack after another habit, time and place with a reminder, a treat, an environment note); a Hardest habit card offering a two-minute version; a How habits work sheet; Habit rewards can be switched off in Settings.
   0.82.0 Harder to lose data: automatic safety copies kept in a separate store (daily, before app updates, before a restore, before erasing) with a Restore list in Settings; deleted goals, exams and topics now go to Trash for 30 days like tasks and habits (linked tasks are relinked on restore); Undo for bulk Done, Archive and Edit and for removing a long-streak check-in; Erase everything needs a typed word and can be undone; the last 5 titles and notes of a task or goal can be brought back from the edit screen; a one-time offer to turn on the automatic daily backup in the app, and a Last backup line on the dashboard; a Check my data tool that finds and fixes broken links.
   0.81.0 Game fixes: a defeated week boss stays defeated (no counterattacks after it dies, and a knockout can no longer undo a win); damage beyond the boss HP gives a small overkill XP bonus; one huge week raises the next boss by at most 25%; a "How the game works" sheet in plain words (tap ? on the game card); 11 badges that you keep once earned, with a toast; and a weeks-won-in-a-row counter.
   0.80.0 Plan view, part 3: Undo after moving, resizing, adding or unscheduling a block; a ⚠ marks blocks that overlap and the toolbar names what they overlap with; swipe sideways to change the day (Plan) or month (calendar), which you can switch off; new Settings for the clock (12 or 24 hour) and for which day the calendar week starts on.
@@ -4230,6 +4231,67 @@ form.kbdock {
   font-size: 10px;
   line-height: 1.2;
 }
+
+/* Habits (Atomic Habits) */
+.day.half.on {
+  background: linear-gradient(135deg, var(--ok) 50%, transparent 50%);
+  color: inherit;
+}
+.hint {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  margin-top: 4px;
+}
+.hint.miss {
+  color: var(--accent);
+  font-weight: 600;
+}
+.hring {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 4px 0 8px;
+}
+.hring .bg {
+  fill: none;
+  stroke: var(--line, #8883);
+  stroke-width: 5;
+}
+.hring .fg {
+  fill: none;
+  stroke: var(--ok);
+  stroke-width: 5;
+  stroke-linecap: round;
+  transition: stroke-dasharray 0.4s;
+}
+.hring.full .fg {
+  stroke: var(--accent);
+}
+.xpfloat {
+  position: fixed;
+  z-index: 9999;
+  pointer-events: none;
+  font-weight: 700;
+  color: var(--accent);
+  transform: translate(-50%, 0);
+  animation: xpup 1s ease-out forwards;
+}
+@keyframes xpup {
+  from {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+  to {
+    opacity: 0;
+    transform: translate(-50%, -48px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .xpfloat {
+    display: none;
+  }
+}
 </style>
 </head>
 <body>
@@ -4406,6 +4468,7 @@ const S = {
   trash: [],
   sel: new Set(),
   selMode: null,
+  mini: new Set(),
 };
 
 const TRASH_DAYS = 30;
@@ -4421,6 +4484,7 @@ async function load() {
   S.goals = g;
   S.habits = h;
   S.logs = new Set(l.map((x) => x.id));
+  S.mini = new Set(l.filter((x) => x.mini).map((x) => x.id));
 }
 
 /* ---------- Logic ---------- */
@@ -4570,14 +4634,23 @@ function streak(h) {
   }
   let d = new Date();
   if (!good(h, ds(d))) d = addDays(d, -1);
-  let n = 0;
+  // Never miss twice: one missed due day is forgiven, two due days in a row end the streak.
+  let n = 0,
+    miss = false;
   for (let i = 0; i < 1100; i++) {
-    if (good(h, ds(d))) n++;
-    else if (isDue(h, d) && !isRest(ds(d))) break;
+    const k = ds(d);
+    if (good(h, k)) {
+      n++;
+      miss = false;
+    } else if (isDue(h, d) && !isRest(k)) {
+      if (miss) break;
+      miss = true;
+    }
     d = addDays(d, -1);
   }
   return n;
 }
+const isMini = (hid, k) => S.mini.has(hid + '|' + k) && S.logs.has(hid + '|' + k);
 function weekCount(h) {
   const d = new Date();
   const dow = (d.getDay() + 6) % 7;
@@ -4600,7 +4673,7 @@ function rate30(h) {
 }
 
 /* ---------- Version ---------- */
-const APP_VERSION = '0.82.0';
+const APP_VERSION = '0.83.0';
 
 /* Pick the English or Arabic text for the current language. Call it at render time, never while the file is loading. */
 const L2 = (en, ar) => (S.cfg.lang === 'ar' ? ar : en);
@@ -4721,7 +4794,7 @@ function dayButtons(h, n = 7) {
   for (let i = n - 1; i >= 0; i--) {
     const d = addDays(new Date(), -i);
     const k = ds(d);
-    out += `<button class="day ${good(h, k) ? 'on' : ''} ${isNeg(h) && (slipMode(h) ? logged(h.id, k) : k >= bornK(h) && k < today && !logged(h.id, k)) ? 'slip' : ''} ${k === today ? 'today' : ''} ${isDue(h, d) ? '' : 'off'}" data-action="toggle-log" data-id="${h.id}" data-date="${k}" title="${k}">
+    out += `<button class="day ${good(h, k) ? 'on' : ''} ${isNeg(h) && (slipMode(h) ? logged(h.id, k) : k >= bornK(h) && k < today && !logged(h.id, k)) ? 'slip' : ''} ${k === today ? 'today' : ''} ${isDue(h, d) ? '' : 'off'} ${isMini(h.id, k) ? 'half' : ''}" data-action="toggle-log" data-id="${h.id}" data-date="${k}" title="${k}">
       ${fmt(d, { weekday: 'narrow' })}<b>${d.getDate()}</b></button>`;
   }
   return `<div class="days">${out}</div>`;
@@ -4745,11 +4818,11 @@ function habitCard(h, full) {
   }
   return `<div class="card ${sm && S.sel.has(h.id) ? 'selected' : ''}" ${sm ? `data-action="sel-toggle" data-id="${h.id}"` : ''}><div class="habit">${sm ? selBox(h.id) : ''}
     <div class="grow habit-open" ${sm ? '' : `data-action="open-habit" data-id="${h.id}" role="button" tabindex="0" title="Open history"`}><div class="title">${hname(h)} <span class="chev">›</span></div>
-      <div class="meta"><span class="streak">${isNeg(h) ? '🛡 ' + s + ' day' + (s === 1 ? '' : 's') + ' clean' : '🔥 ' + s + ' day' + (s === 1 ? '' : 's')}</span>
+      <div class="meta"><span class="streak">${isNeg(h) ? '🛡 ' + s + ' day' + (s === 1 ? '' : 's') + ' clean' : '🔥 ' + s + ' day' + (s === 1 ? '' : 's')}</span>${full && !isNeg(h) && bestStreak(h) > s ? `<span>${L2('Best', 'الأفضل')} ${bestStreak(h)}</span>` : ''}
         <span>This week ${weekCount(h)}/${weekTarget(h)}</span>${full ? `<span>30-day ${rate30(h)}%</span>` : ''}${hasSched(h) ? `<span>${schedText(h)}</span>` : ''}</div></div>
     ${dayButtons(h)}
     ${full ? `${mvBtns('move-habit', h.id, `data-id="${h.id}"`)}${shareBtn('habit', h.id)}<button class="icon" data-action="edit-habit" data-id="${h.id}" title="Edit" aria-label="Edit ${esc(h.name)}">✎</button><button class="icon" data-action="del-habit" data-id="${h.id}" title="Delete" aria-label="Delete ${esc(h.name)}">✕</button>` : ''}
-  </div>${full ? `<div class="heat">${heat}</div>` : ''}</div>`;
+  </div>${habitHint(h)}${full ? `<div class="heat">${heat}</div>` : ''}</div>`;
 }
 /**
  * Game mode.
@@ -5142,7 +5215,8 @@ function eliteLine() {
 }
 /* Badges: derived from your history, then remembered once earned (S.cfg.ach) so they never disappear. */
 function badges() {
-  const A = rpgAll(),
+  const hb = S.habits.filter((h) => !isNeg(h)).reduce((m, h) => Math.max(m, bestStreak(h)), 0),
+    A = rpgAll(),
     done = S.tasks.filter((t) => t.done).length,
     B = (id, icon, en, ar, den, dar, ok) => ({ id, icon, name: L2(en, ar), desc: L2(den, dar), ok });
   return [
@@ -5213,6 +5287,42 @@ function badges() {
     ),
     B('l5', '⭐', 'Level 5', 'المستوى 5', 'Reach hero level 5.', 'بلغ مستوى البطل 5.', heroLv(A.xp) >= 5),
     B('l10', '🌟', 'Level 10', 'المستوى 10', 'Reach hero level 10.', 'بلغ مستوى البطل 10.', heroLv(A.xp) >= 10),
+    B(
+      'hs7',
+      '🔗',
+      'Week of votes',
+      'أسبوع من الأصوات',
+      'A 7-day streak on one habit.',
+      'سلسلة 7 أيام على عادة واحدة.',
+      hb >= 7
+    ),
+    B(
+      'hs30',
+      '⛓',
+      'Month of votes',
+      'شهر من الأصوات',
+      'A 30-day streak on one habit.',
+      'سلسلة 30 يومًا على عادة واحدة.',
+      hb >= 30
+    ),
+    B(
+      'hs100',
+      '💎',
+      'Hundred votes',
+      'مئة صوت',
+      'A 100-day streak on one habit.',
+      'سلسلة 100 يوم على عادة واحدة.',
+      hb >= 100
+    ),
+    B(
+      'pd',
+      '🎉',
+      'Perfect day',
+      'يوم مثالي',
+      'Finish every habit due in one day.',
+      'أنجز كل العادات المستحقة في يوم واحد.',
+      perfectDays() > 0
+    ),
   ];
 }
 const earned = () => new Set((S.cfg.ach || '').split(',').filter(Boolean));
@@ -6547,6 +6657,21 @@ function buildNotifications() {
       } else if (hs.length) body = L2("Evening check-in: tick off today's habits.", 'مراجعة المساء: علّم عادات اليوم.');
       if (body) out.push({ key: 'e' + k, at: e, title: L2('Evening check-in', 'مراجعة المساء'), body });
     }
+    for (const h of hs)
+      if (h.at && !(i === 0 && good(h, k))) {
+        const when = at(d, h.at);
+        if (when > now)
+          out.push({
+            key: 'h' + k + h.id,
+            at: when,
+            title: (h.icon ? h.icon + ' ' : '') + h.name,
+            body: h.mini
+              ? L2('Two-minute version: ' + h.mini, 'النسخة السريعة: ' + h.mini)
+              : h.where
+                ? L2('Time for it, in ' + h.where + '.', 'حان وقتها في ' + h.where + '.')
+                : L2('Time for your habit.', 'حان وقت عادتك.'),
+          });
+      }
     if (S.cfg.nClasses)
       for (const c of cls) {
         const t = at(d, c.start) - 10 * 60000;
@@ -7170,7 +7295,7 @@ function viewDash() {
     }
     ${S.cfg.dGoals ? `<div class="h2row"><h2>This week's goals</h2><span class="hbtns"><button class="chip" data-action="open-plan">Plan this week</button><details class="chipmenu"><summary class="chip" aria-label="More">⋯</summary><div><button class="chip" data-action="open-report">Weekly report</button><button class="chip" data-action="open-month">Monthly review</button></div></details></span></div>${wk.length ? `<div class="goals">${wk.map(goalCard).join('')}</div>` : `<div class="empty">No weekly goals for ${currentPeriod('weekly')}.</div>`}` : ''}
   </div><div>
-    ${S.cfg.dHabits ? `<h2>Today's habits</h2>${habitList(false)}` : ''}
+    ${S.cfg.dHabits ? `${habitRing()}<h2>Today's habits</h2>${habitList(false)}` : ''}
   </div></div>
   ${planCta ? `<div class="card plan-cta"><div class="grow"><div class="title">${wk.length ? L2(`${openSlots} weekly slot${openSlots > 1 ? 's' : ''} still to plan`, `${openSlots} خانات أسبوعية للتخطيط`) : `Plan ${currentPeriod('weekly')}`}</div><div class="meta">${wk.length ? L2("Fill in this week's steps toward your monthly goals.", 'املأ خطوات هذا الأسبوع نحو أهدافك الشهرية.') : L2("No weekly goals yet. Pick this week's steps.", 'لا أهداف أسبوعية بعد. اختر خطوات هذا الأسبوع.')}</div></div><button class="btn" data-action="open-plan">Plan week</button></div>` : ''}${rpgCard()}<div class="stats dstats">
     <div class="card stat"><div class="n">${todaysDone}/${todays.length}</div><div class="l">Today's tasks done</div></div>
@@ -7371,9 +7496,10 @@ function viewHabits() {
     <select name="kind" aria-label="Habit type"><option value="">✅ Build: tick it when done</option><option value="avoid">${S.cfg.avoidMode === 'confirm' ? '🚫 Avoid: tick each clean day' : '🚫 Avoid: clean unless you slip'}</option></select>
     <select name="target" title="Target days per week">${[7, 6, 5, 4, 3, 2, 1].map((n) => `<option value="${n}">${n}×/week</option>`).join('')}</select>
     <input type="text" name="group" list="folderListAdd" placeholder="Folder (optional), e.g. Morning routine" style="flex:1 1 200px" autocomplete="off">${folderList('folderListAdd')}
-    ${dayPicker()}
+    ${dayPicker()}${stickFields()}
     <button class="btn">Add habit</button></form></details>
-  ${habitList(true)}`;
+  <div class="row" style="margin:6px 0"><button class="chip" data-action="info-habits">ⓘ ${L2('How habits work', 'كيف تعمل العادات')}</button></div>
+  ${easierCard()}${habitList(true)}`;
 }
 // Shared by the dashboard and Habits tab; honours the "hide done today" switch.
 // Dashboard row: just today — one big check button, streak and weekly progress.
@@ -7382,20 +7508,20 @@ function habitToday(h) {
     on = good(h, k),
     s = streak(h);
   return `<li class="item ${on ? 'done' : ''}">
-    <button class="tcheck ${on ? 'on' : ''}" data-action="toggle-log" data-id="${h.id}" data-date="${k}" aria-pressed="${on}" aria-label="${slipMode(h) ? (on ? 'Clean today. Tap to log a slip' : 'Slipped today. Tap to undo') : (on ? 'Undo' : 'Check off') + ' ' + esc(h.name) + ' for today'}">${slipMode(h) && !on ? '✗' : '✓'}</button>
+    <button class="tcheck ${on ? 'on' : ''}" data-action="toggle-log" data-id="${h.id}" data-date="${k}" aria-pressed="${on}" aria-label="${slipMode(h) ? (on ? 'Clean today. Tap to log a slip' : 'Slipped today. Tap to undo') : (on ? L2('Undo', 'تراجع') : L2('Check off', 'إنجاز')) + ' ' + esc(h.name) + L2(' for today', ' لهذا اليوم')}">${slipMode(h) && !on ? '✗' : '✓'}</button>
     <div class="grow habit-open" data-action="open-habit" data-id="${h.id}" role="button" tabindex="0" title="Open history">
       <div class="title">${hname(h)} <span class="chev">›</span></div>
-      <div class="meta"><span>${isNeg(h) ? '🛡 ' + s + ' day' + (s === 1 ? '' : 's') + ' clean' : '🔥 ' + s + ' day' + (s === 1 ? '' : 's')}</span><span>This week ${weekCount(h)}/${weekTarget(h)}</span></div></div></li>`;
+      <div class="meta"><span>${isNeg(h) ? '🛡 ' + s + ' day' + (s === 1 ? '' : 's') + ' clean' : '🔥 ' + s + ' day' + (s === 1 ? '' : 's')}</span><span>This week ${weekCount(h)}/${weekTarget(h)}</span></div>${habitHint(h)}</div></li>`;
 }
 function habitList(full) {
   const hideIt = (h) => S.hideDone && !(isNeg(h) && !S.cfg.avoidHide) && good(h, TODAY());
   if (!S.habits.length) return `<div class="empty">No habits yet.${full ? ' Tap a day to check it off.' : ''}</div>`;
   const today = TODAY(),
-    dueAll0 = sortedHabits().filter(dueToday),
+    dueAll0 = stackOrder(sortedHabits()).filter(dueToday),
     dueAll = full ? dueAll0 : dueAll0.filter((h) => !isNeg(h)),
     doneToday = dueAll.filter((h) => good(h, today)).length;
   const avoids = full ? [] : dueAll0.filter(isNeg);
-  const pool = full ? sortedHabits() : dueAll,
+  const pool = full ? stackOrder(sortedHabits()) : dueAll,
     offToday = S.habits.length - dueAll0.length;
   if (!pool.length && avoids.length) return avoidSection(avoids);
   if (!pool.length)
@@ -7857,6 +7983,7 @@ function settingsCard() {
       ],
       c.eliteTarget
     )}
+    ${sw('habitFx', L2('Habit rewards', 'مكافآت العادات'), L2('Shows +XP pop-ups, the daily ring and celebrations when you tick habits', 'يعرض +نقاط الخبرة والحلقة اليومية والاحتفالات عند إنجاز العادات'), c.habitFx !== false)}
     ${sw('rpg', 'RPG game mode', 'A weekly pixel boss you beat by finishing tasks, habits and study. Shows damage, a hero level and a bestiary of beaten monsters', c.rpg)}
   </div>
   ${notifCard()}
@@ -8175,6 +8302,23 @@ function render() {
       setTimeout(() => el.classList.remove('pop'), 450);
     }
   }
+  if (S.fx) {
+    const f = S.fx;
+    S.fx = null;
+    try {
+      const el = app.querySelector(f.sel);
+      if (el && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        const r = el.getBoundingClientRect(),
+          s = document.createElement('span');
+        s.className = 'xpfloat';
+        s.textContent = f.text;
+        s.style.left = r.left + r.width / 2 + 'px';
+        s.style.top = r.top + 'px';
+        document.body.appendChild(s);
+        setTimeout(() => s.remove(), 1100);
+      }
+    } catch (_) {}
+  }
   const nv =
     S.view === 'archive' || S.view === 'trash' || S.view === 'safety'
       ? 'data'
@@ -8282,7 +8426,7 @@ function openEdit(kind, id) {
       <label>Type</label><select name="kind"><option value="">✅ Build: tick it when done</option><option value="avoid" ${slipMode(h) ? 'selected' : ''}>🚫 Avoid: clean unless you slip</option><option value="avoid-confirm" ${isNeg(h) && !slipMode(h) ? 'selected' : ''}>🚫 Avoid: tick each clean day</option></select>
       <label>Target</label><select name="target">${[7, 6, 5, 4, 3, 2, 1].map((n) => `<option value="${n}" ${(h.target || 7) === n ? 'selected' : ''}>${n}× per week</option>`).join('')}</select>
       <label>Folder</label><input type="text" name="group" list="folderListEdit" value="${esc(h.group || '')}" placeholder="None. Type a name to create one" autocomplete="off">${folderList('folderListEdit')}
-      <label>Schedule</label>${dayPicker(h.days || [])}`;
+      <label>Schedule</label>${dayPicker(h.days || [])}${isNeg(h) ? '' : stickFields(h)}`;
   }
   if (kind === 'exam') {
     const e = S.exams.find((x) => x.id === id) || { kind: 'exam', date: TODAY() };
@@ -8472,6 +8616,7 @@ dlg.addEventListener('submit', async (e) => {
       target: av ? 7 : +v.target,
       group: (v.group || '').trim(),
       days: av ? [] : readDays(f),
+      ...stickRead(v),
     });
     await DB.put('habits', h);
   }
@@ -8491,14 +8636,21 @@ function bestStreak(h) {
   const dates = isNeg(h) ? [bornK(h)] : habitDates(h);
   if (!dates.length) return 0;
   let best = 0,
-    run = 0;
+    run = 0,
+    miss = false;
   const today = TODAY();
   for (let d = new Date(dates[0] + 'T00:00'); ds(d) <= today; d = addDays(d, 1)) {
     const k = ds(d);
     if (good(h, k)) {
       run++;
+      miss = false;
       best = Math.max(best, run);
-    } else if (isDue(h, d) && !isRest(k) && (k !== today || slipMode(h))) run = 0;
+    } else if (isDue(h, d) && !isRest(k) && (k !== today || slipMode(h))) {
+      if (isNeg(h) || miss) {
+        run = 0;
+        miss = false;
+      } else miss = true;
+    }
   }
   return best;
 }
@@ -8701,6 +8853,7 @@ function drawHabit() {
   dlg.innerHTML = `<div class="hist">
     <div class="hist-top"><h3>${esc(h.name)}</h3><button type="button" class="icon" data-action="dlg-close" aria-label="Close">✕</button></div>
     <div class="hist-stats"><div><b>🔥 ${streak(h)}</b><span>Current</span></div><div><b>${bestStreak(h)}</b><span>Best streak</span></div><div><b>${habitDates(h).length}</b><span>Total days</span></div><div><b>${rate30(h)}%</b><span>Last 30</span></div></div>
+    ${h.env ? `<p class="meta" translate="no">🛠 ${esc(h.env)}</p>` : ''}
     <div class="cal-nav"><button type="button" class="icon" data-action="cal-month" data-d="-1" aria-label="Previous month">‹</button><b>${fmt(first, { month: 'long', year: 'numeric' })}</b><button type="button" class="icon" data-action="cal-month" data-d="1" ${atNow ? 'disabled' : ''} aria-label="Next month">›</button></div>
     <div class="cal cal-wk">${wk}</div><div class="cal">${cells}</div>
     <div class="meta cal-foot"><span>${monthCount} day${monthCount === 1 ? '' : 's'} this month</span>${created}</div>
@@ -8814,6 +8967,23 @@ function openInfo(kind, id) {
       body,
       iBtn('🏰 ' + L2('Tower', 'البرج'), 'open-tower', '') +
         iBtn('📖 ' + L2('Bestiary', 'الموسوعة'), 'open-bestiary', '', 'btn')
+    );
+  } else if (kind === 'habits') {
+    const row = (icon, head, text) => `<div class="irow"><span>${icon} ${head}</span><b>${text}</b></div>`;
+    infoShell(
+      L2('How habits work', 'كيف تعمل العادات'),
+      `<p class="meta">${L2('Built on the four laws of Atomic Habits. Everything under "Make it stick" is optional.', 'مبنية على القوانين الأربعة لكتاب العادات الذرية. كل ما تحت «اجعلها تثبت» اختياري.')}</p>
+      <div class="inf-list"><b>${L2('1. Make it obvious', '1. اجعلها واضحة')}</b>
+      <div>${L2('Say when and where, and stack it after something you already do: "After my morning coffee, I will read."', 'حدّد الوقت والمكان واربطها بشيء تفعله أصلًا: «بعد قهوة الصباح سأقرأ».')}</div></div>
+      <div class="inf-list"><b>${L2('2. Make it attractive', '2. اجعلها جذابة')}</b>
+      <div>${L2('Every check-in is a vote for the person you want to become. Pair it with a treat you only allow after.', 'كل إنجاز هو صوت للشخص الذي تريد أن تصبحه. اربطها بمكافأة لا تأخذها إلا بعدها.')}</div></div>
+      <div class="inf-list"><b>${L2('3. Make it easy', '3. اجعلها سهلة')}</b>
+      <div>${L2('Give a habit a two-minute version. Tapping ½ counts for the streak and the ring, for half the XP. Showing up beats doing it perfectly.', 'أعطِ العادة نسخة من دقيقتين. زر ½ يحسب للسلسلة والحلقة بنصف النقاط. الحضور أهم من الكمال.')}</div></div>
+      <div class="inf-list"><b>${L2('4. Make it satisfying', '4. اجعلها ممتعة')}</b>
+      <div>${L2('You see the XP at once, the ring fills as you go, and 3, 7, 14, 30, 60 and 100 days get a celebration.', 'ترى النقاط فورًا، وتمتلئ الحلقة أثناء التقدم، ويُحتفل بأيام 3 و7 و14 و30 و60 و100.')}</div></div>
+      <div class="inf-list"><b>${L2('Never miss twice', 'لا تفوّت مرتين')}</b>
+      <div>${L2('One missed day does not break your streak. Two due days in a row do.', 'يوم واحد فائت لا يكسر سلسلتك. يومان مستحقان متتاليان يكسرانها.')}</div></div>`,
+      `<button type="button" class="btn" data-action="dlg-close">${L2('Got it', 'فهمت')}</button>`
     );
   } else if (kind === 'boss') {
     if (!rpgOn()) return;
@@ -9206,6 +9376,8 @@ const CFG_DEF = {
   abOn: false,
   abTime: '21:00',
   abAsked: false,
+  habitFx: true,
+  mile: '',
   nMorning: '08:00',
   nEvening: '20:00',
   nClasses: true,
@@ -9449,6 +9621,121 @@ function histBox(item) {
         `<div class="row" style="margin:6px 0;align-items:center"><span class="meta grow" translate="no">${esc(fmtWhen(x.at))} · ${esc(x.title)}${x.notes ? ' · ' + esc(x.notes.slice(0, 40)) : ''}</span><button type="button" class="chip" data-action="hist-use" data-i="${i}">${L2('Use', 'استخدم')}</button></div>`
     )
     .join('')}</details>`;
+}
+/**
+ * Habits built on the four laws of Atomic Habits: obvious (stacking, time and place), attractive (identity votes,
+ * rewards), easy (two-minute version), satisfying (instant payoff, today ring, never miss twice).
+ * (All src/js files are joined, in filename order, into one shared scope. See src/README.md.)
+ */
+const STICK = ['ident', 'after', 'at', 'where', 'treat', 'mini', 'env'];
+/* The optional "Make it stick" section of the habit forms. */
+function stickFields(h) {
+  h = h || {};
+  const anchors = S.habits.filter((x) => !isNeg(x) && x.id !== h.id),
+    linked = anchors.some((x) => x.id === h.after),
+    open = S._stick || STICK.some((k) => h[k]);
+  S._stick = false;
+  return `<details class="more stick" style="flex:1 1 100%" ${open ? 'open' : ''}><summary>${L2('Make it stick (optional)', 'اجعلها تثبت (اختياري)')}</summary>
+    <label>${L2('Identity: I am becoming…', 'الهوية: أنا أصبح…')}</label><input type="text" name="ident" value="${esc(h.ident || '')}" placeholder="${L2('e.g. a reader', 'مثال: قارئًا')}" autocomplete="off">
+    <label>${L2('Two-minute version', 'النسخة السريعة (دقيقتان)')}</label><input type="text" name="mini" value="${esc(h.mini || '')}" placeholder="${L2('e.g. read one page', 'مثال: اقرأ صفحة واحدة')}" autocomplete="off">
+    <label>${L2('After I…', 'بعد أن…')}</label><select name="after"><option value="">—</option>${anchors.map((x) => `<option value="${x.id}" ${x.id === h.after ? 'selected' : ''}>${esc(x.name)}</option>`).join('')}</select>
+    <input type="text" name="afterTxt" value="${linked ? '' : esc(h.after || '')}" placeholder="${L2('or something else, e.g. morning coffee', 'أو شيء آخر، مثل قهوة الصباح')}" autocomplete="off">
+    <div class="two"><div><label>${L2('At (time)', 'الوقت')}</label><input type="time" name="at" value="${h.at || ''}"></div><div><label>${L2('Where', 'المكان')}</label><input type="text" name="where" value="${esc(h.where || '')}" autocomplete="off"></div></div>
+    <label>${L2('Then I get to…', 'ثم أسمح لنفسي بـ…')}</label><input type="text" name="treat" value="${esc(h.treat || '')}" placeholder="${L2('a treat I only allow after this', 'مكافأة لا آخذها إلا بعدها')}" autocomplete="off">
+    <label>${L2('Make it easy: what I set up', 'اجعلها سهلة: ما أجهّزه')}</label><input type="text" name="env" value="${esc(h.env || '')}" placeholder="${L2('e.g. book on my pillow', 'مثال: الكتاب على وسادتي')}" autocomplete="off"></details>`;
+}
+function stickRead(v) {
+  const o = {};
+  for (const k of ['ident', 'where', 'treat', 'mini', 'env']) o[k] = (v[k] || '').trim();
+  o.at = v.at || '';
+  o.after = v.after || (v.afterTxt || '').trim();
+  return o;
+}
+function stackOrder(list) {
+  const ids = new Set(list.map((h) => h.id)),
+    kids = new Map(),
+    roots = [];
+  for (const h of list) {
+    if (h.after && ids.has(h.after) && h.after !== h.id) {
+      if (!kids.has(h.after)) kids.set(h.after, []);
+      kids.get(h.after).push(h);
+    } else roots.push(h);
+  }
+  const out = [],
+    seen = new Set(),
+    add = (h) => {
+      if (seen.has(h.id)) return;
+      seen.add(h.id);
+      out.push(h);
+      (kids.get(h.id) || []).forEach(add);
+    };
+  roots.forEach(add);
+  list.forEach(add);
+  return out;
+}
+/* Lines under a habit's name: identity votes, when and where, the stack anchor, the treat, the miss message, the 2-minute button. */
+function habitHint(h) {
+  if (isNeg(h)) return '';
+  const T = TODAY(),
+    yd = addDays(new Date(), -1),
+    yk = ds(yd),
+    bits = [];
+  if (h.ident)
+    bits.push(
+      `🗳 ${habitDates(h).length} ${L2('votes for being', 'صوتًا لتصبح')} <span translate="no">${esc(h.ident)}</span>`
+    );
+  if (h.at || h.where)
+    bits.push(
+      `⏰ ${h.at ? esc(h.at) : ''}${h.where ? (h.at ? ' · ' : '') + L2('in ', 'في ') + `<span translate="no">${esc(h.where)}</span>` : ''}`
+    );
+  if (h.after) {
+    const a = S.habits.find((x) => x.id === h.after);
+    bits.push(`↳ ${L2('After', 'بعد')} <span translate="no">${esc(a ? a.name : h.after)}</span>`);
+  }
+  if (h.treat) bits.push(`🎁 <span translate="no">${esc(h.treat)}</span>`);
+  const missed =
+    dueToday(h) && isDue(h, yd) && !isRest(yk) && yk >= bornK(h) && !good(h, yk) && !good(h, T) && streak(h) > 0;
+  let out = bits.length ? `<div class="meta hint">${bits.map((b) => `<span>${b}</span>`).join('')}</div>` : '';
+  if (missed)
+    out += `<div class="meta hint miss">${L2('Missed yesterday. Today is the one that counts.', 'فاتك أمس. اليوم هو الذي يهم.')}</div>`;
+  if (h.mini && dueToday(h) && !good(h, T))
+    out += `<div class="hint"><button type="button" class="chip" data-action="log-mini" data-id="${h.id}" data-date="${T}">½ <span translate="no">${esc(h.mini)}</span></button></div>`;
+  return out;
+}
+/* Perfect days in the last 60: every habit that was due (and already created) was done. */
+let _pd = [0, ''];
+function perfectDays() {
+  const key = DBV + '|' + TODAY() + '|' + S.logs.size + '|' + S.habits.length;
+  if (_pd[1] === key) return _pd[0];
+  let n = 0;
+  for (let i = 0; i < 60; i++) {
+    const d = addDays(new Date(), -i),
+      k = ds(d),
+      hs = S.habits.filter((h) => !isNeg(h) && isDue(h, d) && k >= bornK(h));
+    if (hs.length && hs.every((h) => good(h, k))) n++;
+  }
+  _pd = [n, key];
+  return n;
+}
+function habitRing() {
+  const due = S.habits.filter((h) => !isNeg(h) && dueToday(h));
+  if (!due.length || S.cfg.habitFx === false) return '';
+  const done = due.filter((h) => good(h, TODAY())).length,
+    C = 2 * Math.PI * 18,
+    full = done === due.length,
+    pd = perfectDays();
+  return `<div class="hring ${full ? 'full' : ''}"><svg viewBox="0 0 44 44" width="52" height="52" aria-hidden="true"><circle cx="22" cy="22" r="18" class="bg"/><circle cx="22" cy="22" r="18" class="fg" stroke-dasharray="${((done / due.length) * C).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 22 22)"/></svg>
+    <div><div class="title">${full ? L2('Perfect day 🎉', 'يوم مثالي 🎉') : L2(`${done} of ${due.length} habits today`, `${done} من ${due.length} عادات اليوم`)}</div>
+    <div class="meta">${pd ? L2(`${pd} perfect day(s) in the last 60`, `${pd} يوم مثالي في آخر 60`) : L2('Close the ring for a perfect day.', 'أغلق الحلقة لتحصل على يوم مثالي.')}</div></div></div>`;
+}
+/* The hardest habit, with an offer to shrink it to a two-minute version. */
+function easierCard() {
+  const old = Date.now() - 14 * 864e5,
+    h = S.habits
+      .filter((x) => !isNeg(x) && !x.mini && (x.created || 0) < old && rate30(x) < 60)
+      .sort((a, b) => rate30(a) - rate30(b))[0];
+  if (!h) return '';
+  return `<div class="card backup-cta"><div class="grow"><div class="title">${L2('Hardest one: ', 'الأصعب: ')}<span translate="no">${esc(h.name)}</span> (${rate30(h)}%)</div><div class="meta">${L2('Make it so small you cannot say no, like one page or one push-up. Showing up matters more than the size.', 'اجعلها صغيرة لدرجة لا تستطيع رفضها، كصفحة واحدة أو تمرين واحد. الحضور أهم من الحجم.')}</div></div><button class="btn" data-action="easier" data-id="${h.id}">${L2('Add a 2-minute version', 'أضف نسخة دقيقتين')}</button></div>`;
 }
 /**
  * English and Arabic.
@@ -10852,14 +11139,55 @@ async function toggleLog(hid, date) {
     toast(`Slip logged for "${hh.name}". Tap the day again to undo.`);
   } else {
     S.logs.add(id);
+    S.mini.delete(id);
     await DB.put('logs', { id, habitId: hid, date });
-    const h = hh,
-      g = h && folderOf(h);
-    if (g && date === TODAY() && S.habits.filter((x) => folderOf(x) === g && dueToday(x)).every((x) => good(x, date))) {
-      Sound.play('goal');
-      toast(`✅ ${g}: all done for today`);
-    } else Sound.play('habit');
+    await habitWin(hh, date, false);
   }
+}
+/* Reward for a check-in: floating +XP, milestone, perfect day or folder-complete toast. */
+const MILES = [3, 7, 14, 30, 60, 100];
+async function habitWin(h, date, mini) {
+  const fx = S.cfg.habitFx !== false;
+  if (h && !isNeg(h)) {
+    if (fx) {
+      const xp = Math.max(1, Math.round(habitHit(h, date) / (mini ? 2 : 1)));
+      S.fx = {
+        sel: `[data-action="toggle-log"][data-id="${h.id}"][data-date="${date}"]`,
+        text: rpgOn() ? `+${xp} XP` : `+1 ${L2('vote', 'صوت')}`,
+      };
+    }
+    if (fx && date === TODAY()) {
+      const s = streak(h),
+        key = h.id + ':' + s,
+        seen = (S.cfg.mile || '').split(',');
+      if (MILES.includes(s) && !seen.includes(key)) {
+        S.cfg.mile = [...seen.filter(Boolean), key].join(',');
+        saveCfg();
+        Sound.play('goal');
+        const v = habitDates(h).length;
+        toast(
+          h.ident
+            ? L2(
+                `🔥 ${s} days in a row: ${v} votes for being ${h.ident}`,
+                `🔥 ${s} يومًا متتاليًا: ${v} صوتًا لتصبح ${h.ident}`
+              )
+            : L2(`🔥 ${s} days in a row: ${h.name}`, `🔥 ${s} يومًا متتاليًا: ${h.name}`)
+        );
+        return;
+      }
+      const due = S.habits.filter((x) => !isNeg(x) && dueToday(x));
+      if (due.length && due.every((x) => good(x, date))) {
+        Sound.play('goal');
+        toast(L2('🎉 Perfect day: every habit done', '🎉 يوم مثالي: أنجزت كل العادات'));
+        return;
+      }
+    }
+  }
+  const g = h && folderOf(h);
+  if (g && date === TODAY() && S.habits.filter((x) => folderOf(x) === g && dueToday(x)).every((x) => good(x, date))) {
+    Sound.play('goal');
+    toast(`✅ ${g}: all done for today`);
+  } else Sound.play('habit');
 }
 const actions = {
   'see-overdue'() {
@@ -11832,6 +12160,29 @@ const actions = {
   async 'toggle-log'(el) {
     await toggleLog(el.dataset.id, el.dataset.date);
   },
+  async 'log-mini'(el) {
+    const hid = el.dataset.id,
+      date = el.dataset.date || TODAY(),
+      id = hid + '|' + date;
+    if (S.logs.has(id)) return false;
+    S.logs.add(id);
+    S.mini.add(id);
+    await DB.put('logs', { id, habitId: hid, date, mini: true });
+    await habitWin(
+      S.habits.find((x) => x.id === hid),
+      date,
+      true
+    );
+  },
+  'info-habits'() {
+    openInfo('habits');
+    return false;
+  },
+  easier(el) {
+    S._stick = true;
+    openEdit('habit', el.dataset.id);
+    return false;
+  },
   async 'del-habit'(el) {
     const gone = S.habits.find((h) => h.id === el.dataset.id);
     if (!gone) return false;
@@ -12242,6 +12593,7 @@ document.addEventListener('submit', async (e) => {
       target: av ? 7 : +v.target,
       group: (v.group || '').trim(),
       days: av ? [] : readDays(f),
+      ...stickRead(v),
       created: Date.now(),
     };
     S.habits.push(h);
@@ -13303,7 +13655,7 @@ function backupData() {
     trash: S.trash,
     logs: [...S.logs].map((id) => {
       const i = id.lastIndexOf('|');
-      return { id, habitId: id.slice(0, i), date: id.slice(i + 1) };
+      return { id, habitId: id.slice(0, i), date: id.slice(i + 1), ...(S.mini.has(id) ? { mini: true } : {}) };
     }),
     settings: { cfg: S.cfg, sound: Sound.on, hideDone: S.hideDone, compact: S.compact },
   };

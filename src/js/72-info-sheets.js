@@ -101,6 +101,23 @@ function openInfo(kind, id) {
       iBtn('🏰 ' + L2('Tower', 'البرج'), 'open-tower', '') +
         iBtn('📖 ' + L2('Bestiary', 'الموسوعة'), 'open-bestiary', '', 'btn')
     );
+  } else if (kind === 'habits') {
+    const row = (icon, head, text) => `<div class="irow"><span>${icon} ${head}</span><b>${text}</b></div>`;
+    infoShell(
+      L2('How habits work', 'كيف تعمل العادات'),
+      `<p class="meta">${L2('Built on the four laws of Atomic Habits. Everything under "Make it stick" is optional.', 'مبنية على القوانين الأربعة لكتاب العادات الذرية. كل ما تحت «اجعلها تثبت» اختياري.')}</p>
+      <div class="inf-list"><b>${L2('1. Make it obvious', '1. اجعلها واضحة')}</b>
+      <div>${L2('Say when and where, and stack it after something you already do: "After my morning coffee, I will read."', 'حدّد الوقت والمكان واربطها بشيء تفعله أصلًا: «بعد قهوة الصباح سأقرأ».')}</div></div>
+      <div class="inf-list"><b>${L2('2. Make it attractive', '2. اجعلها جذابة')}</b>
+      <div>${L2('Every check-in is a vote for the person you want to become. Pair it with a treat you only allow after.', 'كل إنجاز هو صوت للشخص الذي تريد أن تصبحه. اربطها بمكافأة لا تأخذها إلا بعدها.')}</div></div>
+      <div class="inf-list"><b>${L2('3. Make it easy', '3. اجعلها سهلة')}</b>
+      <div>${L2('Give a habit a two-minute version. Tapping ½ counts for the streak and the ring, for half the XP. Showing up beats doing it perfectly.', 'أعطِ العادة نسخة من دقيقتين. زر ½ يحسب للسلسلة والحلقة بنصف النقاط. الحضور أهم من الكمال.')}</div></div>
+      <div class="inf-list"><b>${L2('4. Make it satisfying', '4. اجعلها ممتعة')}</b>
+      <div>${L2('You see the XP at once, the ring fills as you go, and 3, 7, 14, 30, 60 and 100 days get a celebration.', 'ترى النقاط فورًا، وتمتلئ الحلقة أثناء التقدم، ويُحتفل بأيام 3 و7 و14 و30 و60 و100.')}</div></div>
+      <div class="inf-list"><b>${L2('Never miss twice', 'لا تفوّت مرتين')}</b>
+      <div>${L2('One missed day does not break your streak. Two due days in a row do.', 'يوم واحد فائت لا يكسر سلسلتك. يومان مستحقان متتاليان يكسرانها.')}</div></div>`,
+      `<button type="button" class="btn" data-action="dlg-close">${L2('Got it', 'فهمت')}</button>`
+    );
   } else if (kind === 'boss') {
     if (!rpgOn()) return;
     const A = rpgAll(),

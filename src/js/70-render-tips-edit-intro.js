@@ -151,6 +151,23 @@ function render() {
       setTimeout(() => el.classList.remove('pop'), 450);
     }
   }
+  if (S.fx) {
+    const f = S.fx;
+    S.fx = null;
+    try {
+      const el = app.querySelector(f.sel);
+      if (el && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        const r = el.getBoundingClientRect(),
+          s = document.createElement('span');
+        s.className = 'xpfloat';
+        s.textContent = f.text;
+        s.style.left = r.left + r.width / 2 + 'px';
+        s.style.top = r.top + 'px';
+        document.body.appendChild(s);
+        setTimeout(() => s.remove(), 1100);
+      }
+    } catch (_) {}
+  }
   const nv =
     S.view === 'archive' || S.view === 'trash' || S.view === 'safety'
       ? 'data'
@@ -258,7 +275,7 @@ function openEdit(kind, id) {
       <label>Type</label><select name="kind"><option value="">✅ Build: tick it when done</option><option value="avoid" ${slipMode(h) ? 'selected' : ''}>🚫 Avoid: clean unless you slip</option><option value="avoid-confirm" ${isNeg(h) && !slipMode(h) ? 'selected' : ''}>🚫 Avoid: tick each clean day</option></select>
       <label>Target</label><select name="target">${[7, 6, 5, 4, 3, 2, 1].map((n) => `<option value="${n}" ${(h.target || 7) === n ? 'selected' : ''}>${n}× per week</option>`).join('')}</select>
       <label>Folder</label><input type="text" name="group" list="folderListEdit" value="${esc(h.group || '')}" placeholder="None. Type a name to create one" autocomplete="off">${folderList('folderListEdit')}
-      <label>Schedule</label>${dayPicker(h.days || [])}`;
+      <label>Schedule</label>${dayPicker(h.days || [])}${isNeg(h) ? '' : stickFields(h)}`;
   }
   if (kind === 'exam') {
     const e = S.exams.find((x) => x.id === id) || { kind: 'exam', date: TODAY() };
@@ -448,6 +465,7 @@ dlg.addEventListener('submit', async (e) => {
       target: av ? 7 : +v.target,
       group: (v.group || '').trim(),
       days: av ? [] : readDays(f),
+      ...stickRead(v),
     });
     await DB.put('habits', h);
   }
@@ -467,14 +485,21 @@ function bestStreak(h) {
   const dates = isNeg(h) ? [bornK(h)] : habitDates(h);
   if (!dates.length) return 0;
   let best = 0,
-    run = 0;
+    run = 0,
+    miss = false;
   const today = TODAY();
   for (let d = new Date(dates[0] + 'T00:00'); ds(d) <= today; d = addDays(d, 1)) {
     const k = ds(d);
     if (good(h, k)) {
       run++;
+      miss = false;
       best = Math.max(best, run);
-    } else if (isDue(h, d) && !isRest(k) && (k !== today || slipMode(h))) run = 0;
+    } else if (isDue(h, d) && !isRest(k) && (k !== today || slipMode(h))) {
+      if (isNeg(h) || miss) {
+        run = 0;
+        miss = false;
+      } else miss = true;
+    }
   }
   return best;
 }
@@ -677,6 +702,7 @@ function drawHabit() {
   dlg.innerHTML = `<div class="hist">
     <div class="hist-top"><h3>${esc(h.name)}</h3><button type="button" class="icon" data-action="dlg-close" aria-label="Close">✕</button></div>
     <div class="hist-stats"><div><b>🔥 ${streak(h)}</b><span>Current</span></div><div><b>${bestStreak(h)}</b><span>Best streak</span></div><div><b>${habitDates(h).length}</b><span>Total days</span></div><div><b>${rate30(h)}%</b><span>Last 30</span></div></div>
+    ${h.env ? `<p class="meta" translate="no">🛠 ${esc(h.env)}</p>` : ''}
     <div class="cal-nav"><button type="button" class="icon" data-action="cal-month" data-d="-1" aria-label="Previous month">‹</button><b>${fmt(first, { month: 'long', year: 'numeric' })}</b><button type="button" class="icon" data-action="cal-month" data-d="1" ${atNow ? 'disabled' : ''} aria-label="Next month">›</button></div>
     <div class="cal cal-wk">${wk}</div><div class="cal">${cells}</div>
     <div class="meta cal-foot"><span>${monthCount} day${monthCount === 1 ? '' : 's'} this month</span>${created}</div>

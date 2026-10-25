@@ -628,7 +628,7 @@ function backupData() {
     trash: S.trash,
     logs: [...S.logs].map((id) => {
       const i = id.lastIndexOf('|');
-      return { id, habitId: id.slice(0, i), date: id.slice(i + 1) };
+      return { id, habitId: id.slice(0, i), date: id.slice(i + 1), ...(S.mini.has(id) ? { mini: true } : {}) };
     }),
     settings: { cfg: S.cfg, sound: Sound.on, hideDone: S.hideDone, compact: S.compact },
   };

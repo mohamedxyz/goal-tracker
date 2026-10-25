@@ -25,14 +25,55 @@ async function toggleLog(hid, date) {
     toast(`Slip logged for "${hh.name}". Tap the day again to undo.`);
   } else {
     S.logs.add(id);
+    S.mini.delete(id);
     await DB.put('logs', { id, habitId: hid, date });
-    const h = hh,
-      g = h && folderOf(h);
-    if (g && date === TODAY() && S.habits.filter((x) => folderOf(x) === g && dueToday(x)).every((x) => good(x, date))) {
-      Sound.play('goal');
-      toast(`✅ ${g}: all done for today`);
-    } else Sound.play('habit');
+    await habitWin(hh, date, false);
   }
+}
+/* Reward for a check-in: floating +XP, milestone, perfect day or folder-complete toast. */
+const MILES = [3, 7, 14, 30, 60, 100];
+async function habitWin(h, date, mini) {
+  const fx = S.cfg.habitFx !== false;
+  if (h && !isNeg(h)) {
+    if (fx) {
+      const xp = Math.max(1, Math.round(habitHit(h, date) / (mini ? 2 : 1)));
+      S.fx = {
+        sel: `[data-action="toggle-log"][data-id="${h.id}"][data-date="${date}"]`,
+        text: rpgOn() ? `+${xp} XP` : `+1 ${L2('vote', 'صوت')}`,
+      };
+    }
+    if (fx && date === TODAY()) {
+      const s = streak(h),
+        key = h.id + ':' + s,
+        seen = (S.cfg.mile || '').split(',');
+      if (MILES.includes(s) && !seen.includes(key)) {
+        S.cfg.mile = [...seen.filter(Boolean), key].join(',');
+        saveCfg();
+        Sound.play('goal');
+        const v = habitDates(h).length;
+        toast(
+          h.ident
+            ? L2(
+                `🔥 ${s} days in a row: ${v} votes for being ${h.ident}`,
+                `🔥 ${s} يومًا متتاليًا: ${v} صوتًا لتصبح ${h.ident}`
+              )
+            : L2(`🔥 ${s} days in a row: ${h.name}`, `🔥 ${s} يومًا متتاليًا: ${h.name}`)
+        );
+        return;
+      }
+      const due = S.habits.filter((x) => !isNeg(x) && dueToday(x));
+      if (due.length && due.every((x) => good(x, date))) {
+        Sound.play('goal');
+        toast(L2('🎉 Perfect day: every habit done', '🎉 يوم مثالي: أنجزت كل العادات'));
+        return;
+      }
+    }
+  }
+  const g = h && folderOf(h);
+  if (g && date === TODAY() && S.habits.filter((x) => folderOf(x) === g && dueToday(x)).every((x) => good(x, date))) {
+    Sound.play('goal');
+    toast(`✅ ${g}: all done for today`);
+  } else Sound.play('habit');
 }
 const actions = {
   'see-overdue'() {
@@ -1005,6 +1046,29 @@ const actions = {
   async 'toggle-log'(el) {
     await toggleLog(el.dataset.id, el.dataset.date);
   },
+  async 'log-mini'(el) {
+    const hid = el.dataset.id,
+      date = el.dataset.date || TODAY(),
+      id = hid + '|' + date;
+    if (S.logs.has(id)) return false;
+    S.logs.add(id);
+    S.mini.add(id);
+    await DB.put('logs', { id, habitId: hid, date, mini: true });
+    await habitWin(
+      S.habits.find((x) => x.id === hid),
+      date,
+      true
+    );
+  },
+  'info-habits'() {
+    openInfo('habits');
+    return false;
+  },
+  easier(el) {
+    S._stick = true;
+    openEdit('habit', el.dataset.id);
+    return false;
+  },
   async 'del-habit'(el) {
     const gone = S.habits.find((h) => h.id === el.dataset.id);
     if (!gone) return false;
@@ -1415,6 +1479,7 @@ document.addEventListener('submit', async (e) => {
       target: av ? 7 : +v.target,
       group: (v.group || '').trim(),
       days: av ? [] : readDays(f),
+      ...stickRead(v),
       created: Date.now(),
     };
     S.habits.push(h);

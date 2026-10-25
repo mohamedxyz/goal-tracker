@@ -100,6 +100,8 @@ const CFG_DEF = {
   abOn: false,
   abTime: '21:00',
   abAsked: false,
+  habitFx: true,
+  mile: '',
   nMorning: '08:00',
   nEvening: '20:00',
   nClasses: true,

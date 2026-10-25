@@ -371,6 +371,7 @@ function settingsCard() {
       ],
       c.eliteTarget
     )}
+    ${sw('habitFx', L2('Habit rewards', 'مكافآت العادات'), L2('Shows +XP pop-ups, the daily ring and celebrations when you tick habits', 'يعرض +نقاط الخبرة والحلقة اليومية والاحتفالات عند إنجاز العادات'), c.habitFx !== false)}
     ${sw('rpg', 'RPG game mode', 'A weekly pixel boss you beat by finishing tasks, habits and study. Shows damage, a hero level and a bestiary of beaten monsters', c.rpg)}
   </div>
   ${notifCard()}

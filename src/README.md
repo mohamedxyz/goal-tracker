@@ -25,3 +25,4 @@
 - **Style:** code is formatted with Prettier (`npm run format`). Run `npm run build` after any change and `npm test` before committing.
 
 - `76-safety-copies.js`: safety snapshots (separate IndexedDB), Check my data, edit history helpers.
+- `77-habit-craft.js`: Atomic Habits fields, hints, today ring, stack order, Hardest-habit card.

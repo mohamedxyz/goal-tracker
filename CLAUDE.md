@@ -32,6 +32,9 @@ Note: `main` once held a 0.75.0 rollback to the 0.71.1 app; 0.76.0 supersedes it
 ## Data safety (0.82.0)
 `src/js/76-safety-copies.js`: snapshots live in a separate IndexedDB (`goal-tracker-snap`, newest 10), saved daily, on app-version change, before restore, before erase and before a data repair. Goals, exams and topics go to Trash like tasks and habits. Erase needs a typed word (tests must set `window.__noAuto=true` and fill `#askIn` themselves). Tasks/goals keep their last 5 title+notes versions in `hist`.
 
+## Habits (0.83.0)
+`src/js/77-habit-craft.js` holds the Atomic Habits features: optional per-habit fields (`ident`, `after`, `at`, `where`, `treat`, `mini`, `env`), `habitHint`, `habitRing`, `stackOrder`, `easierCard`. `streak()`/`bestStreak()` use "never miss twice" (one missed due day is forgiven). Half-ticks are check-in rows with `mini:true`, mirrored in `S.mini`. Rewards run in `habitWin()` (90-actions.js) and can be switched off with `cfg.habitFx`. Note: inside `rpgAll()` the local names `streak`/`bestStreak` shadow the habit functions.
+
 ## Known to-do (not yet done)
 - README is out of date: "Import" is now "Restore", screenshots predate 0.72, no mention of info sheets, tip cards or auto backup. `tests/screenshots.py` needs tips dismissed and Settings sections opened before it will give good images.
 - Game (done in 0.81.0): boss death is permanent, overkill bonus, 25% growth cap, how-it-works sheet, badges. Still open: anti-grind rules (tiny tasks ticked straight after creating them), more badges.

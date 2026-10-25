@@ -619,6 +619,21 @@ function buildNotifications() {
       } else if (hs.length) body = L2("Evening check-in: tick off today's habits.", 'مراجعة المساء: علّم عادات اليوم.');
       if (body) out.push({ key: 'e' + k, at: e, title: L2('Evening check-in', 'مراجعة المساء'), body });
     }
+    for (const h of hs)
+      if (h.at && !(i === 0 && good(h, k))) {
+        const when = at(d, h.at);
+        if (when > now)
+          out.push({
+            key: 'h' + k + h.id,
+            at: when,
+            title: (h.icon ? h.icon + ' ' : '') + h.name,
+            body: h.mini
+              ? L2('Two-minute version: ' + h.mini, 'النسخة السريعة: ' + h.mini)
+              : h.where
+                ? L2('Time for it, in ' + h.where + '.', 'حان وقتها في ' + h.where + '.')
+                : L2('Time for your habit.', 'حان وقت عادتك.'),
+          });
+      }
     if (S.cfg.nClasses)
       for (const c of cls) {
         const t = at(d, c.start) - 10 * 60000;

@@ -143,6 +143,7 @@ const S = {
   trash: [],
   sel: new Set(),
   selMode: null,
+  mini: new Set(),
 };
 
 const TRASH_DAYS = 30;
@@ -158,6 +159,7 @@ async function load() {
   S.goals = g;
   S.habits = h;
   S.logs = new Set(l.map((x) => x.id));
+  S.mini = new Set(l.filter((x) => x.mini).map((x) => x.id));
 }
 
 /* ---------- Logic ---------- */
@@ -307,14 +309,23 @@ function streak(h) {
   }
   let d = new Date();
   if (!good(h, ds(d))) d = addDays(d, -1);
-  let n = 0;
+  // Never miss twice: one missed due day is forgiven, two due days in a row end the streak.
+  let n = 0,
+    miss = false;
   for (let i = 0; i < 1100; i++) {
-    if (good(h, ds(d))) n++;
-    else if (isDue(h, d) && !isRest(ds(d))) break;
+    const k = ds(d);
+    if (good(h, k)) {
+      n++;
+      miss = false;
+    } else if (isDue(h, d) && !isRest(k)) {
+      if (miss) break;
+      miss = true;
+    }
     d = addDays(d, -1);
   }
   return n;
 }
+const isMini = (hid, k) => S.mini.has(hid + '|' + k) && S.logs.has(hid + '|' + k);
 function weekCount(h) {
   const d = new Date();
   const dow = (d.getDay() + 6) % 7;
@@ -337,7 +348,7 @@ function rate30(h) {
 }
 
 /* ---------- Version ---------- */
-const APP_VERSION = '0.82.0';
+const APP_VERSION = '0.83.0';
 
 /* Pick the English or Arabic text for the current language. Call it at render time, never while the file is loading. */
 const L2 = (en, ar) => (S.cfg.lang === 'ar' ? ar : en);
