@@ -230,7 +230,7 @@ function rpgAll() {
       prev = hist.slice(-4).filter((x) => x > 0),
       avg = prev.length ? prev.reduce((a, b) => a + b, 0) / prev.length : 0;
     const hp = Math.max(60, Math.round(planned * 0.8), Math.round(avg * 0.9));
-    hist.push(total);
+    hist.push(Math.min(total, Math.round(hp * 1.25))); // one huge week raises the next boss by at most 25%
     xp += total;
     totT += tD + fD;
     totH += hD;
@@ -244,19 +244,30 @@ function rpgAll() {
   }
   if (stu) for (const x of elites()) xp += x.bonus;
   // Counterattacks: replay each finished day since Game mode was turned on.
+  // Once a week's boss is dead it stops attacking for the rest of that week, and a knockout can never undo a win.
   const negs = S.habits.filter(isNeg),
     since = S.cfg.rpgSince || today,
-    heal = {};
+    wmap = new Map(weeks.map((w) => [w.key, w])),
+    st = {};
   let sh = 0,
     mor = 100,
     kos = 0,
     blocked = 0,
     hits = 0;
   for (let d = new Date(since + 'T00:00'), i = 0; ds(d) < today && i < 800; d = addDays(d, 1), i++) {
-    const k = ds(d);
+    const k = ds(d),
+      wk = isoWeek(d),
+      w = wmap.get(wk);
+    let s = st[wk];
+    if (!s) {
+      s = st[wk] = { cum: 0, ko: 0, dead: false };
+      if (w) for (const kk of w.keys) if (kk < k) s.cum += dayD[kk] || 0;
+    }
+    s.cum += dayD[k] || 0;
+    if (w && !s.dead && s.cum >= Math.round(w.hp * (1 + 0.2 * s.ko))) s.dead = true;
     for (const h of negs) if (k >= bornK(h) && good(h, k)) sh = Math.min(3, sh + 1);
     if ((dayD[k] || 0) > 0) mor = Math.min(100, mor + 10);
-    else if (isRest(k)) {
+    else if (isRest(k) || s.dead) {
     } else if (sh > 0) {
       sh--;
       blocked++;
@@ -265,18 +276,32 @@ function rpgAll() {
       mor -= 25;
       if (mor <= 0) {
         kos++;
-        const wk = isoWeek(d);
-        heal[wk] = (heal[wk] || 0) + 1;
+        s.ko++;
         mor = 100;
       }
     }
   }
-  for (const w of weeks)
-    if (heal[w.key]) {
-      w.ko = heal[w.key];
+  let overXp = 0;
+  for (const w of weeks) {
+    const s = st[w.key];
+    if (s && s.ko) {
+      w.ko = s.ko;
       w.hp = Math.round(w.hp * (1 + 0.2 * w.ko));
-      w.won = w.total >= w.hp;
     }
+    w.won = w.total >= w.hp;
+    w.over = Math.max(0, w.total - w.hp);
+    if (w.won) overXp += Math.min(40, Math.round(w.over * 0.25)); // overkill: a small bonus, not a bigger boss
+  }
+  xp += overXp;
+  // Weeks won in a row (the week in progress never breaks the streak).
+  let streak = 0,
+    bestStreak = 0,
+    run = 0;
+  for (const w of weeks) {
+    run = w.won ? run + 1 : w === weeks[weeks.length - 1] ? run : 0;
+    bestStreak = Math.max(bestStreak, run);
+  }
+  streak = run;
   let shields = sh;
   for (const h of negs) if (today >= bornK(h) && good(h, today)) shields = Math.min(3, shields + 1);
   const used = (S.cfg.restDays || '').split(',').filter(Boolean).length,
@@ -297,6 +322,9 @@ function rpgAll() {
     blocked,
     hits,
     tokens,
+    overXp,
+    streak,
+    bestStreak,
   });
 }
 /* Exam elites: preparation from study sessions on the exam's subject in the 21 days before; the logged score decides the outcome. */
@@ -359,6 +387,97 @@ function eliteLine() {
   const m = monster('E:' + x.e.id);
   return `<button type="button" class="tw-mini elite" data-action="edit-exam" data-id="${x.e.id}"><span class="tw-spr sm">${m.svg}</span><span class="grow" style="min-width:0;text-align:start"><b translate="no">${m.name}</b> <span class="meta" style="display:inline">${esc(x.e.title || x.e.subject || '')}</span></span><b>${x.state === 'await' ? L2('Log score', 'سجّل الدرجة') : `${Math.min(x.prep, x.hp)}/${x.hp}`}</b></button>`;
 }
+/* Badges: derived from your history, then remembered once earned (S.cfg.ach) so they never disappear. */
+function badges() {
+  const A = rpgAll(),
+    done = S.tasks.filter((t) => t.done).length,
+    B = (id, icon, en, ar, den, dar, ok) => ({ id, icon, name: L2(en, ar), desc: L2(den, dar), ok });
+  return [
+    B(
+      'first',
+      '🏆',
+      'First blood',
+      'أول انتصار',
+      'Defeat a week boss.',
+      'اهزم زعيم أسبوع.',
+      A.weeks.some((w) => w.won)
+    ),
+    B('s3', '🔥', 'Hat trick', 'ثلاثية', 'Win 3 weeks in a row.', 'افز بثلاثة أسابيع متتالية.', A.bestStreak >= 3),
+    B(
+      's8',
+      '🌋',
+      'Unstoppable',
+      'لا يُوقَف',
+      'Win 8 weeks in a row.',
+      'افز بثمانية أسابيع متتالية.',
+      A.bestStreak >= 8
+    ),
+    B(
+      'perfect',
+      '📅',
+      'Perfect week',
+      'أسبوع مثالي',
+      'Deal damage on all 7 days of a week.',
+      'سجّل ضررًا في أيام الأسبوع السبعة.',
+      A.weeks.some((w) => w.keys.every((k) => A.dayD[k] > 0))
+    ),
+    B(
+      'over',
+      '💥',
+      'Overkill',
+      'ضربة قاضية',
+      'End a week with 150% of the boss HP.',
+      'أنهِ أسبوعًا بـ150% من صحة الزعيم.',
+      A.weeks.some((w) => w.won && w.total >= w.hp * 1.5)
+    ),
+    B('t100', '✅', 'Century', 'المئة', 'Finish 100 tasks.', 'أنجز 100 مهمة.', done >= 100),
+    B(
+      'c7',
+      '🌱',
+      'Clean week',
+      'أسبوع نظيف',
+      '7 clean days on avoid habits.',
+      '7 أيام نظيفة على عادات التجنّب.',
+      A.clean >= 7
+    ),
+    B(
+      'c30',
+      '🌳',
+      'Clean month',
+      'شهر نظيف',
+      '30 clean days on avoid habits.',
+      '30 يومًا نظيفًا على عادات التجنّب.',
+      A.clean >= 30
+    ),
+    B(
+      'shield',
+      '🛡',
+      'Guarded',
+      'محمي',
+      'Block 5 counterattacks with shields.',
+      'صُدَّ 5 هجمات بالدروع.',
+      A.blocked >= 5
+    ),
+    B('l5', '⭐', 'Level 5', 'المستوى 5', 'Reach hero level 5.', 'بلغ مستوى البطل 5.', heroLv(A.xp) >= 5),
+    B('l10', '🌟', 'Level 10', 'المستوى 10', 'Reach hero level 10.', 'بلغ مستوى البطل 10.', heroLv(A.xp) >= 10),
+  ];
+}
+const earned = () => new Set((S.cfg.ach || '').split(',').filter(Boolean));
+// Saves newly earned badges. The very first check only records what you already have, so nothing pops up all at once.
+function badgeCheck() {
+  const have = earned(),
+    first = S.cfg.ach == null,
+    now = badges().filter((b) => b.ok && !have.has(b.id));
+  if (!first && !now.length) return;
+  now.forEach((b) => have.add(b.id));
+  S.cfg.ach = [...have].join(',');
+  saveCfg();
+  if (!first)
+    setTimeout(() => {
+      Sound.play('goal');
+      toast('🏅 ' + now[0].name + (now.length > 1 ? ' +' + (now.length - 1) : ''));
+    }, 1200);
+}
 function rpgTick() {
   if (!rpgOn()) {
     S._rpgK = null;
@@ -403,6 +522,7 @@ function rpgTick() {
         }, 600);
       }
   S._rpgE = ew;
+  badgeCheck();
   S._rpgM = { k: gm.key, won: gm.won };
   S._rpgY = { k: gy.key, won: gy.won };
   S._rpgK = w.key;
@@ -564,7 +684,14 @@ function rpgCard() {
     hi = 50 * L * L,
     xpPct = Math.round(((A.xp - lo) / (hi - lo)) * 100);
   const status = w.won
-    ? 'Defeated. It joins your bestiary.'
+    ? w.over > 0 && rpgAll().overXp > 0
+      ? L2('Defeated. It joins your bestiary.', 'هُزم. انضم إلى موسوعتك.') +
+        ' ' +
+        L2(
+          'Overkill bonus +' + Math.min(40, Math.round(w.over * 0.25)) + ' XP',
+          'مكافأة الضربة القاضية +' + Math.min(40, Math.round(w.over * 0.25)) + ' نقطة'
+        )
+      : 'Defeated. It joins your bestiary.'
     : dl === 1
       ? `${left} HP to go. It escapes tonight.`
       : `${left} HP to go`;
@@ -582,7 +709,7 @@ function rpgCard() {
       const g = rpgTower().curM;
       return `<button type="button" class="tw-mini" data-action="open-tower"><span class="tw-spr sm">${bossSvg('M:' + g.key, 1)}</span><span>${guardianTitle(g.key)}</span><b>${Math.min(g.dmg, g.hp)}/${g.hp}</b></button>`;
     })()}${eliteLine()}</div>
-    <div class="rpg-hero"><b>Lv ${L}</b><div class="bar xp"><span style="width:${xpPct}%"></span></div><span>${A.xp} / ${hi} XP</span><button class="chip" data-action="open-bestiary">Bestiary →</button></div></div>`;
+    <div class="rpg-hero"><b>Lv ${L}</b><div class="bar xp"><span style="width:${xpPct}%"></span></div><span>${A.xp} / ${hi} XP</span>${A.streak >= 2 ? `<span title="${L2('Weeks won in a row', 'أسابيع متتالية فزت بها')}">🔥 ${A.streak}</span>` : ''}<button class="chip" data-action="info-game" aria-label="${L2('How the game works', 'كيف تعمل اللعبة')}">?</button><button class="chip" data-action="open-bestiary">Bestiary →</button></div></div>`;
 }
 /* Tower: monthly guardians (weekly wins + monthly goals) and annual bosses (guardians + annual goals), derived from history. */
 const thuMonth = (w) => w.keys[3].slice(0, 7);

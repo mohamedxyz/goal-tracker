@@ -72,6 +72,35 @@ function openInfo(kind, id) {
       iBtn(g.done ? L2('Reopen', 'إعادة فتح') : '✓ ' + L2('Complete', 'إكمال'), 'done-goal', id) +
         iBtn('✎ ' + L2('Edit', 'تعديل'), 'edit-goal', id, 'btn')
     );
+  } else if (kind === 'game') {
+    const A = rpgAll(),
+      have = earned(),
+      L = lvlAt(),
+      B = badges();
+    const row = (icon, head, text) => `<div class="irow"><span>${icon} ${head}</span><b>${text}</b></div>`;
+    const body = `<p class="meta">${L2('Everything you finish hits this week’s boss. It is only a mirror of what you really did, so nothing is lost if you skip the game.', 'كل ما تنجزه يضرب زعيم هذا الأسبوع. إنه مرآة لما فعلته فقط، فلا تخسر شيئًا إن تجاهلت اللعبة.')}</p>
+      <div class="inf-list"><b>${L2('What deals damage', 'ما الذي يسبب الضرر')}</b>
+      <div>⚔️ ${L2('Tasks: low 10, medium 20, high 30. ×1.5 when linked to a weekly goal, +20% if finished early, half if late.', 'المهام: منخفضة 10، متوسطة 20، عالية 30. ×1.5 إن ارتبطت بهدف أسبوعي، +20% عند الإنجاز مبكرًا، والنصف إن تأخرت.')}</div>
+      <div>🔁 ${L2('Habits: 5 per check-in, up to 10 as a streak grows.', 'العادات: 5 لكل تسجيل، حتى 10 مع نمو السلسلة.')}</div>
+      <div>⏱ ${L2('Focus: 2 per 5 minutes.', 'التركيز: 2 لكل 5 دقائق.')}${S.cfg.student ? ' 📚 ' + L2('Study: 5, 8 or 12 per session.', 'الدراسة: 5 أو 8 أو 12 للجلسة.') : ''}</div></div>
+      <div class="inf-list"><b>${L2('Day levels', 'مستويات اليوم')}</b>
+      <div>⚡ ${L2('Spark', 'الشرارة')} ${L2('is a normal day.', 'يوم عادي.')} 🔥 ${L2('Blaze', 'اللهب')} ${L2('from ' + L[1] + ' tasks: +10% damage.', 'من ' + L[1] + ' مهام: +10% ضرر.')} ⚔️ ${L2('Titan', 'الجبّار')} ${L2('from ' + L[2] + ' tasks: +25% and critical hits.', 'من ' + L[2] + ' مهام: +25% وضربات حرجة.')}</div></div>
+      <div class="inf-list"><b>${L2('The boss’s HP', 'صحة الزعيم')}</b>
+      <div>${L2('HP means health: the damage you must deal in a week. It is the highest of: 80% of the damage you planned, 90% of your recent weekly average, or 60. One huge week raises the next boss by at most 25%.', 'الصحة هي الضرر المطلوب في الأسبوع. تساوي الأعلى بين: 80% مما خططت له، أو 90% من متوسطك الأسبوعي الأخير، أو 60. أسبوع ضخم واحد يرفع الزعيم التالي 25% كحد أقصى.')}</div>
+      <div>${L2('Once it is defeated it stays defeated. Damage beyond its HP becomes a small XP bonus (overkill).', 'إذا هُزم يبقى مهزومًا. الضرر الزائد يتحول إلى مكافأة صغيرة (ضربة قاضية).')}</div></div>
+      <div class="inf-list"><b>${L2('Shields and morale', 'الدروع والمعنويات')}</b>
+      <div>🛡 ${L2('Each clean day on an avoid habit adds a shield (up to 3).', 'كل يوم نظيف على عادة تجنّب يضيف درعًا (حتى 3).')}</div>
+      <div>❤ ${L2('A day with no damage makes the boss counterattack: a shield blocks it, otherwise morale drops 25%. At 0 it knocks you out and heals the boss 20%. A defeated boss no longer attacks that week.', 'يوم بلا ضرر يجعل الزعيم يهاجم: الدرع يصدّه وإلا هبطت المعنويات 25%. عند 0 يُغمى عليك ويشفى الزعيم 20%. الزعيم المهزوم لا يهاجم بقية الأسبوع.')}</div>
+      <div>🌙 ${L2('Rest tokens (one per week won) let you take a day off with no counterattack.', 'رموز الراحة (واحد لكل أسبوع تفوز به) تتيح يوم راحة بلا هجوم.')}</div></div>
+      <div class="inf-list"><b>${L2('Badges', 'الأوسمة')} ${B.filter((b) => have.has(b.id) || b.ok).length}/${B.length}</b>
+      <div class="badges">${B.map((b) => `<div class="badge ${have.has(b.id) || b.ok ? 'on' : ''}" title="${esc(b.desc)}"><span>${b.icon}</span><b>${b.name}</b><small>${b.desc}</small></div>`).join('')}</div></div>
+      ${irow(L2('Weeks won in a row', 'أسابيع متتالية'), String(A.streak))}${irow(L2('Best streak', 'أفضل سلسلة'), String(A.bestStreak))}`;
+    infoShell(
+      L2('How the game works', 'كيف تعمل اللعبة'),
+      body,
+      iBtn('🏰 ' + L2('Tower', 'البرج'), 'open-tower', '') +
+        iBtn('📖 ' + L2('Bestiary', 'الموسوعة'), 'open-bestiary', '', 'btn')
+    );
   } else if (kind === 'boss') {
     if (!rpgOn()) return;
     const A = rpgAll(),
@@ -94,7 +123,8 @@ function openInfo(kind, id) {
     infoShell(
       L2('Week boss', 'زعيم الأسبوع'),
       body,
-      iBtn('🏰 ' + L2('Tower', 'البرج'), 'open-tower', '') +
+      iBtn('❓ ' + L2('How it works', 'كيف تعمل'), 'info-game', '') +
+        iBtn('🏰 ' + L2('Tower', 'البرج'), 'open-tower', '') +
         iBtn('📖 ' + L2('Bestiary', 'الموسوعة'), 'open-bestiary', '', 'btn')
     );
   }

@@ -369,6 +369,10 @@ const actions = {
     openInfo('goal', el.dataset.id);
     return false;
   },
+  'info-game'() {
+    openInfo('game');
+    return false;
+  },
   'info-boss'() {
     openInfo('boss');
     return false;

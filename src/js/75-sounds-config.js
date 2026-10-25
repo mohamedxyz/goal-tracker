@@ -106,6 +106,7 @@ const CFG_DEF = {
   timeFmt: 'auto',
   weekStart: 'mon',
   planSwipe: true,
+  ach: null,
   planFrom: '06:00',
   planTo: '24:00',
   nBlocks: true,

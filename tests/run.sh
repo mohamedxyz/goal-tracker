@@ -8,7 +8,7 @@ python3 -c "
 import re;s=open('../goal-tracker.html',encoding='utf-8').read();open('out/app.js','w').write('\n'.join(re.findall(r'<script>(.*?)</script>',s,re.S)))" 2>/dev/null || { mkdir -p out; python3 -c "
 import re;s=open('../goal-tracker.html',encoding='utf-8').read();open('out/app.js','w').write('\n'.join(re.findall(r'<script>(.*?)</script>',s,re.S)))"; }
 node --check out/app.js && echo "[syntax] ok" || { echo "[syntax] FAIL"; exit 1; }
-names=("$@"); [ ${#names[@]} -eq 0 ] && names=(plan plan2 kbdock info declutter intro_levels due rpg goals_palettes arscan habits qa focus cal tower elite shield reward tt tpl backup insight contrast a11y native perf)
+names=("$@"); [ ${#names[@]} -eq 0 ] && names=(game plan plan2 kbdock info declutter intro_levels due rpg goals_palettes arscan habits qa focus cal tower elite shield reward tt tpl backup insight contrast a11y native perf)
 fail=0
 for n in "${names[@]}"; do
   out=$(python3 "test_$n.py" 2>&1)

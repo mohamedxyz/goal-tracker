@@ -5,6 +5,7 @@
     PATCH = bug fix · MINOR = new feature · MAJOR = breaks old backups or data
 
   Changelog
+  0.81.0 Game fixes: a defeated week boss stays defeated (no counterattacks after it dies, and a knockout can no longer undo a win); damage beyond the boss HP gives a small overkill XP bonus; one huge week raises the next boss by at most 25%; a "How the game works" sheet in plain words (tap ? on the game card); 11 badges that you keep once earned, with a toast; and a weeks-won-in-a-row counter.
   0.80.0 Plan view, part 3: Undo after moving, resizing, adding or unscheduling a block; a ⚠ marks blocks that overlap and the toolbar names what they overlap with; swipe sideways to change the day (Plan) or month (calendar), which you can switch off; new Settings for the clock (12 or 24 hour) and for which day the calendar week starts on.
   0.79.0 Plan view fixes: choose when your day starts and ends (Settings, default 6:00 to midnight); the block toolbar stays on screen while you scroll and is more compact; in Arabic the tick box no longer covers the title; unscheduled tasks with no date can be placed too; the calendar and Plan open on the same day; the red now line keeps moving.
   0.78.0 Time blocking, part 2: tap a block in the Plan view to select it, then nudge it 15 minutes earlier or later, make it shorter or longer, or tap a time to move it there. Quick add understands times and lengths ("Gym at 6pm for 1h", "Call 18:30 for 45 min"). New reminders before each block starts (Settings > Notifications: on/off and how long before).
@@ -4191,6 +4192,43 @@ form.kbdock {
 .pl-warn {
   color: var(--warn);
 }
+
+/* ---------- Game: badges ---------- */
+.badges {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+  margin-top: 6px;
+}
+.badge {
+  display: grid;
+  grid-template-columns: 28px 1fr;
+  grid-template-rows: auto auto;
+  column-gap: 8px;
+  align-items: center;
+  padding: 6px 8px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  opacity: 0.45;
+  filter: grayscale(1);
+}
+.badge.on {
+  opacity: 1;
+  filter: none;
+  background: var(--soft);
+}
+.badge span {
+  grid-row: 1 / 3;
+  font-size: 20px;
+}
+.badge b {
+  font-size: 12px;
+}
+.badge small {
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.2;
+}
 </style>
 </head>
 <body>
@@ -4561,7 +4599,7 @@ function rate30(h) {
 }
 
 /* ---------- Version ---------- */
-const APP_VERSION = '0.80.0';
+const APP_VERSION = '0.81.0';
 
 /* Pick the English or Arabic text for the current language. Call it at render time, never while the file is loading. */
 const L2 = (en, ar) => (S.cfg.lang === 'ar' ? ar : en);
@@ -4944,7 +4982,7 @@ function rpgAll() {
       prev = hist.slice(-4).filter((x) => x > 0),
       avg = prev.length ? prev.reduce((a, b) => a + b, 0) / prev.length : 0;
     const hp = Math.max(60, Math.round(planned * 0.8), Math.round(avg * 0.9));
-    hist.push(total);
+    hist.push(Math.min(total, Math.round(hp * 1.25))); // one huge week raises the next boss by at most 25%
     xp += total;
     totT += tD + fD;
     totH += hD;
@@ -4958,19 +4996,30 @@ function rpgAll() {
   }
   if (stu) for (const x of elites()) xp += x.bonus;
   // Counterattacks: replay each finished day since Game mode was turned on.
+  // Once a week's boss is dead it stops attacking for the rest of that week, and a knockout can never undo a win.
   const negs = S.habits.filter(isNeg),
     since = S.cfg.rpgSince || today,
-    heal = {};
+    wmap = new Map(weeks.map((w) => [w.key, w])),
+    st = {};
   let sh = 0,
     mor = 100,
     kos = 0,
     blocked = 0,
     hits = 0;
   for (let d = new Date(since + 'T00:00'), i = 0; ds(d) < today && i < 800; d = addDays(d, 1), i++) {
-    const k = ds(d);
+    const k = ds(d),
+      wk = isoWeek(d),
+      w = wmap.get(wk);
+    let s = st[wk];
+    if (!s) {
+      s = st[wk] = { cum: 0, ko: 0, dead: false };
+      if (w) for (const kk of w.keys) if (kk < k) s.cum += dayD[kk] || 0;
+    }
+    s.cum += dayD[k] || 0;
+    if (w && !s.dead && s.cum >= Math.round(w.hp * (1 + 0.2 * s.ko))) s.dead = true;
     for (const h of negs) if (k >= bornK(h) && good(h, k)) sh = Math.min(3, sh + 1);
     if ((dayD[k] || 0) > 0) mor = Math.min(100, mor + 10);
-    else if (isRest(k)) {
+    else if (isRest(k) || s.dead) {
     } else if (sh > 0) {
       sh--;
       blocked++;
@@ -4979,18 +5028,32 @@ function rpgAll() {
       mor -= 25;
       if (mor <= 0) {
         kos++;
-        const wk = isoWeek(d);
-        heal[wk] = (heal[wk] || 0) + 1;
+        s.ko++;
         mor = 100;
       }
     }
   }
-  for (const w of weeks)
-    if (heal[w.key]) {
-      w.ko = heal[w.key];
+  let overXp = 0;
+  for (const w of weeks) {
+    const s = st[w.key];
+    if (s && s.ko) {
+      w.ko = s.ko;
       w.hp = Math.round(w.hp * (1 + 0.2 * w.ko));
-      w.won = w.total >= w.hp;
     }
+    w.won = w.total >= w.hp;
+    w.over = Math.max(0, w.total - w.hp);
+    if (w.won) overXp += Math.min(40, Math.round(w.over * 0.25)); // overkill: a small bonus, not a bigger boss
+  }
+  xp += overXp;
+  // Weeks won in a row (the week in progress never breaks the streak).
+  let streak = 0,
+    bestStreak = 0,
+    run = 0;
+  for (const w of weeks) {
+    run = w.won ? run + 1 : w === weeks[weeks.length - 1] ? run : 0;
+    bestStreak = Math.max(bestStreak, run);
+  }
+  streak = run;
   let shields = sh;
   for (const h of negs) if (today >= bornK(h) && good(h, today)) shields = Math.min(3, shields + 1);
   const used = (S.cfg.restDays || '').split(',').filter(Boolean).length,
@@ -5011,6 +5074,9 @@ function rpgAll() {
     blocked,
     hits,
     tokens,
+    overXp,
+    streak,
+    bestStreak,
   });
 }
 /* Exam elites: preparation from study sessions on the exam's subject in the 21 days before; the logged score decides the outcome. */
@@ -5073,6 +5139,97 @@ function eliteLine() {
   const m = monster('E:' + x.e.id);
   return `<button type="button" class="tw-mini elite" data-action="edit-exam" data-id="${x.e.id}"><span class="tw-spr sm">${m.svg}</span><span class="grow" style="min-width:0;text-align:start"><b translate="no">${m.name}</b> <span class="meta" style="display:inline">${esc(x.e.title || x.e.subject || '')}</span></span><b>${x.state === 'await' ? L2('Log score', 'سجّل الدرجة') : `${Math.min(x.prep, x.hp)}/${x.hp}`}</b></button>`;
 }
+/* Badges: derived from your history, then remembered once earned (S.cfg.ach) so they never disappear. */
+function badges() {
+  const A = rpgAll(),
+    done = S.tasks.filter((t) => t.done).length,
+    B = (id, icon, en, ar, den, dar, ok) => ({ id, icon, name: L2(en, ar), desc: L2(den, dar), ok });
+  return [
+    B(
+      'first',
+      '🏆',
+      'First blood',
+      'أول انتصار',
+      'Defeat a week boss.',
+      'اهزم زعيم أسبوع.',
+      A.weeks.some((w) => w.won)
+    ),
+    B('s3', '🔥', 'Hat trick', 'ثلاثية', 'Win 3 weeks in a row.', 'افز بثلاثة أسابيع متتالية.', A.bestStreak >= 3),
+    B(
+      's8',
+      '🌋',
+      'Unstoppable',
+      'لا يُوقَف',
+      'Win 8 weeks in a row.',
+      'افز بثمانية أسابيع متتالية.',
+      A.bestStreak >= 8
+    ),
+    B(
+      'perfect',
+      '📅',
+      'Perfect week',
+      'أسبوع مثالي',
+      'Deal damage on all 7 days of a week.',
+      'سجّل ضررًا في أيام الأسبوع السبعة.',
+      A.weeks.some((w) => w.keys.every((k) => A.dayD[k] > 0))
+    ),
+    B(
+      'over',
+      '💥',
+      'Overkill',
+      'ضربة قاضية',
+      'End a week with 150% of the boss HP.',
+      'أنهِ أسبوعًا بـ150% من صحة الزعيم.',
+      A.weeks.some((w) => w.won && w.total >= w.hp * 1.5)
+    ),
+    B('t100', '✅', 'Century', 'المئة', 'Finish 100 tasks.', 'أنجز 100 مهمة.', done >= 100),
+    B(
+      'c7',
+      '🌱',
+      'Clean week',
+      'أسبوع نظيف',
+      '7 clean days on avoid habits.',
+      '7 أيام نظيفة على عادات التجنّب.',
+      A.clean >= 7
+    ),
+    B(
+      'c30',
+      '🌳',
+      'Clean month',
+      'شهر نظيف',
+      '30 clean days on avoid habits.',
+      '30 يومًا نظيفًا على عادات التجنّب.',
+      A.clean >= 30
+    ),
+    B(
+      'shield',
+      '🛡',
+      'Guarded',
+      'محمي',
+      'Block 5 counterattacks with shields.',
+      'صُدَّ 5 هجمات بالدروع.',
+      A.blocked >= 5
+    ),
+    B('l5', '⭐', 'Level 5', 'المستوى 5', 'Reach hero level 5.', 'بلغ مستوى البطل 5.', heroLv(A.xp) >= 5),
+    B('l10', '🌟', 'Level 10', 'المستوى 10', 'Reach hero level 10.', 'بلغ مستوى البطل 10.', heroLv(A.xp) >= 10),
+  ];
+}
+const earned = () => new Set((S.cfg.ach || '').split(',').filter(Boolean));
+// Saves newly earned badges. The very first check only records what you already have, so nothing pops up all at once.
+function badgeCheck() {
+  const have = earned(),
+    first = S.cfg.ach == null,
+    now = badges().filter((b) => b.ok && !have.has(b.id));
+  if (!first && !now.length) return;
+  now.forEach((b) => have.add(b.id));
+  S.cfg.ach = [...have].join(',');
+  saveCfg();
+  if (!first)
+    setTimeout(() => {
+      Sound.play('goal');
+      toast('🏅 ' + now[0].name + (now.length > 1 ? ' +' + (now.length - 1) : ''));
+    }, 1200);
+}
 function rpgTick() {
   if (!rpgOn()) {
     S._rpgK = null;
@@ -5117,6 +5274,7 @@ function rpgTick() {
         }, 600);
       }
   S._rpgE = ew;
+  badgeCheck();
   S._rpgM = { k: gm.key, won: gm.won };
   S._rpgY = { k: gy.key, won: gy.won };
   S._rpgK = w.key;
@@ -5278,7 +5436,14 @@ function rpgCard() {
     hi = 50 * L * L,
     xpPct = Math.round(((A.xp - lo) / (hi - lo)) * 100);
   const status = w.won
-    ? 'Defeated. It joins your bestiary.'
+    ? w.over > 0 && rpgAll().overXp > 0
+      ? L2('Defeated. It joins your bestiary.', 'هُزم. انضم إلى موسوعتك.') +
+        ' ' +
+        L2(
+          'Overkill bonus +' + Math.min(40, Math.round(w.over * 0.25)) + ' XP',
+          'مكافأة الضربة القاضية +' + Math.min(40, Math.round(w.over * 0.25)) + ' نقطة'
+        )
+      : 'Defeated. It joins your bestiary.'
     : dl === 1
       ? `${left} HP to go. It escapes tonight.`
       : `${left} HP to go`;
@@ -5296,7 +5461,7 @@ function rpgCard() {
       const g = rpgTower().curM;
       return `<button type="button" class="tw-mini" data-action="open-tower"><span class="tw-spr sm">${bossSvg('M:' + g.key, 1)}</span><span>${guardianTitle(g.key)}</span><b>${Math.min(g.dmg, g.hp)}/${g.hp}</b></button>`;
     })()}${eliteLine()}</div>
-    <div class="rpg-hero"><b>Lv ${L}</b><div class="bar xp"><span style="width:${xpPct}%"></span></div><span>${A.xp} / ${hi} XP</span><button class="chip" data-action="open-bestiary">Bestiary →</button></div></div>`;
+    <div class="rpg-hero"><b>Lv ${L}</b><div class="bar xp"><span style="width:${xpPct}%"></span></div><span>${A.xp} / ${hi} XP</span>${A.streak >= 2 ? `<span title="${L2('Weeks won in a row', 'أسابيع متتالية فزت بها')}">🔥 ${A.streak}</span>` : ''}<button class="chip" data-action="info-game" aria-label="${L2('How the game works', 'كيف تعمل اللعبة')}">?</button><button class="chip" data-action="open-bestiary">Bestiary →</button></div></div>`;
 }
 /* Tower: monthly guardians (weekly wins + monthly goals) and annual bosses (guardians + annual goals), derived from history. */
 const thuMonth = (w) => w.keys[3].slice(0, 7);
@@ -8564,6 +8729,35 @@ function openInfo(kind, id) {
       iBtn(g.done ? L2('Reopen', 'إعادة فتح') : '✓ ' + L2('Complete', 'إكمال'), 'done-goal', id) +
         iBtn('✎ ' + L2('Edit', 'تعديل'), 'edit-goal', id, 'btn')
     );
+  } else if (kind === 'game') {
+    const A = rpgAll(),
+      have = earned(),
+      L = lvlAt(),
+      B = badges();
+    const row = (icon, head, text) => `<div class="irow"><span>${icon} ${head}</span><b>${text}</b></div>`;
+    const body = `<p class="meta">${L2('Everything you finish hits this week’s boss. It is only a mirror of what you really did, so nothing is lost if you skip the game.', 'كل ما تنجزه يضرب زعيم هذا الأسبوع. إنه مرآة لما فعلته فقط، فلا تخسر شيئًا إن تجاهلت اللعبة.')}</p>
+      <div class="inf-list"><b>${L2('What deals damage', 'ما الذي يسبب الضرر')}</b>
+      <div>⚔️ ${L2('Tasks: low 10, medium 20, high 30. ×1.5 when linked to a weekly goal, +20% if finished early, half if late.', 'المهام: منخفضة 10، متوسطة 20، عالية 30. ×1.5 إن ارتبطت بهدف أسبوعي، +20% عند الإنجاز مبكرًا، والنصف إن تأخرت.')}</div>
+      <div>🔁 ${L2('Habits: 5 per check-in, up to 10 as a streak grows.', 'العادات: 5 لكل تسجيل، حتى 10 مع نمو السلسلة.')}</div>
+      <div>⏱ ${L2('Focus: 2 per 5 minutes.', 'التركيز: 2 لكل 5 دقائق.')}${S.cfg.student ? ' 📚 ' + L2('Study: 5, 8 or 12 per session.', 'الدراسة: 5 أو 8 أو 12 للجلسة.') : ''}</div></div>
+      <div class="inf-list"><b>${L2('Day levels', 'مستويات اليوم')}</b>
+      <div>⚡ ${L2('Spark', 'الشرارة')} ${L2('is a normal day.', 'يوم عادي.')} 🔥 ${L2('Blaze', 'اللهب')} ${L2('from ' + L[1] + ' tasks: +10% damage.', 'من ' + L[1] + ' مهام: +10% ضرر.')} ⚔️ ${L2('Titan', 'الجبّار')} ${L2('from ' + L[2] + ' tasks: +25% and critical hits.', 'من ' + L[2] + ' مهام: +25% وضربات حرجة.')}</div></div>
+      <div class="inf-list"><b>${L2('The boss’s HP', 'صحة الزعيم')}</b>
+      <div>${L2('HP means health: the damage you must deal in a week. It is the highest of: 80% of the damage you planned, 90% of your recent weekly average, or 60. One huge week raises the next boss by at most 25%.', 'الصحة هي الضرر المطلوب في الأسبوع. تساوي الأعلى بين: 80% مما خططت له، أو 90% من متوسطك الأسبوعي الأخير، أو 60. أسبوع ضخم واحد يرفع الزعيم التالي 25% كحد أقصى.')}</div>
+      <div>${L2('Once it is defeated it stays defeated. Damage beyond its HP becomes a small XP bonus (overkill).', 'إذا هُزم يبقى مهزومًا. الضرر الزائد يتحول إلى مكافأة صغيرة (ضربة قاضية).')}</div></div>
+      <div class="inf-list"><b>${L2('Shields and morale', 'الدروع والمعنويات')}</b>
+      <div>🛡 ${L2('Each clean day on an avoid habit adds a shield (up to 3).', 'كل يوم نظيف على عادة تجنّب يضيف درعًا (حتى 3).')}</div>
+      <div>❤ ${L2('A day with no damage makes the boss counterattack: a shield blocks it, otherwise morale drops 25%. At 0 it knocks you out and heals the boss 20%. A defeated boss no longer attacks that week.', 'يوم بلا ضرر يجعل الزعيم يهاجم: الدرع يصدّه وإلا هبطت المعنويات 25%. عند 0 يُغمى عليك ويشفى الزعيم 20%. الزعيم المهزوم لا يهاجم بقية الأسبوع.')}</div>
+      <div>🌙 ${L2('Rest tokens (one per week won) let you take a day off with no counterattack.', 'رموز الراحة (واحد لكل أسبوع تفوز به) تتيح يوم راحة بلا هجوم.')}</div></div>
+      <div class="inf-list"><b>${L2('Badges', 'الأوسمة')} ${B.filter((b) => have.has(b.id) || b.ok).length}/${B.length}</b>
+      <div class="badges">${B.map((b) => `<div class="badge ${have.has(b.id) || b.ok ? 'on' : ''}" title="${esc(b.desc)}"><span>${b.icon}</span><b>${b.name}</b><small>${b.desc}</small></div>`).join('')}</div></div>
+      ${irow(L2('Weeks won in a row', 'أسابيع متتالية'), String(A.streak))}${irow(L2('Best streak', 'أفضل سلسلة'), String(A.bestStreak))}`;
+    infoShell(
+      L2('How the game works', 'كيف تعمل اللعبة'),
+      body,
+      iBtn('🏰 ' + L2('Tower', 'البرج'), 'open-tower', '') +
+        iBtn('📖 ' + L2('Bestiary', 'الموسوعة'), 'open-bestiary', '', 'btn')
+    );
   } else if (kind === 'boss') {
     if (!rpgOn()) return;
     const A = rpgAll(),
@@ -8586,7 +8780,8 @@ function openInfo(kind, id) {
     infoShell(
       L2('Week boss', 'زعيم الأسبوع'),
       body,
-      iBtn('🏰 ' + L2('Tower', 'البرج'), 'open-tower', '') +
+      iBtn('❓ ' + L2('How it works', 'كيف تعمل'), 'info-game', '') +
+        iBtn('🏰 ' + L2('Tower', 'البرج'), 'open-tower', '') +
         iBtn('📖 ' + L2('Bestiary', 'الموسوعة'), 'open-bestiary', '', 'btn')
     );
   }
@@ -8960,6 +9155,7 @@ const CFG_DEF = {
   timeFmt: 'auto',
   weekStart: 'mon',
   planSwipe: true,
+  ach: null,
   planFrom: '06:00',
   planTo: '24:00',
   nBlocks: true,
@@ -10753,6 +10949,10 @@ const actions = {
   },
   'info-goal'(el) {
     openInfo('goal', el.dataset.id);
+    return false;
+  },
+  'info-game'() {
+    openInfo('game');
     return false;
   },
   'info-boss'() {
