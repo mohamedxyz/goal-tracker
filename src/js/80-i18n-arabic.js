@@ -35,6 +35,8 @@ const AR = {
   'Time-block reminders': 'تذكير فترات الجدول',
   'A reminder before each scheduled block starts': 'تذكير قبل بدء كل فترة مجدولة',
   'Remind me': 'ذكّرني',
+  'Plan: day starts at': 'المخطِّط: يبدأ اليوم عند',
+  'Plan: day ends at': 'المخطِّط: ينتهي اليوم عند',
   'Exam reminders': 'تذكير الامتحانات',
   'The evening before an exam or quiz': 'مساء اليوم السابق للامتحان أو الاختبار',
   'Send a test notification': 'أرسل إشعارًا تجريبيًا',

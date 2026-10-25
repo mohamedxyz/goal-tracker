@@ -12,6 +12,12 @@ async def main():
       if lang=='ar':await pg.evaluate("S.cfg.lang='ar';saveCfg();applyLang();render()")
       await pg.wait_for_timeout(300)
       print(scheme,lang,'blocks',await pg.evaluate("document.querySelectorAll('.pl-b').length"),'tray',await pg.evaluate("document.querySelectorAll('.pl-chips .chip').length"))
+      # undated tasks can be scheduled too; the visible hours follow Settings
+      print(scheme,lang,'undated in tray',await pg.evaluate("(async()=>{const t={id:uid(),title:'Someday',notes:'',repeat:'',tag:'',items:[],due:null,priority:'low',goalId:null,done:false,created:Date.now()};S.tasks.push(t);render();const n=document.querySelectorAll('.pl-chips .chip').length;S.tasks.pop();render();return n})()"))
+      print(scheme,lang,'hours default 6-24',await pg.evaluate("document.querySelectorAll('.pl-hr').length"))
+      await pg.evaluate("S.cfg.planFrom='08:00';S.cfg.planTo='18:00';render()")
+      print(scheme,lang,'hours 8-18 (blocks inside)',await pg.evaluate("document.querySelectorAll('.pl-hr').length"))
+      await pg.evaluate("S.cfg.planFrom='06:00';S.cfg.planTo='24:00';render()")
       # overlap: Deep work (9-11) and Email (9:30-10) share the row in two columns
       print(scheme,lang,'overlap side by side',await pg.evaluate("(()=>{const r=[...document.querySelectorAll('.pl-b')].slice(0,2).map(e=>e.getBoundingClientRect());return Math.abs(r[0].left-r[1].left)>20&&r[0].width<250})()"))
       # schedule 'Call bank' from the tray into 14:00

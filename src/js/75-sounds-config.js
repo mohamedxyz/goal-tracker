@@ -103,6 +103,8 @@ const CFG_DEF = {
   nEvening: '20:00',
   nClasses: true,
   nExams: true,
+  planFrom: '06:00',
+  planTo: '24:00',
   nBlocks: true,
   nBlockLead: '10',
   classes: '',

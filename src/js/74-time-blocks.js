@@ -53,14 +53,16 @@ function planView() {
     day = PLAN.day || today;
   const blocks = S.tasks.filter((t) => !t.archived && t.due === day && t.start);
   const lay = layoutBlocks(blocks);
-  // Show 6:00 to 22:00 by default, and stretch to fit anything earlier or later.
+  // Show your day (Settings: 6:00 to midnight by default), stretched to fit anything earlier or later.
   const first = lay.length ? Math.min(...lay.map((x) => x.s)) : 1440,
     last = lay.length ? Math.max(...lay.map((x) => x.e)) : 0;
-  const s0 = Math.max(0, Math.min(6 * 60, Math.floor(first / 60) * 60)),
-    e0 = Math.min(1440, Math.max(22 * 60, Math.ceil(last / 60) * 60));
+  const s0 = Math.max(0, Math.min(toMin(S.cfg.planFrom || '06:00'), Math.floor(first / 60) * 60)),
+    e0 = Math.min(1440, Math.max(toMin(S.cfg.planTo || '24:00'), Math.ceil(last / 60) * 60));
   const pr = (t) => ({ high: 0, med: 1, low: 2 })[t.priority] ?? 2;
   const tray = S.tasks
-    .filter((t) => !t.archived && !t.done && !t.start && t.due && (t.due === day || (day === today && t.due < today)))
+    .filter(
+      (t) => !t.archived && !t.done && !t.start && (t.due === day || (day === today && (!t.due || t.due < today)))
+    )
     .sort((a, b) => pr(a) - pr(b))
     .slice(0, 30);
   const pick = PLAN.pick && S.tasks.find((t) => t.id === PLAN.pick && !t.done && !t.archived);
@@ -93,21 +95,20 @@ function planView() {
     <div class="meta pl-sum">${blocks.length ? L2(blocks.length + ' blocks · ' + lenText(planned) + ' planned', blocks.length + ' فترات · ' + lenText(planned) + ' مخطّطة') : L2('Nothing scheduled yet.', 'لا شيء مجدول بعد.')}${day !== today ? ` <button type="button" class="chip" data-action="plan-today">${L2('Today', 'اليوم')}</button>` : ''}</div>
     ${
       pick && pick.start
-        ? `<div class="pl-bar"><div class="meta"><b>${esc(pick.title)}</b> · ${blockTime(pick)}</div>
+        ? `<div class="pl-bar"><div class="meta"><b>${esc(pick.title)}</b> · ${blockTime(pick)} · ${L2('tap a time to move it', 'اضغط على وقت لنقلها')}</div>
       <div class="pl-btns">${[
-        ['plan-nudge', -15, '▲ 15'],
-        ['plan-nudge', 15, '▼ 15'],
-        ['plan-len', -15, '− ' + L2('shorter', 'أقصر')],
-        ['plan-len', 15, '+ ' + L2('longer', 'أطول')],
+        ['plan-nudge', -15, '▲ 15', L2('15 minutes earlier', 'أبكر بـ15 دقيقة')],
+        ['plan-nudge', 15, '▼ 15', L2('15 minutes later', 'أبعد بـ15 دقيقة')],
+        ['plan-len', -15, '− 15', L2('Shorter by 15 minutes', 'أقصر بـ15 دقيقة')],
+        ['plan-len', 15, '+ 15', L2('Longer by 15 minutes', 'أطول بـ15 دقيقة')],
       ]
         .map(
-          ([a, d, l]) =>
-            `<button type="button" class="chip" data-action="${a}" data-id="${pick.id}" data-d="${d}">${l}</button>`
+          ([a, d, l, tip]) =>
+            `<button type="button" class="chip" data-action="${a}" data-id="${pick.id}" data-d="${d}" title="${tip}" aria-label="${tip}">${l}</button>`
         )
         .join('')}
-      <button type="button" class="chip" data-action="info-task" data-id="${pick.id}">ⓘ ${L2('Details', 'تفاصيل')}</button>
-      <button type="button" class="chip" data-action="plan-unset" data-id="${pick.id}">✕ ${L2('Unschedule', 'إلغاء')}</button></div>
-      <div class="meta">${L2('Tap a time to move it there.', 'اضغط على وقت لنقلها إليه.')}</div></div>`
+      <button type="button" class="chip" data-action="info-task" data-id="${pick.id}" aria-label="${L2('Details', 'تفاصيل')}">ⓘ</button>
+      <button type="button" class="chip" data-action="plan-unset" data-id="${pick.id}" aria-label="${L2('Unschedule', 'إلغاء الجدولة')}">✕</button></div></div>`
         : ''
     }
     ${
@@ -116,6 +117,6 @@ function planView() {
       <div class="pl-chips">${tray.map((t) => `<button type="button" class="chip ${PLAN.pick === t.id ? 'on' : ''}" data-action="plan-pick" data-id="${t.id}" aria-pressed="${PLAN.pick === t.id}">${iconPrefix(t)}${esc(t.title)}</button>`).join('')}</div></div>`
         : ''
     }
-    <div class="pl-grid" style="--plh:${PLAN_PX}px">${rows}<div class="pl-layer">${blk}${now}</div></div>
+    <div class="pl-grid" style="--plh:${PLAN_PX}px" data-s0="${s0}">${rows}<div class="pl-layer">${blk}${now}</div></div>
     <div class="meta pl-hint">${L2('Tap an empty time to add a block. Tap a block to move or resize it.', 'اضغط على وقت فارغ لإضافة فترة. اضغط على فترة لنقلها أو تغيير مدتها.')}</div></div>`;
 }

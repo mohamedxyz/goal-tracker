@@ -117,6 +117,14 @@ async function autoArchive() {
 })();
 
 setInterval(autoBackupTick, 60000);
+// Keep the red "now" line on the Plan timeline moving without redrawing the page.
+setInterval(() => {
+  const line = document.querySelector('.pl-now'),
+    grid = document.querySelector('.pl-grid');
+  if (!line || !grid) return;
+  const n = new Date();
+  line.style.top = ((n.getHours() * 60 + n.getMinutes() - +grid.dataset.s0) / 60) * PLAN_PX + 'px';
+}, 60000);
 document.addEventListener('visibilitychange', () => {
   if (!document.hidden) autoBackupTick();
 });

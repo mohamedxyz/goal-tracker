@@ -5,6 +5,7 @@
     PATCH = bug fix · MINOR = new feature · MAJOR = breaks old backups or data
 
   Changelog
+  0.79.0 Plan view fixes: choose when your day starts and ends (Settings, default 6:00 to midnight); the block toolbar stays on screen while you scroll and is more compact; in Arabic the tick box no longer covers the title; unscheduled tasks with no date can be placed too; the calendar and Plan open on the same day; the red now line keeps moving.
   0.78.0 Time blocking, part 2: tap a block in the Plan view to select it, then nudge it 15 minutes earlier or later, make it shorter or longer, or tap a time to move it there. Quick add understands times and lengths ("Gym at 6pm for 1h", "Call 18:30 for 45 min"). New reminders before each block starts (Settings > Notifications: on/off and how long before).
   0.77.0 Time blocking: a new Plan view on the Tasks tab shows your day as a timeline. Give a task a start time and length (Edit task, or tap an empty time), or pick an unscheduled task and tap a time to place it. Overlapping blocks sit side by side, tap a block for details or tick it done, and Unschedule from its info sheet.
   0.76.0 Android keyboard, native fix: the app now applies the keyboard and system-bar space itself, once, instead of letting Capacitor pass the keyboard inset on to the web view as well (which could shrink the page twice and leave a blank band above the keyboard). This is the 0.74.5 app (tips, info sheets, auto backup, icons) with the keyboard layout fixed in the Android code.
@@ -4088,7 +4089,8 @@ form.kbdock {
   box-sizing: border-box;
   pointer-events: auto;
   overflow: hidden;
-  padding: 3px 6px 3px 26px;
+  padding: 3px 6px;
+  padding-inline-start: 26px;
   background: var(--soft);
   border: 1px solid var(--line);
   border-inline-start: 4px solid var(--muted);
@@ -4160,6 +4162,9 @@ form.kbdock {
   text-align: center;
 }
 .pl-bar {
+  position: sticky;
+  top: 58px;
+  z-index: 6;
   margin-bottom: 10px;
   padding: 8px;
   border: 1px solid var(--accent);
@@ -4175,6 +4180,9 @@ form.kbdock {
 .pl-b.sel {
   outline: 2px solid var(--accent);
   z-index: 2;
+}
+.pl-btns .chip {
+  padding: 6px 10px;
 }
 </style>
 </head>
@@ -4546,7 +4554,7 @@ function rate30(h) {
 }
 
 /* ---------- Version ---------- */
-const APP_VERSION = '0.78.0';
+const APP_VERSION = '0.79.0';
 
 /* Pick the English or Arabic text for the current language. Call it at render time, never while the file is loading. */
 const L2 = (en, ar) => (S.cfg.lang === 'ar' ? ar : en);
@@ -7661,6 +7669,20 @@ function settingsCard() {
       c.breakLen
     )}
     ${sel(
+      'planFrom',
+      'Plan: day starts at',
+      [...Array(11)].map((_, h) => [String(h).padStart(2, '0') + ':00', hmText(h * 60)]),
+      c.planFrom
+    )}
+    ${sel(
+      'planTo',
+      'Plan: day ends at',
+      [...Array(8)]
+        .map((_, i) => [String(17 + i).padStart(2, '0') + ':00', hmText((17 + i) * 60)])
+        .concat([['24:00', hmText(1439).replace(/59/, '00')]]),
+      c.planTo
+    )}
+    ${sel(
       'dueDef',
       'Default due date for new tasks',
       [
@@ -8664,14 +8686,16 @@ function planView() {
     day = PLAN.day || today;
   const blocks = S.tasks.filter((t) => !t.archived && t.due === day && t.start);
   const lay = layoutBlocks(blocks);
-  // Show 6:00 to 22:00 by default, and stretch to fit anything earlier or later.
+  // Show your day (Settings: 6:00 to midnight by default), stretched to fit anything earlier or later.
   const first = lay.length ? Math.min(...lay.map((x) => x.s)) : 1440,
     last = lay.length ? Math.max(...lay.map((x) => x.e)) : 0;
-  const s0 = Math.max(0, Math.min(6 * 60, Math.floor(first / 60) * 60)),
-    e0 = Math.min(1440, Math.max(22 * 60, Math.ceil(last / 60) * 60));
+  const s0 = Math.max(0, Math.min(toMin(S.cfg.planFrom || '06:00'), Math.floor(first / 60) * 60)),
+    e0 = Math.min(1440, Math.max(toMin(S.cfg.planTo || '24:00'), Math.ceil(last / 60) * 60));
   const pr = (t) => ({ high: 0, med: 1, low: 2 })[t.priority] ?? 2;
   const tray = S.tasks
-    .filter((t) => !t.archived && !t.done && !t.start && t.due && (t.due === day || (day === today && t.due < today)))
+    .filter(
+      (t) => !t.archived && !t.done && !t.start && (t.due === day || (day === today && (!t.due || t.due < today)))
+    )
     .sort((a, b) => pr(a) - pr(b))
     .slice(0, 30);
   const pick = PLAN.pick && S.tasks.find((t) => t.id === PLAN.pick && !t.done && !t.archived);
@@ -8704,21 +8728,20 @@ function planView() {
     <div class="meta pl-sum">${blocks.length ? L2(blocks.length + ' blocks · ' + lenText(planned) + ' planned', blocks.length + ' فترات · ' + lenText(planned) + ' مخطّطة') : L2('Nothing scheduled yet.', 'لا شيء مجدول بعد.')}${day !== today ? ` <button type="button" class="chip" data-action="plan-today">${L2('Today', 'اليوم')}</button>` : ''}</div>
     ${
       pick && pick.start
-        ? `<div class="pl-bar"><div class="meta"><b>${esc(pick.title)}</b> · ${blockTime(pick)}</div>
+        ? `<div class="pl-bar"><div class="meta"><b>${esc(pick.title)}</b> · ${blockTime(pick)} · ${L2('tap a time to move it', 'اضغط على وقت لنقلها')}</div>
       <div class="pl-btns">${[
-        ['plan-nudge', -15, '▲ 15'],
-        ['plan-nudge', 15, '▼ 15'],
-        ['plan-len', -15, '− ' + L2('shorter', 'أقصر')],
-        ['plan-len', 15, '+ ' + L2('longer', 'أطول')],
+        ['plan-nudge', -15, '▲ 15', L2('15 minutes earlier', 'أبكر بـ15 دقيقة')],
+        ['plan-nudge', 15, '▼ 15', L2('15 minutes later', 'أبعد بـ15 دقيقة')],
+        ['plan-len', -15, '− 15', L2('Shorter by 15 minutes', 'أقصر بـ15 دقيقة')],
+        ['plan-len', 15, '+ 15', L2('Longer by 15 minutes', 'أطول بـ15 دقيقة')],
       ]
         .map(
-          ([a, d, l]) =>
-            `<button type="button" class="chip" data-action="${a}" data-id="${pick.id}" data-d="${d}">${l}</button>`
+          ([a, d, l, tip]) =>
+            `<button type="button" class="chip" data-action="${a}" data-id="${pick.id}" data-d="${d}" title="${tip}" aria-label="${tip}">${l}</button>`
         )
         .join('')}
-      <button type="button" class="chip" data-action="info-task" data-id="${pick.id}">ⓘ ${L2('Details', 'تفاصيل')}</button>
-      <button type="button" class="chip" data-action="plan-unset" data-id="${pick.id}">✕ ${L2('Unschedule', 'إلغاء')}</button></div>
-      <div class="meta">${L2('Tap a time to move it there.', 'اضغط على وقت لنقلها إليه.')}</div></div>`
+      <button type="button" class="chip" data-action="info-task" data-id="${pick.id}" aria-label="${L2('Details', 'تفاصيل')}">ⓘ</button>
+      <button type="button" class="chip" data-action="plan-unset" data-id="${pick.id}" aria-label="${L2('Unschedule', 'إلغاء الجدولة')}">✕</button></div></div>`
         : ''
     }
     ${
@@ -8727,7 +8750,7 @@ function planView() {
       <div class="pl-chips">${tray.map((t) => `<button type="button" class="chip ${PLAN.pick === t.id ? 'on' : ''}" data-action="plan-pick" data-id="${t.id}" aria-pressed="${PLAN.pick === t.id}">${iconPrefix(t)}${esc(t.title)}</button>`).join('')}</div></div>`
         : ''
     }
-    <div class="pl-grid" style="--plh:${PLAN_PX}px">${rows}<div class="pl-layer">${blk}${now}</div></div>
+    <div class="pl-grid" style="--plh:${PLAN_PX}px" data-s0="${s0}">${rows}<div class="pl-layer">${blk}${now}</div></div>
     <div class="meta pl-hint">${L2('Tap an empty time to add a block. Tap a block to move or resize it.', 'اضغط على وقت فارغ لإضافة فترة. اضغط على فترة لنقلها أو تغيير مدتها.')}</div></div>`;
 }
 /**
@@ -8835,6 +8858,8 @@ const CFG_DEF = {
   nEvening: '20:00',
   nClasses: true,
   nExams: true,
+  planFrom: '06:00',
+  planTo: '24:00',
   nBlocks: true,
   nBlockLead: '10',
   classes: '',
@@ -8924,6 +8949,8 @@ const AR = {
   'Time-block reminders': 'تذكير فترات الجدول',
   'A reminder before each scheduled block starts': 'تذكير قبل بدء كل فترة مجدولة',
   'Remind me': 'ذكّرني',
+  'Plan: day starts at': 'المخطِّط: يبدأ اليوم عند',
+  'Plan: day ends at': 'المخطِّط: ينتهي اليوم عند',
   'Exam reminders': 'تذكير الامتحانات',
   'The evening before an exam or quiz': 'مساء اليوم السابق للامتحان أو الاختبار',
   'Send a test notification': 'أرسل إشعارًا تجريبيًا',
@@ -10359,11 +10386,16 @@ const actions = {
   },
   'tasks-cal'() {
     S.tcalOn = !S.tcalOn;
+    if (S.tcalOn && S.planOn && PLAN.day && typeof tcal !== 'undefined' && tcal) {
+      const d = new Date(PLAN.day + 'T00:00');
+      tcal = { y: d.getFullYear(), m: d.getMonth(), sel: PLAN.day }; // open the calendar on the day you were planning
+    }
     S.planOn = false;
     if (S.selMode) S.selMode = null;
   },
   /* ----- Time blocking (Plan view) ----- */
   'tasks-plan'() {
+    if (!S.planOn && S.tcalOn && tcal) PLAN.day = tcal.sel === TODAY() ? null : tcal.sel; // plan the day picked in the calendar
     S.planOn = !S.planOn;
     S.tcalOn = false;
     PLAN.pick = null;
@@ -10390,7 +10422,12 @@ const actions = {
       t.due = day;
       t.start = fromMin(min);
     } else {
-      const raw = await askPrompt(L2('New block at ' + hmText(min), 'فترة جديدة عند ' + hmText(min)));
+      const raw = await askPrompt(
+        L2(
+          'New block at ' + hmText(min) + ' (tip: add "for 90 min")',
+          'فترة جديدة عند ' + hmText(min) + ' (نصيحة: أضف «لمدة 90 دقيقة»)'
+        )
+      );
       if (!raw || !raw.trim()) return false;
       // You can type a time and length too, e.g. "Study at 4pm for 90 min"; otherwise the tapped time is used.
       const q = parseQuick(raw + ' ' + fromMin(min));
@@ -12943,6 +12980,14 @@ async function autoArchive() {
 })();
 
 setInterval(autoBackupTick, 60000);
+// Keep the red "now" line on the Plan timeline moving without redrawing the page.
+setInterval(() => {
+  const line = document.querySelector('.pl-now'),
+    grid = document.querySelector('.pl-grid');
+  if (!line || !grid) return;
+  const n = new Date();
+  line.style.top = ((n.getHours() * 60 + n.getMinutes() - +grid.dataset.s0) / 60) * PLAN_PX + 'px';
+}, 60000);
 document.addEventListener('visibilitychange', () => {
   if (!document.hidden) autoBackupTick();
 });

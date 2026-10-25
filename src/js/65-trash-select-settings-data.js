@@ -357,6 +357,20 @@ function settingsCard() {
       c.breakLen
     )}
     ${sel(
+      'planFrom',
+      'Plan: day starts at',
+      [...Array(11)].map((_, h) => [String(h).padStart(2, '0') + ':00', hmText(h * 60)]),
+      c.planFrom
+    )}
+    ${sel(
+      'planTo',
+      'Plan: day ends at',
+      [...Array(8)]
+        .map((_, i) => [String(17 + i).padStart(2, '0') + ':00', hmText((17 + i) * 60)])
+        .concat([['24:00', hmText(1439).replace(/59/, '00')]]),
+      c.planTo
+    )}
+    ${sel(
       'dueDef',
       'Default due date for new tasks',
       [

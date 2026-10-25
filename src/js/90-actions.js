@@ -106,11 +106,16 @@ const actions = {
   },
   'tasks-cal'() {
     S.tcalOn = !S.tcalOn;
+    if (S.tcalOn && S.planOn && PLAN.day && typeof tcal !== 'undefined' && tcal) {
+      const d = new Date(PLAN.day + 'T00:00');
+      tcal = { y: d.getFullYear(), m: d.getMonth(), sel: PLAN.day }; // open the calendar on the day you were planning
+    }
     S.planOn = false;
     if (S.selMode) S.selMode = null;
   },
   /* ----- Time blocking (Plan view) ----- */
   'tasks-plan'() {
+    if (!S.planOn && S.tcalOn && tcal) PLAN.day = tcal.sel === TODAY() ? null : tcal.sel; // plan the day picked in the calendar
     S.planOn = !S.planOn;
     S.tcalOn = false;
     PLAN.pick = null;
@@ -137,7 +142,12 @@ const actions = {
       t.due = day;
       t.start = fromMin(min);
     } else {
-      const raw = await askPrompt(L2('New block at ' + hmText(min), 'فترة جديدة عند ' + hmText(min)));
+      const raw = await askPrompt(
+        L2(
+          'New block at ' + hmText(min) + ' (tip: add "for 90 min")',
+          'فترة جديدة عند ' + hmText(min) + ' (نصيحة: أضف «لمدة 90 دقيقة»)'
+        )
+      );
       if (!raw || !raw.trim()) return false;
       // You can type a time and length too, e.g. "Study at 4pm for 90 min"; otherwise the tapped time is used.
       const q = parseQuick(raw + ' ' + fromMin(min));
