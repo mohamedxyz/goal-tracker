@@ -135,32 +135,52 @@ const actions = {
     if (t) {
       PLAN.pick = null;
       t.due = day;
+      t.start = fromMin(min);
     } else {
-      const title = await askPrompt(L2('New block at ' + hmText(min), 'فترة جديدة عند ' + hmText(min)));
-      if (!title || !title.trim()) return false;
+      const raw = await askPrompt(L2('New block at ' + hmText(min), 'فترة جديدة عند ' + hmText(min)));
+      if (!raw || !raw.trim()) return false;
+      // You can type a time and length too, e.g. "Study at 4pm for 90 min"; otherwise the tapped time is used.
+      const q = parseQuick(raw + ' ' + fromMin(min));
+      const typed = parseQuick(raw);
+      if (typed.start) Object.assign(q, typed);
       t = {
         id: uid(),
-        title: title.trim(),
+        title: q.title,
+        start: q.start,
+        dur: q.dur,
         notes: '',
         repeat: '',
-        tag: '',
+        tag: q.tag || '',
         items: [],
         due: day,
-        priority: S.cfg.prio,
+        priority: q.priority || S.cfg.prio,
         goalId: null,
         done: false,
         created: Date.now(),
       };
       S.tasks.push(t);
     }
-    t.start = fromMin(min);
     t.dur = t.dur || 60;
+    await DB.put('tasks', t);
+  },
+  /* Selected block: move it 15 minutes, or make it 15 minutes shorter or longer. */
+  async 'plan-nudge'(el) {
+    const t = S.tasks.find((x) => x.id === el.dataset.id);
+    if (!t || !t.start) return;
+    t.start = fromMin(Math.max(0, Math.min(1440 - blockLen(t), toMin(t.start) + +el.dataset.d)));
+    await DB.put('tasks', t);
+  },
+  async 'plan-len'(el) {
+    const t = S.tasks.find((x) => x.id === el.dataset.id);
+    if (!t || !t.start) return;
+    t.dur = Math.max(15, Math.min(480, blockLen(t) + +el.dataset.d, 1440 - toMin(t.start)));
     await DB.put('tasks', t);
   },
   async 'plan-unset'(el) {
     const t = S.tasks.find((x) => x.id === el.dataset.id);
     if (!t) return;
     t.start = null;
+    PLAN.pick = null;
     await DB.put('tasks', t);
   },
   'tcal-day'(el) {
@@ -1165,7 +1185,9 @@ document.addEventListener('submit', async (e) => {
       repeat: v.repeat || '',
       tag: q.tag || (v.tag || '').trim(),
       items: parseItems(v.items),
-      due: q.due || v.due || null,
+      due: q.due || v.due || (q.start ? TODAY() : null),
+      start: q.start,
+      dur: q.dur,
       priority: q.priority || v.priority,
       goalId: v.goalId || null,
       done: false,
@@ -1224,6 +1246,8 @@ document.addEventListener('submit', async (e) => {
       tag: q.tag || '',
       items: [],
       due: q.due || f.dataset.date,
+      start: q.start,
+      dur: q.dur,
       priority: q.priority || S.cfg.prio,
       goalId: null,
       done: false,

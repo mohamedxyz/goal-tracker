@@ -556,6 +556,8 @@ function planNotifications(force) {
       S.cfg.nEvening,
       S.cfg.nClasses,
       S.cfg.nExams,
+      S.cfg.nBlocks,
+      S.cfg.nBlockLead,
       S.cfg.classes,
       S.cfg.lang,
       S.cfg.rpg,
@@ -628,6 +630,17 @@ function buildNotifications() {
             body: c.room ? L2('Room ', 'القاعة ') + c.room : L2('Class in 10 minutes', 'الحصة بعد 10 دقائق'),
           });
       }
+    if (S.cfg.nBlocks)
+      for (const t of S.tasks.filter((t) => !t.done && !t.archived && t.due === k && t.start)) {
+        const when = at(d, t.start) - (+S.cfg.nBlockLead || 0) * 60000;
+        if (when > now)
+          out.push({
+            key: 'b' + k + t.id,
+            at: when,
+            title: t.title,
+            body: L2('Starts at ', 'تبدأ الساعة ') + hmText(toMin(t.start)) + ' · ' + lenText(blockLen(t)),
+          });
+      }
     if (S.cfg.nExams && S.cfg.student)
       for (const x of S.exams.filter((x) => x.date === ds(addDays(d, 1)) && x.score == null)) {
         const t = at(d, '18:00');
@@ -686,6 +699,19 @@ function notifCard() {
     )}
     ${sw('nClasses', 'Class reminders', '10 minutes before each class', c.nClasses)}
     ${sw('nExams', 'Exam reminders', 'The evening before an exam or quiz', c.nExams)}
+    ${sw('nBlocks', 'Time-block reminders', 'A reminder before each scheduled block starts', c.nBlocks)}
+    ${sel(
+      'nBlockLead',
+      'Remind me',
+      [
+        ['0', L2('At the start', 'عند البدء')],
+        ['5', L2('5 minutes before', 'قبلها بـ5 دقائق')],
+        ['10', L2('10 minutes before', 'قبلها بـ10 دقائق')],
+        ['15', L2('15 minutes before', 'قبلها بـ15 دقيقة')],
+        ['30', L2('30 minutes before', 'قبلها بـ30 دقيقة')],
+      ],
+      c.nBlockLead
+    )}
     <div class="row" style="margin-top:8px"><button class="ghost" data-action="n-test">Send a test notification</button><button class="ghost" data-action="n-exact">Exact timers</button></div>
     <p class="meta">Exact timers let the focus timer ring on the second; without them Android may deliver it a little late.</p></div>`;
 }

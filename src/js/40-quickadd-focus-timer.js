@@ -60,7 +60,9 @@ function parseQuick(raw) {
   let s = ' ' + String(raw || '').replace(/\s+/g, ' ') + ' ',
     due = null,
     priority = null,
-    tag = null;
+    tag = null,
+    start = null,
+    dur = null;
   const now = new Date(),
     T = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const dm = (d, mo) => {
@@ -113,6 +115,34 @@ function parseQuick(raw) {
       }
     }
   }
+  // A time of day ("at 6pm", "6:30pm", "18:00", "الساعة 6م") and then a length ("for 1h", "for 45 min", "لمدة ساعة").
+  const hhmm = (h, m) =>
+    h >= 0 && h < 24 && m >= 0 && m < 60 ? String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0') : null;
+  const t12 = s.match(/(?<=\s)(?:at\s+|الساعة\s+)?(\d{1,2})(?::(\d{2}))?\s?(am|pm|ص|م)(?=\s)/iu);
+  if (t12 && +t12[1] >= 1 && +t12[1] <= 12) {
+    const pmk = /^(pm|م)$/i.test(t12[3]);
+    start = hhmm((+t12[1] % 12) + (pmk ? 12 : 0), +(t12[2] || 0));
+    if (start) s = s.replace(t12[0], ' ');
+  }
+  if (!start) {
+    const t24 = s.match(/(?<=\s)(?:at\s+|الساعة\s+)?([01]?\d|2[0-3]):([0-5]\d)(?=\s)/iu);
+    if (t24) {
+      start = hhmm(+t24[1], +t24[2]);
+      if (start) s = s.replace(t24[0], ' ');
+    }
+  }
+  if (start) {
+    const dm2 = s.match(
+      /(?<=\s)(?:for|لمدة)\s+(?:(\d+(?:\.\d+)?)\s*|(?:an?\s+)?)(h|hr|hrs|hour|hours|m|min|mins|minute|minutes|ساعة|ساعات|دقيقة|دقائق)(?=\s)/iu
+    );
+    if (dm2) {
+      const n = (dm2[1] ? parseFloat(dm2[1]) : 1) * (/^(h|ساع)/i.test(dm2[2]) ? 60 : 1);
+      if (n >= 5 && n <= 720) {
+        dur = Math.round(n);
+        s = s.replace(dm2[0], ' ');
+      }
+    }
+  }
   const pm = s.match(/(?<=\s)!(high|medium|med|low|h|m|l|1|2|3|عالي|عالية|متوسط|متوسطة|منخفض|منخفضة)(?=\s)/iu);
   if (pm) {
     priority = QA_PRI[pm[1].toLowerCase()];
@@ -124,7 +154,7 @@ function parseQuick(raw) {
     s = s.replace(tm[0], ' ');
   }
   const title = s.replace(/\s+/g, ' ').trim();
-  return { title: title || String(raw || '').trim(), due, priority, tag };
+  return { title: title || String(raw || '').trim(), due, priority, tag, start, dur };
 }
 function qaHint(inp) {
   const f = inp.form,
@@ -133,6 +163,8 @@ function qaHint(inp) {
   const q = parseQuick(inp.value),
     bits = [];
   if (q.due) bits.push(`<span class="pill sm">📅 ${fmtDay(q.due)}</span>`);
+  if (q.start)
+    bits.push(`<span class="pill sm">🕐 ${hmText(toMin(q.start))}${q.dur ? ' · ' + lenText(q.dur) : ''}</span>`);
   if (q.priority)
     bits.push(`<span class="pill sm">⚑ ${{ high: 'High', med: 'Medium', low: 'Low' }[q.priority]}</span>`);
   if (q.tag) bits.push(`<span class="pill sm" translate="no">#${esc(q.tag)}</span>`);

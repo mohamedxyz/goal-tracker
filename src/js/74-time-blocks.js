@@ -63,7 +63,7 @@ function planView() {
     .filter((t) => !t.archived && !t.done && !t.start && t.due && (t.due === day || (day === today && t.due < today)))
     .sort((a, b) => pr(a) - pr(b))
     .slice(0, 30);
-  const pick = PLAN.pick && tray.find((t) => t.id === PLAN.pick);
+  const pick = PLAN.pick && S.tasks.find((t) => t.id === PLAN.pick && !t.done && !t.archived);
   if (!pick) PLAN.pick = null;
   const planned = lay.reduce((n, x) => n + (x.e - x.s), 0);
 
@@ -77,7 +77,7 @@ function planView() {
     .map((x) => {
       const t = x.t,
         h = Math.max(24, ((x.e - x.s) / 60) * PLAN_PX - 2);
-      return `<div class="pl-b pr-${t.priority || 'low'} ${t.done ? 'done' : ''}" style="top:${((x.s - s0) / 60) * PLAN_PX}px;height:${h}px;inset-inline-start:${(x.col / x.n) * 100}%;width:${100 / x.n}%" data-action="info-task" data-id="${t.id}" role="button" tabindex="0">
+      return `<div class="pl-b pr-${t.priority || 'low'} ${t.done ? 'done' : ''} ${PLAN.pick === t.id ? 'sel' : ''}" style="top:${((x.s - s0) / 60) * PLAN_PX}px;height:${h}px;inset-inline-start:${(x.col / x.n) * 100}%;width:${100 / x.n}%" data-action="plan-pick" data-id="${t.id}" role="button" tabindex="0">
         <button type="button" class="pl-ck" data-action="toggle-task" data-id="${t.id}" aria-label="${L2('Mark done', 'تم')}">${t.done ? '✓' : ''}</button>
         <b>${iconPrefix(t)}${esc(t.title)}</b>${h >= 40 ? `<span>${hmText(x.s)} – ${hmText(x.e)}</span>` : ''}</div>`;
     })
@@ -92,11 +92,30 @@ function planView() {
     <div class="cal-nav"><button type="button" class="icon" data-action="plan-day" data-d="-1" aria-label="${L2('Previous day', 'اليوم السابق')}">‹</button><b>${fmtDay(day)}</b><button type="button" class="icon" data-action="plan-day" data-d="1" aria-label="${L2('Next day', 'اليوم التالي')}">›</button></div>
     <div class="meta pl-sum">${blocks.length ? L2(blocks.length + ' blocks · ' + lenText(planned) + ' planned', blocks.length + ' فترات · ' + lenText(planned) + ' مخطّطة') : L2('Nothing scheduled yet.', 'لا شيء مجدول بعد.')}${day !== today ? ` <button type="button" class="chip" data-action="plan-today">${L2('Today', 'اليوم')}</button>` : ''}</div>
     ${
+      pick && pick.start
+        ? `<div class="pl-bar"><div class="meta"><b>${esc(pick.title)}</b> · ${blockTime(pick)}</div>
+      <div class="pl-btns">${[
+        ['plan-nudge', -15, '▲ 15'],
+        ['plan-nudge', 15, '▼ 15'],
+        ['plan-len', -15, '− ' + L2('shorter', 'أقصر')],
+        ['plan-len', 15, '+ ' + L2('longer', 'أطول')],
+      ]
+        .map(
+          ([a, d, l]) =>
+            `<button type="button" class="chip" data-action="${a}" data-id="${pick.id}" data-d="${d}">${l}</button>`
+        )
+        .join('')}
+      <button type="button" class="chip" data-action="info-task" data-id="${pick.id}">ⓘ ${L2('Details', 'تفاصيل')}</button>
+      <button type="button" class="chip" data-action="plan-unset" data-id="${pick.id}">✕ ${L2('Unschedule', 'إلغاء')}</button></div>
+      <div class="meta">${L2('Tap a time to move it there.', 'اضغط على وقت لنقلها إليه.')}</div></div>`
+        : ''
+    }
+    ${
       tray.length
-        ? `<div class="pl-tray"><div class="meta">${pick ? L2('Now tap a time for “' + pick.title + '”', 'اضغط على وقت لـ«' + pick.title + '»') : L2('Not scheduled · tap one, then tap a time', 'غير مجدولة · اضغط على مهمة ثم على وقت')}</div>
+        ? `<div class="pl-tray"><div class="meta">${pick && !pick.start ? L2('Now tap a time for “' + pick.title + '”', 'اضغط على وقت لـ«' + pick.title + '»') : L2('Not scheduled · tap one, then tap a time', 'غير مجدولة · اضغط على مهمة ثم على وقت')}</div>
       <div class="pl-chips">${tray.map((t) => `<button type="button" class="chip ${PLAN.pick === t.id ? 'on' : ''}" data-action="plan-pick" data-id="${t.id}" aria-pressed="${PLAN.pick === t.id}">${iconPrefix(t)}${esc(t.title)}</button>`).join('')}</div></div>`
         : ''
     }
     <div class="pl-grid" style="--plh:${PLAN_PX}px">${rows}<div class="pl-layer">${blk}${now}</div></div>
-    <div class="meta pl-hint">${L2('Tap an empty time to add a block. Tap a block for details.', 'اضغط على وقت فارغ لإضافة فترة. اضغط على فترة للتفاصيل.')}</div></div>`;
+    <div class="meta pl-hint">${L2('Tap an empty time to add a block. Tap a block to move or resize it.', 'اضغط على وقت فارغ لإضافة فترة. اضغط على فترة لنقلها أو تغيير مدتها.')}</div></div>`;
 }
