@@ -29,6 +29,9 @@ A goal, habit, task and study tracker. The app you run is ONE generated file, `g
 Capacitor's SystemBars `insetsHandling: css` padded the window by the keyboard AND passed the IME inset on to the WebView, which can shrink the page twice (blank band above the keyboard, field scrolled away). Since 0.76.0 `insetsHandling` is `disable` and `MainActivity.applyInsets()` pads the decor view once (status bar, and the taller of nav bar / keyboard) and consumes the insets. CSS and JS keyboard tweaks (`--sab`, `form.kbdock`) are kept but are secondary. Unverified on a real device at the time of writing: ask for a screenshot or screen recording.
 Note: `main` once held a 0.75.0 rollback to the 0.71.1 app; 0.76.0 supersedes it.
 
+## Data safety (0.82.0)
+`src/js/76-safety-copies.js`: snapshots live in a separate IndexedDB (`goal-tracker-snap`, newest 10), saved daily, on app-version change, before restore, before erase and before a data repair. Goals, exams and topics go to Trash like tasks and habits. Erase needs a typed word (tests must set `window.__noAuto=true` and fill `#askIn` themselves). Tasks/goals keep their last 5 title+notes versions in `hist`.
+
 ## Known to-do (not yet done)
 - README is out of date: "Import" is now "Restore", screenshots predate 0.72, no mention of info sheets, tip cards or auto backup. `tests/screenshots.py` needs tips dismissed and Settings sections opened before it will give good images.
 - Game (done in 0.81.0): boss death is permanent, overkill bonus, 25% growth cap, how-it-works sheet, badges. Still open: anti-grind rules (tiny tasks ticked straight after creating them), more badges.

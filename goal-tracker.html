@@ -5,6 +5,7 @@
     PATCH = bug fix · MINOR = new feature · MAJOR = breaks old backups or data
 
   Changelog
+  0.82.0 Harder to lose data: automatic safety copies kept in a separate store (daily, before app updates, before a restore, before erasing) with a Restore list in Settings; deleted goals, exams and topics now go to Trash for 30 days like tasks and habits (linked tasks are relinked on restore); Undo for bulk Done, Archive and Edit and for removing a long-streak check-in; Erase everything needs a typed word and can be undone; the last 5 titles and notes of a task or goal can be brought back from the edit screen; a one-time offer to turn on the automatic daily backup in the app, and a Last backup line on the dashboard; a Check my data tool that finds and fixes broken links.
   0.81.0 Game fixes: a defeated week boss stays defeated (no counterattacks after it dies, and a knockout can no longer undo a win); damage beyond the boss HP gives a small overkill XP bonus; one huge week raises the next boss by at most 25%; a "How the game works" sheet in plain words (tap ? on the game card); 11 badges that you keep once earned, with a toast; and a weeks-won-in-a-row counter.
   0.80.0 Plan view, part 3: Undo after moving, resizing, adding or unscheduling a block; a ⚠ marks blocks that overlap and the toolbar names what they overlap with; swipe sideways to change the day (Plan) or month (calendar), which you can switch off; new Settings for the clock (12 or 24 hour) and for which day the calendar week starts on.
   0.79.0 Plan view fixes: choose when your day starts and ends (Settings, default 6:00 to midnight); the block toolbar stays on screen while you scroll and is more compact; in Arabic the tick box no longer covers the title; unscheduled tasks with no date can be placed too; the calendar and Plan open on the same day; the red now line keeps moving.
@@ -4599,7 +4600,7 @@ function rate30(h) {
 }
 
 /* ---------- Version ---------- */
-const APP_VERSION = '0.81.0';
+const APP_VERSION = '0.82.0';
 
 /* Pick the English or Arabic text for the current language. Call it at render time, never while the file is loading. */
 const L2 = (en, ar) => (S.cfg.lang === 'ar' ? ar : en);
@@ -7160,7 +7161,7 @@ function viewDash() {
   const openSlots = planTargets().reduce((a, g) => a + planLeft(g), 0),
     dow = new Date().getDay();
   const planCta = !wk.length || ((dow === 0 || dow === 1) && openSlots > 0);
-  return `${sampleBanner()}${dayBanner()}${autoCard()}${backupNudge() ? `<div class="card backup-cta ${backupLevel() > 1 ? 'urgent' : ''}"><div class="grow"><div class="title">${lb === null ? 'No backup yet' : 'Last backup ' + agoText(lb)}</div><div class="meta">${backupLevel() > 1 ? 'If this browser clears its storage, everything since your last backup is gone. Back up now.' : 'Your data lives only in this browser. Save a backup and keep it somewhere safe.'}</div></div><button class="btn" data-action="backup-now">Back up now</button><button class="icon" data-action="backup-snooze" title="Remind me later" aria-label="Dismiss backup reminder">✕</button></div>` : ''}${nRv ? `<div class="card review-cta"><div class="grow"><div class="title">${nRv} goal${nRv > 1 ? 's' : ''} from past periods need${nRv > 1 ? '' : 's'} a review</div><div class="meta">Hit it, missed, or carry over. About a minute.</div></div><button class="btn" data-action="open-review">Review</button></div>` : ''}  <div class="grid2" style="margin-top:6px"><div>
+  return `${sampleBanner()}${dayBanner()}${autoCard()}${autoAskCard()}${!backupNudge() && lb !== null && lb > 0 ? `<div class="meta" style="margin:2px 2px 8px">${L2('Last backup', 'آخر نسخة')} ${agoText(lb)} · <button class="chip" data-action="backup-now">${L2('Back up now', 'انسخ الآن')}</button></div>` : ''}${backupNudge() ? `<div class="card backup-cta ${backupLevel() > 1 ? 'urgent' : ''}"><div class="grow"><div class="title">${lb === null ? 'No backup yet' : 'Last backup ' + agoText(lb)}</div><div class="meta">${backupLevel() > 1 ? 'If this browser clears its storage, everything since your last backup is gone. Back up now.' : 'Your data lives only in this browser. Save a backup and keep it somewhere safe.'}</div></div><button class="btn" data-action="backup-now">Back up now</button><button class="icon" data-action="backup-snooze" title="Remind me later" aria-label="Dismiss backup reminder">✕</button></div>` : ''}${nRv ? `<div class="card review-cta"><div class="grow"><div class="title">${nRv} goal${nRv > 1 ? 's' : ''} from past periods need${nRv > 1 ? '' : 's'} a review</div><div class="meta">Hit it, missed, or carry over. About a minute.</div></div><button class="btn" data-action="open-review">Review</button></div>` : ''}  <div class="grid2" style="margin-top:6px"><div>
     ${
       S.cfg.dTasks
         ? `<h2>Today's tasks</h2>${todays.length ? `<ul class="list">${todays.map(taskItem).join('')}</ul>` : `<div class="empty">Nothing due today.</div>`}
@@ -7489,8 +7490,9 @@ function avoidToday(h) {
  */
 
 /* ---------- Trash ---------- */
-async function trashAdd(kind, data, logs) {
+async function trashAdd(kind, data, logs, links) {
   const r = { id: kind + ':' + data.id, kind, at: Date.now(), data, logs: logs || [] };
+  if (links) r.links = links;
   S.trash = S.trash.filter((x) => x.id !== r.id);
   S.trash.push(r);
   await DB.put('trash', r);
@@ -7522,6 +7524,25 @@ async function trashRestore(id) {
       S.tasks.push(r.data);
       await DB.put('tasks', r.data);
     }
+  } else if (r.kind === 'goal') {
+    if (!S.goals.some((x) => x.id === r.data.id)) {
+      S.goals.push(r.data);
+      await DB.put('goals', r.data);
+      for (const t of S.tasks.filter((x) => (r.links?.tasks || []).includes(x.id) && !x.goalId)) {
+        t.goalId = r.data.id;
+        await DB.put('tasks', t);
+      }
+      for (const c of S.goals.filter((x) => (r.links?.goals || []).includes(x.id) && !x.parentId)) {
+        c.parentId = r.data.id;
+        await DB.put('goals', c);
+      }
+    }
+  } else if (r.kind === 'exam' || r.kind === 'topic') {
+    const st = r.kind === 'exam' ? 'exams' : 'topics';
+    if (!S[st].some((x) => x.id === r.data.id)) {
+      S[st].push(r.data);
+      await DB.put(st, r.data);
+    }
   } else {
     if (!S.habits.some((x) => x.id === r.data.id)) {
       S.habits.push(r.data);
@@ -7536,18 +7557,27 @@ async function trashRestore(id) {
   S.trash = S.trash.filter((x) => x.id !== id);
   await DB.del('trash', id);
 }
+const trashName = (r) => (r.kind === 'habit' || r.kind === 'topic' ? r.data.name : r.data.title);
+const trashKind = (r) =>
+  ({
+    task: L2('Task', 'مهمة'),
+    habit: L2('Habit', 'عادة'),
+    goal: L2('Goal', 'هدف'),
+    exam: L2('Exam', 'امتحان'),
+    topic: L2('Topic', 'موضوع'),
+  })[r.kind] || r.kind;
 function viewTrash() {
   const list = [...S.trash].sort((a, b) => b.at - a.at);
   const row = (r) => {
     const left = Math.max(0, Math.ceil(TRASH_DAYS - (Date.now() - r.at) / 864e5));
-    const name = r.kind === 'task' ? r.data.title : r.data.name;
-    return `<div class="card trash-row"><div class="grow"><div class="title">${esc(name)}</div>
-      <div class="meta"><span>${r.kind === 'task' ? 'Task' : 'Habit'}</span><span>Deleted ${fmtWhen(r.at)}</span><span>${left} day${left === 1 ? '' : 's'} left</span></div></div>
+    const name = trashName(r);
+    return `<div class="card trash-row"><div class="grow"><div class="title" translate="no">${esc(name)}</div>
+      <div class="meta"><span>${trashKind(r)}</span><span>${L2('Deleted', 'حُذف')} ${fmtWhen(r.at)}</span><span>${left} day${left === 1 ? '' : 's'} left</span></div></div>
       <button class="icon" data-action="trash-restore" data-id="${esc(r.id)}" title="Restore" aria-label="Restore">↩</button>
-      <button class="icon" data-action="trash-del" data-id="${esc(r.id)}" title="Delete forever" aria-label="Delete forever">✕</button></div>`;
+      <button class="icon" data-action="trash-del" data-id="${esc(r.id)}" title="${L2('Delete forever', 'حذف نهائي')}" aria-label="${L2('Delete forever', 'حذف نهائي')}">✕</button></div>`;
   };
   return `<div class="arch-head"><button class="ghost" data-action="back-data">← Settings</button><h2 style="margin:0">Trash</h2></div>
-    <div class="bar-row"><span class="meta" style="margin:0">${list.length} item${list.length === 1 ? '' : 's'} · deleted tasks and habits are kept ${TRASH_DAYS} days</span>
+    <div class="bar-row"><span class="meta" style="margin:0">${L2(`${list.length} item(s) · deleted items are kept ${TRASH_DAYS} days`, `${list.length} عنصر · تُحفظ المحذوفات ${TRASH_DAYS} يومًا`)}</span>
       ${list.length ? `<button class="ghost danger" data-action="trash-empty">Empty trash</button>` : ''}</div>
     ${list.length ? `<div class="goals">${list.map(row).join('')}</div>` : `<div class="empty">Trash is empty.</div>`}`;
 }
@@ -7595,6 +7625,9 @@ function openBulk() {
 async function applyBulk(kind, f) {
   const v = Object.fromEntries(new FormData(f)),
     ids = [...S.sel];
+  const before = (kind === 'bulktasks' ? S.tasks : S.habits)
+    .filter((x) => ids.includes(x.id))
+    .map((x) => structuredClone(x));
   let n = 0;
   if (kind === 'bulktasks') {
     const lat = (t) => {
@@ -7658,7 +7691,15 @@ async function applyBulk(kind, f) {
   }
   S.selMode = null;
   S.sel.clear();
-  toast(`Updated ${n} ${kind === 'bulktasks' ? 'task' : 'habit'}${n === 1 ? '' : 's'}.`);
+  const bk = kind === 'bulktasks' ? 'tasks' : 'habits';
+  toastUndo(`Updated ${n} ${kind === 'bulktasks' ? 'task' : 'habit'}${n === 1 ? '' : 's'}.`, async () => {
+    for (const b of before) {
+      const i = S[bk].findIndex((x) => x.id === b.id);
+      if (i >= 0) S[bk][i] = b;
+      else S[bk].push(b);
+      await DB.put(bk, b);
+    }
+  });
 }
 const folderOf = (h) => (h.group || '').trim();
 const dayPicker = (sel = []) =>
@@ -7973,8 +8014,12 @@ function viewData() {
     <div class="row"><button class="ghost" data-action="open-archive">View archived tasks →</button></div>
   </div>
   <div class="card settings setacc ${S.setOpen && S.setOpen.has('Trash') ? 'open' : ''}" style="margin-top:12px"><div class="title" data-action="set-acc" data-k="Trash" role="button" tabindex="0">Trash</div>
-    <div class="meta">${S.trash.length} deleted task${S.trash.length === 1 ? '' : 's'} and habits, kept ${TRASH_DAYS} days</div>
+    <div class="meta">${L2(`${S.trash.length} deleted item(s), kept ${TRASH_DAYS} days`, `${S.trash.length} عنصر محذوف، يُحفظ ${TRASH_DAYS} يومًا`)}</div>
     <div class="row"><button class="ghost" data-action="open-trash">Open trash →</button></div>
+  </div>
+  <div class="card settings setacc ${S.setOpen && S.setOpen.has('Safety copies') ? 'open' : ''}" style="margin-top:12px"><div class="title" data-action="set-acc" data-k="Safety copies" role="button" tabindex="0">${L2('Safety copies', 'نسخ الأمان')}</div>
+    <div class="meta">${L2('Automatic copies kept on this device, for undoing a bad restore, an erase or a mistake.', 'نسخ تلقائية على هذا الجهاز للتراجع عن استعادة خاطئة أو مسح أو خطأ.')}</div>
+    <div class="row"><button class="ghost" data-action="open-safety">${L2('Open safety copies →', 'فتح نسخ الأمان ←')}</button><button class="ghost" data-action="data-check">${L2('Check my data', 'افحص بياناتي')}</button></div>
   </div>`;
 }
 /**
@@ -8093,6 +8138,7 @@ function render() {
       data: viewData,
       archive: viewArchive,
       trash: viewTrash,
+      safety: viewSafety,
       study: viewStudy,
       bestiary: viewBestiary,
     }[S.view] || viewDash;
@@ -8129,7 +8175,12 @@ function render() {
       setTimeout(() => el.classList.remove('pop'), 450);
     }
   }
-  const nv = S.view === 'archive' || S.view === 'trash' ? 'data' : S.view === 'bestiary' ? 'dash' : S.view;
+  const nv =
+    S.view === 'archive' || S.view === 'trash' || S.view === 'safety'
+      ? 'data'
+      : S.view === 'bestiary'
+        ? 'dash'
+        : S.view;
   document.querySelectorAll('#nav button,#tabbar button').forEach((b) => {
     const on = b.dataset.view === nv;
     b.classList.toggle('on', on);
@@ -8187,7 +8238,7 @@ function openEdit(kind, id) {
       <label>Weekly goal</label><select name="goalId">${goals}</select>
       <label>Tag folder</label><input type="text" name="tag" list="tagListEdit" value="${esc(t.tag || '')}" placeholder="None" autocomplete="off">${tagList('tagListEdit')}
       <label>Repeat</label><select name="repeat">${REPEATS.map(([r, l]) => `<option value="${r}" ${(t.repeat || '') === r ? 'selected' : ''}>${l}</option>`).join('')}</select>
-      <label>Notes</label><textarea name="notes" placeholder="Details, links, anything…">${esc(t.notes)}</textarea>
+      <label>Notes</label><textarea name="notes" placeholder="Details, links, anything…">${esc(t.notes)}</textarea>${histBox(t)}
       <label>Checklist (one item per line)</label><textarea name="items" placeholder="Item one&#10;Item two">${esc((t.items || []).map((i) => i.text).join('\n'))}</textarea>
       <label class="check"><input type="checkbox" name="done" ${t.done ? 'checked' : ''}> Completed</label>`;
   }
@@ -8221,7 +8272,7 @@ function openEdit(kind, id) {
             `<option value="${v}" ${(g.done ? 'done' : g.status === 'missed' ? 'missed' : 'active') === v ? 'selected' : ''}>${l}</option>`
         )
         .join('')}</select>
-      <label>Notes</label><textarea name="notes">${esc(g.notes)}</textarea>
+      <label>Notes</label><textarea name="notes">${esc(g.notes)}</textarea>${histBox(g)}
       <label>Review note (what got in the way / what worked)</label><textarea name="lesson">${esc(g.lesson || '')}</textarea>`;
   }
   if (kind === 'habit') {
@@ -8295,6 +8346,8 @@ dlg.addEventListener('submit', async (e) => {
       }
       (t.pushes = t.pushes || []).push({ at: Date.now(), from: t.due, to: v.due || null, why });
     }
+    const pt0 = t.title,
+      pn0 = t.notes;
     Object.assign(t, {
       icon: v.icon || '',
       title: v.title.trim(),
@@ -8308,6 +8361,7 @@ dlg.addEventListener('submit', async (e) => {
       tag: (v.tag || '').trim(),
       items: parseItems(v.items, t.items),
     });
+    histPush(t, pt0, pn0);
     if (done !== t.done) {
       t.done = done;
       t.doneAt = done ? Date.now() : null;
@@ -8322,6 +8376,8 @@ dlg.addEventListener('submit', async (e) => {
     const old = g.horizon;
     let gk = v.kind || 'check';
     if (gk === 'rollup' && v.horizon === 'weekly') gk = 'check';
+    const pt = g.title,
+      pn = g.notes;
     Object.assign(g, {
       icon: v.icon || '',
       title: v.title.trim(),
@@ -8336,6 +8392,7 @@ dlg.addEventListener('submit', async (e) => {
       expected: v.expected ? Math.max(1, Math.round(+v.expected)) : null,
       lesson: (v.lesson || '').trim(),
     });
+    histPush(g, pt, pn);
     if (v.status === 'done') {
       if (!g.done) {
         g.done = true;
@@ -9148,6 +9205,7 @@ const CFG_DEF = {
   nOn: true,
   abOn: false,
   abTime: '21:00',
+  abAsked: false,
   nMorning: '08:00',
   nEvening: '20:00',
   nClasses: true,
@@ -9210,6 +9268,188 @@ const saveCfg = () => {
     localStorage.setItem('gt-settings', JSON.stringify(S.cfg));
   } catch (e) {}
 };
+/**
+ * Safety copies: automatic snapshots kept in a SEPARATE IndexedDB (goal-tracker-snap), so a bad restore,
+ * an erase or a bug in the main database can always be rolled back. Also the "Check my data" repair tool.
+ * (All src/js files are joined, in filename order, into one shared scope. See src/README.md.)
+ */
+const SNAP_KEEP = 10;
+const Snap = {
+  db: null,
+  open() {
+    if (this.db) return Promise.resolve(this.db);
+    return new Promise((res) => {
+      try {
+        const r = indexedDB.open('goal-tracker-snap', 1);
+        r.onupgradeneeded = () => r.result.createObjectStore('snaps', { keyPath: 'id' });
+        r.onsuccess = () => res((this.db = r.result));
+        r.onerror = () => res(null);
+      } catch (e) {
+        res(null);
+      }
+    });
+  },
+  async run(mode, fn) {
+    const db = await this.open();
+    if (!db) throw new Error('no snapshot storage');
+    return new Promise((res, rej) => {
+      const t = db.transaction('snaps', mode),
+        r = fn(t.objectStore('snaps'));
+      t.oncomplete = () => res(r && 'result' in r ? r.result : undefined);
+      t.onerror = () => rej(t.error);
+    });
+  },
+  all() {
+    return this.run('readonly', (s) => s.getAll()).then((a) => (a || []).sort((x, y) => y.at - x.at));
+  },
+  put(v) {
+    return this.run('readwrite', (s) => s.put(v));
+  },
+  del(id) {
+    return this.run('readwrite', (s) => s.delete(id));
+  },
+};
+/* Save a snapshot of everything. Returns the record, or null when there is nothing to save or storage failed. */
+async function snapSave(reason) {
+  const n = {
+    tasks: S.tasks.length,
+    goals: S.goals.length,
+    habits: S.habits.length,
+    logs: S.logs.size,
+    topics: S.topics.length,
+    exams: S.exams.length,
+  };
+  if (!(n.tasks + n.goals + n.habits + n.topics + n.exams)) return null;
+  try {
+    const rec = {
+      id: 's' + Date.now() + Math.random().toString(36).slice(2, 5),
+      at: Date.now(),
+      reason,
+      n,
+      json: JSON.stringify(backupData()),
+    };
+    await Snap.put(rec);
+    const all = await Snap.all();
+    for (const old of all.slice(SNAP_KEEP)) await Snap.del(old.id);
+    return rec;
+  } catch (e) {
+    return null;
+  }
+}
+/* Once per app update and once per day, quietly. */
+async function snapBoot() {
+  let last = '',
+    day = '';
+  try {
+    last = localStorage.getItem('gt-lastver') || '';
+    day = localStorage.getItem('gt-snap-day') || '';
+  } catch (e) {}
+  const reason = last && last !== APP_VERSION ? 'update' : day !== TODAY() ? 'daily' : '';
+  if (reason) await snapSave(reason);
+  try {
+    localStorage.setItem('gt-lastver', APP_VERSION);
+    localStorage.setItem('gt-snap-day', TODAY());
+  } catch (e) {}
+}
+const snapWhy = (r) =>
+  ({
+    daily: L2('Daily copy', 'نسخة يومية'),
+    update: L2('Before an app update', 'قبل تحديث التطبيق'),
+    restore: L2('Before a restore', 'قبل الاستعادة'),
+    erase: L2('Before erasing', 'قبل المسح'),
+    check: L2('Before a data repair', 'قبل إصلاح البيانات'),
+  })[r] || r;
+function viewSafety() {
+  const list = S.snaps || [];
+  const row = (r) =>
+    `<div class="card trash-row"><div class="grow"><div class="title">${esc(fmtWhen(r.at))}</div>
+      <div class="meta"><span>${snapWhy(r.reason)}</span><span>${r.n.tasks} ${L2('tasks', 'مهمة')}</span><span>${r.n.goals} ${L2('goals', 'هدف')}</span><span>${r.n.habits} ${L2('habits', 'عادة')}</span></div></div>
+      <button class="btn" data-action="snap-restore" data-id="${esc(r.id)}">${L2('Restore', 'استعادة')}</button></div>`;
+  return `<div class="arch-head"><button class="ghost" data-action="back-data">${L2('← Settings', '← الإعدادات')}</button><h2 style="margin:0">${L2('Safety copies', 'نسخ الأمان')}</h2></div>
+    <div class="bar-row"><span class="meta" style="margin:0">${L2(`The app keeps its own copies on this device (last ${SNAP_KEEP}): daily, before updates, before a restore and before erasing. Restoring one replaces what you have now, and takes a copy of that first.`, `يحتفظ التطبيق بنسخ على هذا الجهاز (آخر ${SNAP_KEEP}): يوميًا، وقبل التحديثات، وقبل الاستعادة وقبل المسح. الاستعادة تستبدل بياناتك الحالية وتحفظ نسخة منها أولًا.`)}</span>
+      <button class="ghost" data-action="snap-now">${L2('Save one now', 'احفظ نسخة الآن')}</button></div>
+    ${list.length ? `<div class="goals">${list.map(row).join('')}</div>` : `<div class="empty">${L2('No safety copies yet.', 'لا توجد نسخ أمان بعد.')}</div>`}`;
+}
+/* ---------- Check my data ---------- */
+function dataIssues() {
+  const gid = new Set(S.goals.map((g) => g.id)),
+    hid = new Set(S.habits.map((h) => h.id));
+  return {
+    tasks: S.tasks.filter((t) => t.goalId && !gid.has(t.goalId)),
+    goals: S.goals.filter((g) => g.parentId && !gid.has(g.parentId)),
+    logs: [...S.logs].filter((k) => !hid.has(k.slice(0, k.lastIndexOf('|')))),
+    starts: S.tasks.filter((t) => t.start && !t.due),
+  };
+}
+async function dataCheck() {
+  const q = dataIssues(),
+    total = q.tasks.length + q.goals.length + q.logs.length + q.starts.length;
+  if (!total) {
+    await askAlert(
+      L2('Everything checks out. No broken links or leftovers found.', 'كل شيء سليم. لا توجد روابط مكسورة ولا بقايا.')
+    );
+    return false;
+  }
+  const lines = [
+    q.tasks.length &&
+      L2(`${q.tasks.length} task(s) point to a goal that no longer exists`, `${q.tasks.length} مهمة مرتبطة بهدف محذوف`),
+    q.goals.length &&
+      L2(`${q.goals.length} goal(s) point to a missing parent goal`, `${q.goals.length} هدف مرتبط بهدف أعلى محذوف`),
+    q.logs.length &&
+      L2(`${q.logs.length} check-in(s) belong to a deleted habit`, `${q.logs.length} تسجيل يخص عادة محذوفة`),
+    q.starts.length &&
+      L2(`${q.starts.length} task(s) have a start time but no date`, `${q.starts.length} مهمة لها وقت بداية بلا تاريخ`),
+  ].filter(Boolean);
+  if (
+    !(await askConfirm(
+      lines.join('\n') +
+        '\n\n' +
+        L2(
+          'Fix them? A safety copy is saved first. Nothing is deleted except the leftover check-ins.',
+          'هل تصلحها؟ تُحفظ نسخة أمان أولًا. لا يُحذف شيء سوى التسجيلات اليتيمة.'
+        )
+    ))
+  )
+    return false;
+  if (!(await snapSave('check'))) {
+    await askAlert(
+      L2("Couldn't save a safety copy, so nothing was changed.", 'تعذّر حفظ نسخة أمان، لذلك لم يتغير شيء.')
+    );
+    return false;
+  }
+  for (const t of q.tasks) {
+    t.goalId = null;
+    await DB.put('tasks', t);
+  }
+  for (const g of q.goals) {
+    g.parentId = null;
+    await DB.put('goals', g);
+  }
+  for (const t of q.starts) {
+    t.start = null;
+    await DB.put('tasks', t);
+  }
+  for (const k of q.logs) {
+    S.logs.delete(k);
+    await DB.del('logs', k);
+  }
+  toast(L2(`Fixed ${total} thing(s).`, `تم إصلاح ${total} عنصر.`));
+}
+/* ---------- Edit history (last 5 titles and notes) ---------- */
+function histPush(item, prevTitle, prevNotes) {
+  if (prevTitle === item.title && (prevNotes || '') === (item.notes || '')) return;
+  item.hist = [{ at: Date.now(), title: prevTitle, notes: prevNotes || '' }, ...(item.hist || [])].slice(0, 5);
+}
+function histBox(item) {
+  const h = (item && item.hist) || [];
+  if (!h.length) return '';
+  return `<details class="more"><summary>${L2('Earlier versions', 'نسخ سابقة')} (${h.length})</summary>${h
+    .map(
+      (x, i) =>
+        `<div class="row" style="margin:6px 0;align-items:center"><span class="meta grow" translate="no">${esc(fmtWhen(x.at))} · ${esc(x.title)}${x.notes ? ' · ' + esc(x.notes.slice(0, 40)) : ''}</span><button type="button" class="chip" data-action="hist-use" data-i="${i}">${L2('Use', 'استخدم')}</button></div>`
+    )
+    .join('')}</details>`;
+}
 /**
  * English and Arabic.
  * The AR dictionary and PAT patterns drive a MutationObserver that translates the page; also habit ordering and collapsed-section helpers.
@@ -10321,6 +10561,11 @@ function autoCard() {
   if (window.GTNative || !autoBackupDue()) return '';
   return `<div class="card backup-cta"><div class="grow"><div class="title">${L2('Time for your daily backup', 'حان وقت نسخة اليوم الاحتياطية')}</div><div class="meta">${L2("A browser cannot save files by itself, so tap to save today's backup.", 'المتصفح لا يحفظ الملفات تلقائيًا، فاضغط لحفظ نسخة اليوم.')}</div></div><button class="btn" data-action="backup-auto">${L2('Back up now', 'انسخ الآن')}</button></div>`;
 }
+function autoAskCard() {
+  if (!(window.GTNative && GTNative.autoBackup) || S.cfg.abOn || S.cfg.abAsked) return '';
+  if (S.tasks.length + S.goals.length + S.habits.length < 5) return '';
+  return `<div class="card backup-cta"><div class="grow"><div class="title">${L2('Back up automatically every day?', 'نسخ احتياطي تلقائي كل يوم؟')}</div><div class="meta">${L2('Saves a file to Documents/GoalTerra so a lost or reset phone does not lose your goals. You can change the time in Settings.', 'يحفظ ملفًا في مجلد المستندات حتى لا تضيع أهدافك إن فُقد الهاتف أو أُعيد ضبطه. يمكنك تغيير الوقت من الإعدادات.')}</div></div><button class="btn" data-action="ab-yes">${L2('Turn on', 'تفعيل')}</button><button class="icon" data-action="ab-no" aria-label="${L2('Not now', 'ليس الآن')}">✕</button></div>`;
+}
 function backupDue() {
   const n = daysSince(lastBackup());
   return n === null || n > BACKUP_STALE;
@@ -10591,9 +10836,15 @@ async function toggleLog(hid, date) {
   const hh = S.habits.find((x) => x.id === hid),
     neg = hh && slipMode(hh);
   if (S.logs.has(id)) {
+    const long = hh && !neg && streak(hh) >= 7;
     S.logs.delete(id);
     await DB.del('logs', id);
     Sound.play(neg ? 'habit' : 'undo');
+    if (long)
+      toastUndo(`Removed a check-in from "${hh.name}".`, async () => {
+        S.logs.add(id);
+        await DB.put('logs', { id, habitId: hid, date });
+      });
   } else if (neg) {
     S.logs.add(id);
     await DB.put('logs', { id, habitId: hid, date });
@@ -11175,9 +11426,9 @@ const actions = {
     if (!e || !(await askConfirm(`Delete "${e.title}"?`))) return false;
     S.exams = S.exams.filter((x) => x !== e);
     await DB.del('exams', e.id);
+    await trashAdd('exam', e);
     toastUndo('Deleted.', async () => {
-      S.exams.push(e);
-      await DB.put('exams', e);
+      await trashRestore('exam:' + e.id);
     });
   },
   async 'topic-rate'(el) {
@@ -11210,9 +11461,9 @@ const actions = {
     if (!t || !(await askConfirm(`Delete topic "${t.name}" and its study log?`))) return false;
     S.topics = S.topics.filter((x) => x !== t);
     await DB.del('topics', t.id);
+    await trashAdd('topic', t);
     toastUndo('Topic deleted.', async () => {
-      S.topics.push(t);
-      await DB.put('topics', t);
+      await trashRestore('topic:' + t.id);
     });
   },
   'toggle-compact'() {
@@ -11383,6 +11634,7 @@ const actions = {
   },
   async 'bulk-done'() {
     const list = S.tasks.filter((t) => S.sel.has(t.id) && !t.done);
+    const ids = list.map((t) => t.id);
     for (const t of list) {
       t.done = true;
       t.doneAt = Date.now();
@@ -11391,18 +11643,33 @@ const actions = {
       await onTaskDone(t);
     }
     Sound.play('task');
-    toast(`Marked ${list.length} done.`);
+    toastUndo(`Marked ${list.length} done.`, async () => {
+      for (const t of S.tasks.filter((x) => ids.includes(x.id))) {
+        t.done = false;
+        t.doneAt = null;
+        freezeDmg(t);
+        await DB.put('tasks', t);
+        await onTaskDone(t);
+      }
+    });
     S.selMode = null;
     S.sel.clear();
   },
   async 'bulk-archive'() {
     const list = S.tasks.filter((t) => S.sel.has(t.id));
+    const ids = list.map((t) => t.id);
     for (const t of list) {
       t.archived = true;
       t.archivedAt = Date.now();
       await DB.put('tasks', t);
     }
-    toast(`Archived ${list.length} task${list.length === 1 ? '' : 's'}.`);
+    toastUndo(`Archived ${list.length} task${list.length === 1 ? '' : 's'}.`, async () => {
+      for (const t of S.tasks.filter((x) => ids.includes(x.id))) {
+        t.archived = false;
+        t.archivedAt = null;
+        await DB.put('tasks', t);
+      }
+    });
     S.selMode = null;
     S.sel.clear();
   },
@@ -11432,7 +11699,7 @@ const actions = {
   async 'trash-restore'(el) {
     const r = S.trash.find((x) => x.id === el.dataset.id);
     await trashRestore(el.dataset.id);
-    if (r) toast('Restored ' + (r.kind === 'task' ? r.data.title : r.data.name) + '.');
+    if (r) toast('Restored ' + trashName(r) + '.');
   },
   async 'trash-del'(el) {
     if (!(await askConfirm("Delete this forever? This can't be undone."))) return false;
@@ -11557,17 +11824,9 @@ const actions = {
     }
     S.goals = S.goals.filter((g) => g.id !== id);
     await DB.del('goals', id);
+    await trashAdd('goal', gone, null, { tasks: lt.map((t) => t.id), goals: lc.map((c) => c.id) });
     toastUndo('Goal deleted.', async () => {
-      S.goals.push(gone);
-      await DB.put('goals', gone);
-      for (const t of lt) {
-        t.goalId = id;
-        await DB.put('tasks', t);
-      }
-      for (const c of lc) {
-        c.parentId = id;
-        await DB.put('goals', c);
-      }
+      await trashRestore('goal:' + id);
     });
   },
   async 'toggle-log'(el) {
@@ -11650,7 +11909,25 @@ const actions = {
     return false;
   },
   async wipe() {
-    if (!(await askConfirm('Erase all tasks, goals, habits and history? This cannot be undone.'))) return false;
+    const word = L2('ERASE', 'مسح');
+    const typed = await askPrompt(
+      L2(
+        `This erases ALL tasks, goals, habits and history. A safety copy is kept so you can undo it.\n\nType ${word} to confirm.`,
+        `سيمسح هذا كل المهام والأهداف والعادات والسجل. تُحفظ نسخة أمان للتراجع.\n\nاكتب ${word} للتأكيد.`
+      ),
+      ''
+    );
+    if (typeof typed !== 'string' || !['erase', 'مسح'].includes(typed.trim().toLowerCase())) {
+      if (typed !== null) toast(L2('Not erased. The word did not match.', 'لم يُمسح شيء. الكلمة غير مطابقة.'));
+      return false;
+    }
+    const sn = await snapSave('erase');
+    if (!sn) {
+      await askAlert(
+        L2("Couldn't save a safety copy, so nothing was erased.", 'تعذّر حفظ نسخة أمان، لذلك لم يُمسح شيء.')
+      );
+      return false;
+    }
     for (const s of STORES) await DB.clear(s);
     S.tasks = [];
     S.goals = [];
@@ -11659,6 +11936,57 @@ const actions = {
     S.exams = [];
     S.trash = [];
     S.logs = new Set();
+    toastUndo(L2('Everything erased.', 'تم مسح كل شيء.'), async () => {
+      await restore(sn.json, 'safety copy', true);
+    });
+  },
+  async 'open-safety'() {
+    S.snaps = await Snap.all().catch(() => []);
+    S.view = 'safety';
+    scrollTo(0, 0);
+  },
+  async 'snap-now'() {
+    const r = await snapSave('daily');
+    S.snaps = await Snap.all().catch(() => []);
+    toast(r ? L2('Safety copy saved.', 'تم حفظ نسخة الأمان.') : L2("Couldn't save a copy.", 'تعذّر حفظ النسخة.'));
+  },
+  async 'snap-restore'(el) {
+    const r = (S.snaps || []).find((x) => x.id === el.dataset.id);
+    if (!r) return false;
+    try {
+      if ((await restore(r.json, 'safety copy')) === false) return false;
+      S.snaps = await Snap.all().catch(() => []);
+      toast(
+        L2(
+          'Restored. Your previous data was saved as a new safety copy.',
+          'تمت الاستعادة. حُفظت بياناتك السابقة كنسخة أمان جديدة.'
+        )
+      );
+    } catch (e) {
+      await askAlert(L2('Could not restore: ', 'تعذّرت الاستعادة: ') + e.message);
+    }
+  },
+  async 'data-check'() {
+    await dataCheck();
+  },
+  'hist-use'(el) {
+    const f = el.closest('form'),
+      item = f.dataset.edit === 'task' ? S.tasks.find((x) => x.id === f.dataset.id) : goalById(f.dataset.id),
+      h = item && (item.hist || [])[+el.dataset.i];
+    if (!h) return false;
+    f.elements.title.value = h.title;
+    f.elements.notes.value = h.notes || '';
+    return false;
+  },
+  'ab-yes'() {
+    S.cfg.abOn = true;
+    S.cfg.abAsked = true;
+    saveCfg();
+    toast(L2('Daily backup is on.', 'تم تفعيل النسخ اليومي.'));
+  },
+  'ab-no'() {
+    S.cfg.abAsked = true;
+    saveCfg();
   },
 };
 
@@ -13036,7 +13364,7 @@ function restorePreview(d, rows, skipped) {
     if (!dlg.open) dlg.showModal();
   });
 }
-async function restore(text, source) {
+async function restore(text, source, silent) {
   text = (text || '').replace(/^\uFEFF/, '').trim();
   if (!text)
     throw new Error(
@@ -13068,8 +13396,9 @@ async function restore(text, source) {
     `${rows.tasks.length} tasks, ${rows.goals.length} goals, ${rows.habits.length} habits, ${rows.logs.length} check-ins` +
     (rows.topics.length || rows.exams.length ? `, ${rows.topics.length} topics, ${rows.exams.length} exams` : '') +
     (skipped ? ` (${skipped} damaged rows skipped)` : '');
-  if (!(await restorePreview(d, rows, skipped))) return false;
+  if (!silent && !(await restorePreview(d, rows, skipped))) return false;
   const snap = backupData();
+  await snapSave('restore');
   try {
     for (const st of STORES) {
       await DB.clear(st);
@@ -13286,6 +13615,7 @@ async function autoArchive() {
     if (S.tasks.length || S.goals.length || S.habits.length) markIntro();
     else openIntro();
   }
+  snapBoot();
   await checkStorage(true);
   if (S.view === 'data') render();
 })();

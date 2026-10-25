@@ -99,6 +99,7 @@ const CFG_DEF = {
   nOn: true,
   abOn: false,
   abTime: '21:00',
+  abAsked: false,
   nMorning: '08:00',
   nEvening: '20:00',
   nClasses: true,

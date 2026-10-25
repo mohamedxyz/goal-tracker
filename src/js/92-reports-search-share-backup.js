@@ -689,7 +689,7 @@ function restorePreview(d, rows, skipped) {
     if (!dlg.open) dlg.showModal();
   });
 }
-async function restore(text, source) {
+async function restore(text, source, silent) {
   text = (text || '').replace(/^\uFEFF/, '').trim();
   if (!text)
     throw new Error(
@@ -721,8 +721,9 @@ async function restore(text, source) {
     `${rows.tasks.length} tasks, ${rows.goals.length} goals, ${rows.habits.length} habits, ${rows.logs.length} check-ins` +
     (rows.topics.length || rows.exams.length ? `, ${rows.topics.length} topics, ${rows.exams.length} exams` : '') +
     (skipped ? ` (${skipped} damaged rows skipped)` : '');
-  if (!(await restorePreview(d, rows, skipped))) return false;
+  if (!silent && !(await restorePreview(d, rows, skipped))) return false;
   const snap = backupData();
+  await snapSave('restore');
   try {
     for (const st of STORES) {
       await DB.clear(st);

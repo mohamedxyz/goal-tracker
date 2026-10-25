@@ -4,8 +4,9 @@
  */
 
 /* ---------- Trash ---------- */
-async function trashAdd(kind, data, logs) {
+async function trashAdd(kind, data, logs, links) {
   const r = { id: kind + ':' + data.id, kind, at: Date.now(), data, logs: logs || [] };
+  if (links) r.links = links;
   S.trash = S.trash.filter((x) => x.id !== r.id);
   S.trash.push(r);
   await DB.put('trash', r);
@@ -37,6 +38,25 @@ async function trashRestore(id) {
       S.tasks.push(r.data);
       await DB.put('tasks', r.data);
     }
+  } else if (r.kind === 'goal') {
+    if (!S.goals.some((x) => x.id === r.data.id)) {
+      S.goals.push(r.data);
+      await DB.put('goals', r.data);
+      for (const t of S.tasks.filter((x) => (r.links?.tasks || []).includes(x.id) && !x.goalId)) {
+        t.goalId = r.data.id;
+        await DB.put('tasks', t);
+      }
+      for (const c of S.goals.filter((x) => (r.links?.goals || []).includes(x.id) && !x.parentId)) {
+        c.parentId = r.data.id;
+        await DB.put('goals', c);
+      }
+    }
+  } else if (r.kind === 'exam' || r.kind === 'topic') {
+    const st = r.kind === 'exam' ? 'exams' : 'topics';
+    if (!S[st].some((x) => x.id === r.data.id)) {
+      S[st].push(r.data);
+      await DB.put(st, r.data);
+    }
   } else {
     if (!S.habits.some((x) => x.id === r.data.id)) {
       S.habits.push(r.data);
@@ -51,18 +71,27 @@ async function trashRestore(id) {
   S.trash = S.trash.filter((x) => x.id !== id);
   await DB.del('trash', id);
 }
+const trashName = (r) => (r.kind === 'habit' || r.kind === 'topic' ? r.data.name : r.data.title);
+const trashKind = (r) =>
+  ({
+    task: L2('Task', 'مهمة'),
+    habit: L2('Habit', 'عادة'),
+    goal: L2('Goal', 'هدف'),
+    exam: L2('Exam', 'امتحان'),
+    topic: L2('Topic', 'موضوع'),
+  })[r.kind] || r.kind;
 function viewTrash() {
   const list = [...S.trash].sort((a, b) => b.at - a.at);
   const row = (r) => {
     const left = Math.max(0, Math.ceil(TRASH_DAYS - (Date.now() - r.at) / 864e5));
-    const name = r.kind === 'task' ? r.data.title : r.data.name;
-    return `<div class="card trash-row"><div class="grow"><div class="title">${esc(name)}</div>
-      <div class="meta"><span>${r.kind === 'task' ? 'Task' : 'Habit'}</span><span>Deleted ${fmtWhen(r.at)}</span><span>${left} day${left === 1 ? '' : 's'} left</span></div></div>
+    const name = trashName(r);
+    return `<div class="card trash-row"><div class="grow"><div class="title" translate="no">${esc(name)}</div>
+      <div class="meta"><span>${trashKind(r)}</span><span>${L2('Deleted', 'حُذف')} ${fmtWhen(r.at)}</span><span>${left} day${left === 1 ? '' : 's'} left</span></div></div>
       <button class="icon" data-action="trash-restore" data-id="${esc(r.id)}" title="Restore" aria-label="Restore">↩</button>
-      <button class="icon" data-action="trash-del" data-id="${esc(r.id)}" title="Delete forever" aria-label="Delete forever">✕</button></div>`;
+      <button class="icon" data-action="trash-del" data-id="${esc(r.id)}" title="${L2('Delete forever', 'حذف نهائي')}" aria-label="${L2('Delete forever', 'حذف نهائي')}">✕</button></div>`;
   };
   return `<div class="arch-head"><button class="ghost" data-action="back-data">← Settings</button><h2 style="margin:0">Trash</h2></div>
-    <div class="bar-row"><span class="meta" style="margin:0">${list.length} item${list.length === 1 ? '' : 's'} · deleted tasks and habits are kept ${TRASH_DAYS} days</span>
+    <div class="bar-row"><span class="meta" style="margin:0">${L2(`${list.length} item(s) · deleted items are kept ${TRASH_DAYS} days`, `${list.length} عنصر · تُحفظ المحذوفات ${TRASH_DAYS} يومًا`)}</span>
       ${list.length ? `<button class="ghost danger" data-action="trash-empty">Empty trash</button>` : ''}</div>
     ${list.length ? `<div class="goals">${list.map(row).join('')}</div>` : `<div class="empty">Trash is empty.</div>`}`;
 }
@@ -110,6 +139,9 @@ function openBulk() {
 async function applyBulk(kind, f) {
   const v = Object.fromEntries(new FormData(f)),
     ids = [...S.sel];
+  const before = (kind === 'bulktasks' ? S.tasks : S.habits)
+    .filter((x) => ids.includes(x.id))
+    .map((x) => structuredClone(x));
   let n = 0;
   if (kind === 'bulktasks') {
     const lat = (t) => {
@@ -173,7 +205,15 @@ async function applyBulk(kind, f) {
   }
   S.selMode = null;
   S.sel.clear();
-  toast(`Updated ${n} ${kind === 'bulktasks' ? 'task' : 'habit'}${n === 1 ? '' : 's'}.`);
+  const bk = kind === 'bulktasks' ? 'tasks' : 'habits';
+  toastUndo(`Updated ${n} ${kind === 'bulktasks' ? 'task' : 'habit'}${n === 1 ? '' : 's'}.`, async () => {
+    for (const b of before) {
+      const i = S[bk].findIndex((x) => x.id === b.id);
+      if (i >= 0) S[bk][i] = b;
+      else S[bk].push(b);
+      await DB.put(bk, b);
+    }
+  });
 }
 const folderOf = (h) => (h.group || '').trim();
 const dayPicker = (sel = []) =>
@@ -488,7 +528,11 @@ function viewData() {
     <div class="row"><button class="ghost" data-action="open-archive">View archived tasks →</button></div>
   </div>
   <div class="card settings setacc ${S.setOpen && S.setOpen.has('Trash') ? 'open' : ''}" style="margin-top:12px"><div class="title" data-action="set-acc" data-k="Trash" role="button" tabindex="0">Trash</div>
-    <div class="meta">${S.trash.length} deleted task${S.trash.length === 1 ? '' : 's'} and habits, kept ${TRASH_DAYS} days</div>
+    <div class="meta">${L2(`${S.trash.length} deleted item(s), kept ${TRASH_DAYS} days`, `${S.trash.length} عنصر محذوف، يُحفظ ${TRASH_DAYS} يومًا`)}</div>
     <div class="row"><button class="ghost" data-action="open-trash">Open trash →</button></div>
+  </div>
+  <div class="card settings setacc ${S.setOpen && S.setOpen.has('Safety copies') ? 'open' : ''}" style="margin-top:12px"><div class="title" data-action="set-acc" data-k="Safety copies" role="button" tabindex="0">${L2('Safety copies', 'نسخ الأمان')}</div>
+    <div class="meta">${L2('Automatic copies kept on this device, for undoing a bad restore, an erase or a mistake.', 'نسخ تلقائية على هذا الجهاز للتراجع عن استعادة خاطئة أو مسح أو خطأ.')}</div>
+    <div class="row"><button class="ghost" data-action="open-safety">${L2('Open safety copies →', 'فتح نسخ الأمان ←')}</button><button class="ghost" data-action="data-check">${L2('Check my data', 'افحص بياناتي')}</button></div>
   </div>`;
 }

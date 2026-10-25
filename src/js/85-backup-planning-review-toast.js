@@ -79,6 +79,11 @@ function autoCard() {
   if (window.GTNative || !autoBackupDue()) return '';
   return `<div class="card backup-cta"><div class="grow"><div class="title">${L2('Time for your daily backup', 'حان وقت نسخة اليوم الاحتياطية')}</div><div class="meta">${L2("A browser cannot save files by itself, so tap to save today's backup.", 'المتصفح لا يحفظ الملفات تلقائيًا، فاضغط لحفظ نسخة اليوم.')}</div></div><button class="btn" data-action="backup-auto">${L2('Back up now', 'انسخ الآن')}</button></div>`;
 }
+function autoAskCard() {
+  if (!(window.GTNative && GTNative.autoBackup) || S.cfg.abOn || S.cfg.abAsked) return '';
+  if (S.tasks.length + S.goals.length + S.habits.length < 5) return '';
+  return `<div class="card backup-cta"><div class="grow"><div class="title">${L2('Back up automatically every day?', 'نسخ احتياطي تلقائي كل يوم؟')}</div><div class="meta">${L2('Saves a file to Documents/GoalTerra so a lost or reset phone does not lose your goals. You can change the time in Settings.', 'يحفظ ملفًا في مجلد المستندات حتى لا تضيع أهدافك إن فُقد الهاتف أو أُعيد ضبطه. يمكنك تغيير الوقت من الإعدادات.')}</div></div><button class="btn" data-action="ab-yes">${L2('Turn on', 'تفعيل')}</button><button class="icon" data-action="ab-no" aria-label="${L2('Not now', 'ليس الآن')}">✕</button></div>`;
+}
 function backupDue() {
   const n = daysSince(lastBackup());
   return n === null || n > BACKUP_STALE;

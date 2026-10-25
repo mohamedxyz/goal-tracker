@@ -23,3 +23,5 @@
 - **Dialogs:** use `askConfirm`, `askPrompt` and `askAlert` (async). Do not use the browser's `confirm`, `prompt` or `alert`.
 - **Android:** `window.GTNative` exists only inside the Capacitor app; check for it before using it.
 - **Style:** code is formatted with Prettier (`npm run format`). Run `npm run build` after any change and `npm test` before committing.
+
+- `76-safety-copies.js`: safety snapshots (separate IndexedDB), Check my data, edit history helpers.

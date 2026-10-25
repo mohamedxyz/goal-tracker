@@ -114,6 +114,7 @@ function render() {
       data: viewData,
       archive: viewArchive,
       trash: viewTrash,
+      safety: viewSafety,
       study: viewStudy,
       bestiary: viewBestiary,
     }[S.view] || viewDash;
@@ -150,7 +151,12 @@ function render() {
       setTimeout(() => el.classList.remove('pop'), 450);
     }
   }
-  const nv = S.view === 'archive' || S.view === 'trash' ? 'data' : S.view === 'bestiary' ? 'dash' : S.view;
+  const nv =
+    S.view === 'archive' || S.view === 'trash' || S.view === 'safety'
+      ? 'data'
+      : S.view === 'bestiary'
+        ? 'dash'
+        : S.view;
   document.querySelectorAll('#nav button,#tabbar button').forEach((b) => {
     const on = b.dataset.view === nv;
     b.classList.toggle('on', on);
@@ -208,7 +214,7 @@ function openEdit(kind, id) {
       <label>Weekly goal</label><select name="goalId">${goals}</select>
       <label>Tag folder</label><input type="text" name="tag" list="tagListEdit" value="${esc(t.tag || '')}" placeholder="None" autocomplete="off">${tagList('tagListEdit')}
       <label>Repeat</label><select name="repeat">${REPEATS.map(([r, l]) => `<option value="${r}" ${(t.repeat || '') === r ? 'selected' : ''}>${l}</option>`).join('')}</select>
-      <label>Notes</label><textarea name="notes" placeholder="Details, links, anything…">${esc(t.notes)}</textarea>
+      <label>Notes</label><textarea name="notes" placeholder="Details, links, anything…">${esc(t.notes)}</textarea>${histBox(t)}
       <label>Checklist (one item per line)</label><textarea name="items" placeholder="Item one&#10;Item two">${esc((t.items || []).map((i) => i.text).join('\n'))}</textarea>
       <label class="check"><input type="checkbox" name="done" ${t.done ? 'checked' : ''}> Completed</label>`;
   }
@@ -242,7 +248,7 @@ function openEdit(kind, id) {
             `<option value="${v}" ${(g.done ? 'done' : g.status === 'missed' ? 'missed' : 'active') === v ? 'selected' : ''}>${l}</option>`
         )
         .join('')}</select>
-      <label>Notes</label><textarea name="notes">${esc(g.notes)}</textarea>
+      <label>Notes</label><textarea name="notes">${esc(g.notes)}</textarea>${histBox(g)}
       <label>Review note (what got in the way / what worked)</label><textarea name="lesson">${esc(g.lesson || '')}</textarea>`;
   }
   if (kind === 'habit') {
@@ -316,6 +322,8 @@ dlg.addEventListener('submit', async (e) => {
       }
       (t.pushes = t.pushes || []).push({ at: Date.now(), from: t.due, to: v.due || null, why });
     }
+    const pt0 = t.title,
+      pn0 = t.notes;
     Object.assign(t, {
       icon: v.icon || '',
       title: v.title.trim(),
@@ -329,6 +337,7 @@ dlg.addEventListener('submit', async (e) => {
       tag: (v.tag || '').trim(),
       items: parseItems(v.items, t.items),
     });
+    histPush(t, pt0, pn0);
     if (done !== t.done) {
       t.done = done;
       t.doneAt = done ? Date.now() : null;
@@ -343,6 +352,8 @@ dlg.addEventListener('submit', async (e) => {
     const old = g.horizon;
     let gk = v.kind || 'check';
     if (gk === 'rollup' && v.horizon === 'weekly') gk = 'check';
+    const pt = g.title,
+      pn = g.notes;
     Object.assign(g, {
       icon: v.icon || '',
       title: v.title.trim(),
@@ -357,6 +368,7 @@ dlg.addEventListener('submit', async (e) => {
       expected: v.expected ? Math.max(1, Math.round(+v.expected)) : null,
       lesson: (v.lesson || '').trim(),
     });
+    histPush(g, pt, pn);
     if (v.status === 'done') {
       if (!g.done) {
         g.done = true;

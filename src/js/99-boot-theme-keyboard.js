@@ -112,6 +112,7 @@ async function autoArchive() {
     if (S.tasks.length || S.goals.length || S.habits.length) markIntro();
     else openIntro();
   }
+  snapBoot();
   await checkStorage(true);
   if (S.view === 'data') render();
 })();

@@ -9,9 +9,15 @@ async function toggleLog(hid, date) {
   const hh = S.habits.find((x) => x.id === hid),
     neg = hh && slipMode(hh);
   if (S.logs.has(id)) {
+    const long = hh && !neg && streak(hh) >= 7;
     S.logs.delete(id);
     await DB.del('logs', id);
     Sound.play(neg ? 'habit' : 'undo');
+    if (long)
+      toastUndo(`Removed a check-in from "${hh.name}".`, async () => {
+        S.logs.add(id);
+        await DB.put('logs', { id, habitId: hid, date });
+      });
   } else if (neg) {
     S.logs.add(id);
     await DB.put('logs', { id, habitId: hid, date });
@@ -593,9 +599,9 @@ const actions = {
     if (!e || !(await askConfirm(`Delete "${e.title}"?`))) return false;
     S.exams = S.exams.filter((x) => x !== e);
     await DB.del('exams', e.id);
+    await trashAdd('exam', e);
     toastUndo('Deleted.', async () => {
-      S.exams.push(e);
-      await DB.put('exams', e);
+      await trashRestore('exam:' + e.id);
     });
   },
   async 'topic-rate'(el) {
@@ -628,9 +634,9 @@ const actions = {
     if (!t || !(await askConfirm(`Delete topic "${t.name}" and its study log?`))) return false;
     S.topics = S.topics.filter((x) => x !== t);
     await DB.del('topics', t.id);
+    await trashAdd('topic', t);
     toastUndo('Topic deleted.', async () => {
-      S.topics.push(t);
-      await DB.put('topics', t);
+      await trashRestore('topic:' + t.id);
     });
   },
   'toggle-compact'() {
@@ -801,6 +807,7 @@ const actions = {
   },
   async 'bulk-done'() {
     const list = S.tasks.filter((t) => S.sel.has(t.id) && !t.done);
+    const ids = list.map((t) => t.id);
     for (const t of list) {
       t.done = true;
       t.doneAt = Date.now();
@@ -809,18 +816,33 @@ const actions = {
       await onTaskDone(t);
     }
     Sound.play('task');
-    toast(`Marked ${list.length} done.`);
+    toastUndo(`Marked ${list.length} done.`, async () => {
+      for (const t of S.tasks.filter((x) => ids.includes(x.id))) {
+        t.done = false;
+        t.doneAt = null;
+        freezeDmg(t);
+        await DB.put('tasks', t);
+        await onTaskDone(t);
+      }
+    });
     S.selMode = null;
     S.sel.clear();
   },
   async 'bulk-archive'() {
     const list = S.tasks.filter((t) => S.sel.has(t.id));
+    const ids = list.map((t) => t.id);
     for (const t of list) {
       t.archived = true;
       t.archivedAt = Date.now();
       await DB.put('tasks', t);
     }
-    toast(`Archived ${list.length} task${list.length === 1 ? '' : 's'}.`);
+    toastUndo(`Archived ${list.length} task${list.length === 1 ? '' : 's'}.`, async () => {
+      for (const t of S.tasks.filter((x) => ids.includes(x.id))) {
+        t.archived = false;
+        t.archivedAt = null;
+        await DB.put('tasks', t);
+      }
+    });
     S.selMode = null;
     S.sel.clear();
   },
@@ -850,7 +872,7 @@ const actions = {
   async 'trash-restore'(el) {
     const r = S.trash.find((x) => x.id === el.dataset.id);
     await trashRestore(el.dataset.id);
-    if (r) toast('Restored ' + (r.kind === 'task' ? r.data.title : r.data.name) + '.');
+    if (r) toast('Restored ' + trashName(r) + '.');
   },
   async 'trash-del'(el) {
     if (!(await askConfirm("Delete this forever? This can't be undone."))) return false;
@@ -975,17 +997,9 @@ const actions = {
     }
     S.goals = S.goals.filter((g) => g.id !== id);
     await DB.del('goals', id);
+    await trashAdd('goal', gone, null, { tasks: lt.map((t) => t.id), goals: lc.map((c) => c.id) });
     toastUndo('Goal deleted.', async () => {
-      S.goals.push(gone);
-      await DB.put('goals', gone);
-      for (const t of lt) {
-        t.goalId = id;
-        await DB.put('tasks', t);
-      }
-      for (const c of lc) {
-        c.parentId = id;
-        await DB.put('goals', c);
-      }
+      await trashRestore('goal:' + id);
     });
   },
   async 'toggle-log'(el) {
@@ -1068,7 +1082,25 @@ const actions = {
     return false;
   },
   async wipe() {
-    if (!(await askConfirm('Erase all tasks, goals, habits and history? This cannot be undone.'))) return false;
+    const word = L2('ERASE', 'مسح');
+    const typed = await askPrompt(
+      L2(
+        `This erases ALL tasks, goals, habits and history. A safety copy is kept so you can undo it.\n\nType ${word} to confirm.`,
+        `سيمسح هذا كل المهام والأهداف والعادات والسجل. تُحفظ نسخة أمان للتراجع.\n\nاكتب ${word} للتأكيد.`
+      ),
+      ''
+    );
+    if (typeof typed !== 'string' || !['erase', 'مسح'].includes(typed.trim().toLowerCase())) {
+      if (typed !== null) toast(L2('Not erased. The word did not match.', 'لم يُمسح شيء. الكلمة غير مطابقة.'));
+      return false;
+    }
+    const sn = await snapSave('erase');
+    if (!sn) {
+      await askAlert(
+        L2("Couldn't save a safety copy, so nothing was erased.", 'تعذّر حفظ نسخة أمان، لذلك لم يُمسح شيء.')
+      );
+      return false;
+    }
     for (const s of STORES) await DB.clear(s);
     S.tasks = [];
     S.goals = [];
@@ -1077,6 +1109,57 @@ const actions = {
     S.exams = [];
     S.trash = [];
     S.logs = new Set();
+    toastUndo(L2('Everything erased.', 'تم مسح كل شيء.'), async () => {
+      await restore(sn.json, 'safety copy', true);
+    });
+  },
+  async 'open-safety'() {
+    S.snaps = await Snap.all().catch(() => []);
+    S.view = 'safety';
+    scrollTo(0, 0);
+  },
+  async 'snap-now'() {
+    const r = await snapSave('daily');
+    S.snaps = await Snap.all().catch(() => []);
+    toast(r ? L2('Safety copy saved.', 'تم حفظ نسخة الأمان.') : L2("Couldn't save a copy.", 'تعذّر حفظ النسخة.'));
+  },
+  async 'snap-restore'(el) {
+    const r = (S.snaps || []).find((x) => x.id === el.dataset.id);
+    if (!r) return false;
+    try {
+      if ((await restore(r.json, 'safety copy')) === false) return false;
+      S.snaps = await Snap.all().catch(() => []);
+      toast(
+        L2(
+          'Restored. Your previous data was saved as a new safety copy.',
+          'تمت الاستعادة. حُفظت بياناتك السابقة كنسخة أمان جديدة.'
+        )
+      );
+    } catch (e) {
+      await askAlert(L2('Could not restore: ', 'تعذّرت الاستعادة: ') + e.message);
+    }
+  },
+  async 'data-check'() {
+    await dataCheck();
+  },
+  'hist-use'(el) {
+    const f = el.closest('form'),
+      item = f.dataset.edit === 'task' ? S.tasks.find((x) => x.id === f.dataset.id) : goalById(f.dataset.id),
+      h = item && (item.hist || [])[+el.dataset.i];
+    if (!h) return false;
+    f.elements.title.value = h.title;
+    f.elements.notes.value = h.notes || '';
+    return false;
+  },
+  'ab-yes'() {
+    S.cfg.abOn = true;
+    S.cfg.abAsked = true;
+    saveCfg();
+    toast(L2('Daily backup is on.', 'تم تفعيل النسخ اليومي.'));
+  },
+  'ab-no'() {
+    S.cfg.abAsked = true;
+    saveCfg();
   },
 };
 
