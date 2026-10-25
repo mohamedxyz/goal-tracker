@@ -203,6 +203,8 @@ function openEdit(kind, id) {
       ]
         .map(([v, l]) => `<option value="${v}" ${t.priority === v ? 'selected' : ''}>${l}</option>`)
         .join('')}</select></div></div>
+      <div class="two"><div><label>Start time</label><input type="time" name="start" value="${t.start || ''}"></div>
+      <div><label>Length</label><select name="dur">${PLAN_LENS.map((m) => `<option value="${m}" ${blockLen(t) === m ? 'selected' : ''}>${lenText(m)}</option>`).join('')}</select></div></div>
       <label>Weekly goal</label><select name="goalId">${goals}</select>
       <label>Tag folder</label><input type="text" name="tag" list="tagListEdit" value="${esc(t.tag || '')}" placeholder="None" autocomplete="off">${tagList('tagListEdit')}
       <label>Repeat</label><select name="repeat">${REPEATS.map(([r, l]) => `<option value="${r}" ${(t.repeat || '') === r ? 'selected' : ''}>${l}</option>`).join('')}</select>
@@ -317,7 +319,9 @@ dlg.addEventListener('submit', async (e) => {
     Object.assign(t, {
       icon: v.icon || '',
       title: v.title.trim(),
-      due: v.due || null,
+      due: v.due || (v.start ? TODAY() : null),
+      start: v.start || null,
+      dur: +v.dur || 60,
       priority: v.priority,
       goalId: v.goalId || null,
       notes: (v.notes || '').trim(),

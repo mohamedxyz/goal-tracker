@@ -106,7 +106,62 @@ const actions = {
   },
   'tasks-cal'() {
     S.tcalOn = !S.tcalOn;
+    S.planOn = false;
     if (S.selMode) S.selMode = null;
+  },
+  /* ----- Time blocking (Plan view) ----- */
+  'tasks-plan'() {
+    S.planOn = !S.planOn;
+    S.tcalOn = false;
+    PLAN.pick = null;
+    if (S.selMode) S.selMode = null;
+    if (S.planOn) setTimeout(scrollPlan, 80);
+  },
+  'plan-day'(el) {
+    PLAN.day = ds(addDays(new Date((PLAN.day || TODAY()) + 'T00:00'), +el.dataset.d));
+    PLAN.pick = null;
+  },
+  'plan-today'() {
+    PLAN.day = null;
+    setTimeout(scrollPlan, 80);
+  },
+  'plan-pick'(el) {
+    PLAN.pick = PLAN.pick === el.dataset.id ? null : el.dataset.id;
+  },
+  async 'plan-slot'(el) {
+    const min = +el.dataset.min,
+      day = PLAN.day || TODAY();
+    let t = PLAN.pick && S.tasks.find((x) => x.id === PLAN.pick);
+    if (t) {
+      PLAN.pick = null;
+      t.due = day;
+    } else {
+      const title = await askPrompt(L2('New block at ' + hmText(min), 'فترة جديدة عند ' + hmText(min)));
+      if (!title || !title.trim()) return false;
+      t = {
+        id: uid(),
+        title: title.trim(),
+        notes: '',
+        repeat: '',
+        tag: '',
+        items: [],
+        due: day,
+        priority: S.cfg.prio,
+        goalId: null,
+        done: false,
+        created: Date.now(),
+      };
+      S.tasks.push(t);
+    }
+    t.start = fromMin(min);
+    t.dur = t.dur || 60;
+    await DB.put('tasks', t);
+  },
+  async 'plan-unset'(el) {
+    const t = S.tasks.find((x) => x.id === el.dataset.id);
+    if (!t) return;
+    t.start = null;
+    await DB.put('tasks', t);
   },
   'tcal-day'(el) {
     tcal.sel = el.dataset.date;
@@ -1244,3 +1299,9 @@ document.addEventListener('submit', async (e) => {
   const first = kind === 'ltask' ? $(`#app form[data-goal="${gl}"] input`) : $('#app form input[type=text]');
   if (first) first.focus();
 });
+
+/** Scrolls the Plan timeline to the current time (today) or to the first block. */
+function scrollPlan() {
+  const e = document.querySelector('.pl-now') || document.querySelector('.pl-b');
+  if (e) e.scrollIntoView({ block: 'center' });
+}

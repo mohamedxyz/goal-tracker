@@ -5,6 +5,7 @@
     PATCH = bug fix · MINOR = new feature · MAJOR = breaks old backups or data
 
   Changelog
+  0.77.0 Time blocking: a new Plan view on the Tasks tab shows your day as a timeline. Give a task a start time and length (Edit task, or tap an empty time), or pick an unscheduled task and tap a time to place it. Overlapping blocks sit side by side, tap a block for details or tick it done, and Unschedule from its info sheet.
   0.76.0 Android keyboard, native fix: the app now applies the keyboard and system-bar space itself, once, instead of letting Capacitor pass the keyboard inset on to the web view as well (which could shrink the page twice and leave a blank band above the keyboard). This is the 0.74.5 app (tips, info sheets, auto backup, icons) with the keyboard layout fixed in the Android code.
   0.74.5 Keyboard, new approach: when you tap a text box inside a form (add task, add goal, calendar, search...), the form docks right above the keyboard like a chat box, so you always see what you type and the page never jumps to the end.
   0.74.4 Keyboard: tapping a field no longer scrolls to the end of the page. The page stays where it was and moves only as far as needed to keep the field visible above the keyboard.
@@ -4025,6 +4026,138 @@ form.kbdock {
   border-top: 1px solid var(--line);
   box-shadow: 0 -6px 18px rgba(0, 0, 0, 0.18);
 }
+
+/* ---------- Time blocking (Plan view) ---------- */
+.plan .pl-sum {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
+  margin: 2px 0 8px;
+}
+.pl-tray {
+  margin-bottom: 10px;
+}
+.pl-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+.pl-grid {
+  position: relative;
+  border-top: 1px solid var(--line);
+}
+.pl-hr {
+  display: grid;
+  grid-template-columns: 52px 1fr;
+  grid-template-rows: calc(var(--plh) / 2) calc(var(--plh) / 2);
+  border-bottom: 1px solid var(--line);
+  height: var(--plh);
+}
+.pl-lab {
+  grid-row: 1 / 3;
+  font-size: 11px;
+  color: var(--muted);
+  padding-top: 3px;
+}
+.pl-slot {
+  grid-column: 2;
+  background: none;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  min-height: 0;
+  width: 100%;
+}
+.pl-slot.half {
+  border-top: 1px dashed var(--line);
+}
+.pl-slot:active {
+  background: var(--soft);
+}
+.pl-layer {
+  position: absolute;
+  inset-block: 0;
+  inset-inline: 52px 0;
+  pointer-events: none;
+}
+.pl-b {
+  position: absolute;
+  box-sizing: border-box;
+  pointer-events: auto;
+  overflow: hidden;
+  padding: 3px 6px 3px 26px;
+  background: var(--soft);
+  border: 1px solid var(--line);
+  border-inline-start: 4px solid var(--muted);
+  border-radius: 8px;
+  font-size: 12px;
+  line-height: 1.25;
+  cursor: pointer;
+}
+.pl-b.pr-high {
+  border-inline-start-color: var(--bad);
+}
+.pl-b.pr-med {
+  border-inline-start-color: var(--warn);
+}
+.pl-b.pr-low {
+  border-inline-start-color: var(--ok);
+}
+.pl-b b,
+.pl-b span {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pl-b span {
+  color: var(--muted);
+  font-size: 11px;
+}
+.pl-b.done {
+  opacity: 0.55;
+}
+.pl-b.done b {
+  text-decoration: line-through;
+}
+.pl-ck {
+  position: absolute;
+  inset-inline-start: 3px;
+  top: 3px;
+  width: 18px;
+  min-height: 0;
+  height: 18px;
+  padding: 0;
+  border: 1.5px solid var(--muted);
+  border-radius: 5px;
+  background: var(--card);
+  color: var(--ok);
+  font-size: 12px;
+  line-height: 1;
+}
+.pl-now {
+  position: absolute;
+  inset-inline: -52px 0;
+  height: 0;
+  border-top: 2px solid var(--bad);
+  pointer-events: none;
+}
+.pl-now::before {
+  content: '';
+  position: absolute;
+  inset-inline-start: 46px;
+  top: -5px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--bad);
+}
+.pl-hint {
+  margin-top: 8px;
+  text-align: center;
+}
 </style>
 </head>
 <body>
@@ -4395,7 +4528,7 @@ function rate30(h) {
 }
 
 /* ---------- Version ---------- */
-const APP_VERSION = '0.76.0';
+const APP_VERSION = '0.77.0';
 
 /* Pick the English or Arabic text for the current language. Call it at render time, never while the file is loading. */
 const L2 = (en, ar) => (S.cfg.lang === 'ar' ? ar : en);
@@ -4501,6 +4634,7 @@ function taskItem(t) {
         ${(t.items || []).length ? `<span title="Checklist">☑ ${t.items.filter((i) => i.done).length}/${t.items.length}</span>` : ''}
         ${t.done && t.doneAt ? `<span>Done ${fmtWhen(t.doneAt)}</span>` : ''}
         ${t.done && t.due && !(t.doneAt && ds(new Date(t.doneAt)) === t.due) ? `<span>${fmtDate(t.due)}</span>` : ''}
+        ${isBlock(t) && !t.done ? `<span title="${L2('Scheduled', 'مجدولة')}">🕐 ${blockTime(t)}</span>` : ''}
         ${t.tag ? `<span class="tag">#${esc(t.tag)}</span>` : ''}
         ${t.focus ? `<span title="Focus time">⏱ ${fmtMin(t.focus)}</span>` : ''}
         ${(t.pushes || []).length ? `<span title="Pushed back: ${esc(t.pushes[t.pushes.length - 1].why)}">↻ ${t.pushes.length}×</span>` : ''}
@@ -6781,7 +6915,7 @@ function viewDash() {
   </div><div>
     ${S.cfg.dHabits ? `<h2>Today's habits</h2>${habitList(false)}` : ''}
   </div></div>
-  ${planCta ? `<div class="card plan-cta"><div class="grow"><div class="title">${wk.length ? `${openSlots} weekly slot${openSlots > 1 ? 's' : ''} still to plan` : `Plan ${currentPeriod('weekly')}`}</div><div class="meta">${wk.length ? "Fill in this week's steps toward your monthly goals." : "No weekly goals yet. Pick this week's steps."}</div></div><button class="btn" data-action="open-plan">Plan week</button></div>` : ''}${rpgCard()}<div class="stats dstats">
+  ${planCta ? `<div class="card plan-cta"><div class="grow"><div class="title">${wk.length ? L2(`${openSlots} weekly slot${openSlots > 1 ? 's' : ''} still to plan`, `${openSlots} خانات أسبوعية للتخطيط`) : `Plan ${currentPeriod('weekly')}`}</div><div class="meta">${wk.length ? L2("Fill in this week's steps toward your monthly goals.", 'املأ خطوات هذا الأسبوع نحو أهدافك الشهرية.') : L2("No weekly goals yet. Pick this week's steps.", 'لا أهداف أسبوعية بعد. اختر خطوات هذا الأسبوع.')}</div></div><button class="btn" data-action="open-plan">Plan week</button></div>` : ''}${rpgCard()}<div class="stats dstats">
     <div class="card stat"><div class="n">${todaysDone}/${todays.length}</div><div class="l">Today's tasks done</div></div>
     <div class="card stat"><div class="n">${hd}/${dueHabits.length}</div><div class="l">Habits done today</div></div>
     <div class="card stat"><div class="n">${active}</div><div class="l">Active goals</div></div>
@@ -6845,7 +6979,10 @@ function viewTasks() {
   if (f === 'today') list = list.filter((t) => t.due === today);
   if (f === 'overdue') list = list.filter((t) => !t.done && t.due && t.due < today);
   if (f === 'done') list = list.filter((t) => t.done);
-  const byDue = (a, b) => (a.due || '9999').localeCompare(b.due || '9999') || pr(a) - pr(b);
+  const byDue = (a, b) =>
+    (a.due || '9999').localeCompare(b.due || '9999') ||
+    (a.start || '99').localeCompare(b.start || '99') ||
+    pr(a) - pr(b);
   const sorter =
     {
       due: byDue,
@@ -6877,9 +7014,11 @@ function viewTasks() {
     <textarea name="items" placeholder="Checklist (optional, one item per line)" style="min-height:40px"></textarea>
     </div></details></form>
   ${
-    S.tcalOn
-      ? `<div class="filters"><button class="chip" data-action="tasks-cal">☰ List</button></div>${calView()}`
-      : `<div class="filters fbar"><div class="fscroll">${chip('all', 'All')}${chip('today', 'Due today')}${chip('overdue', 'Overdue' + (nOver ? ' · ' + nOver : ''))}${chip('done', 'Done')}</div><button class="chip ${selOn('tasks') ? 'on' : ''}" data-action="sel-mode" data-k="tasks" aria-pressed="${selOn('tasks')}">${selOn('tasks') ? '✓ Selecting' : '☑ Select'}</button><button class="chip" data-action="tasks-cal">📅 Calendar</button></div>
+    S.planOn
+      ? `<div class="filters"><button class="chip" data-action="tasks-plan">☰ List</button><button class="chip" data-action="tasks-cal">📅 Calendar</button></div>${planView()}`
+      : S.tcalOn
+        ? `<div class="filters"><button class="chip" data-action="tasks-cal">☰ List</button><button class="chip" data-action="tasks-plan">🕐 Plan</button></div>${calView()}`
+        : `<div class="filters fbar"><div class="fscroll">${chip('all', 'All')}${chip('today', 'Due today')}${chip('overdue', 'Overdue' + (nOver ? ' · ' + nOver : ''))}${chip('done', 'Done')}</div><button class="chip ${selOn('tasks') ? 'on' : ''}" data-action="sel-mode" data-k="tasks" aria-pressed="${selOn('tasks')}">${selOn('tasks') ? '✓ Selecting' : '☑ Select'}</button><button class="chip" data-action="tasks-cal">📅 Calendar</button><button class="chip" data-action="tasks-plan">🕐 Plan</button></div>
   ${open.length ? taskGroups(open) : done.length && showDone ? '' : `<div class="empty">No tasks here.</div>`}
   ${done.length && showDone ? `${f === 'done' ? '' : `<button class="chip" style="margin-top:12px" data-action="toggle-done-list" aria-expanded="${!!S.doneOpen}">${S.doneOpen ? '▾' : '▸'} ${L2(done.length + ' done', done.length + ' منجزة')}</button>`}${f === 'done' || S.doneOpen ? `<ul class="list">${(S.doneAll ? done : done.slice(0, 40)).map(taskItem).join('')}</ul>` : ''}${done.length > 40 && (f === 'done' || S.doneOpen) ? `<button class="chip" style="margin-top:8px" data-action="toggle-done-all">${S.doneAll ? 'Show fewer' : 'Show all ' + done.length + ' completed'}</button>` : ''}` : ''}`
   }`;
@@ -7751,6 +7890,8 @@ function openEdit(kind, id) {
       ]
         .map(([v, l]) => `<option value="${v}" ${t.priority === v ? 'selected' : ''}>${l}</option>`)
         .join('')}</select></div></div>
+      <div class="two"><div><label>Start time</label><input type="time" name="start" value="${t.start || ''}"></div>
+      <div><label>Length</label><select name="dur">${PLAN_LENS.map((m) => `<option value="${m}" ${blockLen(t) === m ? 'selected' : ''}>${lenText(m)}</option>`).join('')}</select></div></div>
       <label>Weekly goal</label><select name="goalId">${goals}</select>
       <label>Tag folder</label><input type="text" name="tag" list="tagListEdit" value="${esc(t.tag || '')}" placeholder="None" autocomplete="off">${tagList('tagListEdit')}
       <label>Repeat</label><select name="repeat">${REPEATS.map(([r, l]) => `<option value="${r}" ${(t.repeat || '') === r ? 'selected' : ''}>${l}</option>`).join('')}</select>
@@ -7865,7 +8006,9 @@ dlg.addEventListener('submit', async (e) => {
     Object.assign(t, {
       icon: v.icon || '',
       title: v.title.trim(),
-      due: v.due || null,
+      due: v.due || (v.start ? TODAY() : null),
+      start: v.start || null,
+      dur: +v.dur || 60,
       priority: v.priority,
       goalId: v.goalId || null,
       notes: (v.notes || '').trim(),
@@ -8241,7 +8384,7 @@ function openInfo(kind, id) {
       items = t.items || [];
     const pr = { high: L2('High', 'عالية'), med: L2('Medium', 'متوسطة'), low: L2('Low', 'منخفضة') }[t.priority] || '';
     const body = `<div class="inf-sub">${t.done ? L2('Done', 'منجزة') + (t.doneAt ? ' · ' + fmtWhen(t.doneAt) : '') : t.due ? dueLeft(t.due) : L2('No due date', 'بلا موعد')}</div>
-      ${irow(L2('Due', 'الموعد'), t.due ? fmtDay(t.due) : '')}${irow(L2('Priority', 'الأولوية'), pr)}${irow(L2('Goal', 'الهدف'), g ? esc(g.title) : '')}${irow(L2('Folder', 'المجلد'), t.tag ? '#' + esc(t.tag) : '')}
+      ${irow(L2('Due', 'الموعد'), t.due ? fmtDay(t.due) : '')}${irow(L2('Time block', 'الفترة'), isBlock(t) ? blockTime(t) : '')}${irow(L2('Priority', 'الأولوية'), pr)}${irow(L2('Goal', 'الهدف'), g ? esc(g.title) : '')}${irow(L2('Folder', 'المجلد'), t.tag ? '#' + esc(t.tag) : '')}
       ${irow(L2('Repeats', 'التكرار'), t.repeat ? REPEAT_LABEL[t.repeat] || '' : '')}${irow(L2('Focus time', 'وقت التركيز'), t.focus ? fmtMin(t.focus) : '')}
       ${irow(L2('Pushed back', 'أُجّلت'), (t.pushes || []).length ? t.pushes.length + '×' : '')}${irow(L2('Created', 'أُنشئت'), t.created ? fmtDate(ds(new Date(t.created))) : '')}
       ${t.notes ? `<div class="inf-notes">${esc(t.notes)}</div>` : ''}
@@ -8251,6 +8394,7 @@ function openInfo(kind, id) {
       body,
       iBtn(t.done ? L2('Reopen', 'إعادة فتح') : '✓ ' + L2('Done', 'تم'), 'toggle-task', id) +
         (t.done ? '' : iBtn('⏱ ' + L2('Focus', 'تركيز'), 'ft-start', id)) +
+        (isBlock(t) ? iBtn('✕ ' + L2('Unschedule', 'إلغاء الجدولة'), 'plan-unset', id) : '') +
         iBtn('✎ ' + L2('Edit', 'تعديل'), 'edit-task', id, 'btn')
     );
   } else if (kind === 'goal') {
@@ -8388,6 +8532,108 @@ function iconField(icon) {
     <div class="iconpick"><input type="hidden" name="icon" value="${esc(icon || '')}">
       <button type="button" class="ghost icon-cur" data-action="icon-toggle" aria-label="${L2('Choose an icon', 'اختر أيقونة')}">${cur}</button>
       <div class="icon-grid" hidden>${cells}<button type="button" data-action="icon-pick" data-i="" aria-label="${L2('No icon', 'بدون أيقونة')}">✕</button></div></div>`;
+}
+/**
+ * Time blocking: give a task a start time and a length, and see the day as a timeline (the Plan view on the Tasks tab).
+ * A task is a "block" when it has a due date plus `start` ("HH:MM") and `dur` (minutes).
+ * (All src/js files are joined, in filename order, into one shared scope. See src/README.md.)
+ */
+
+const PLAN = { day: null, pick: null };
+const PLAN_PX = 56; // pixels per hour on the timeline
+const PLAN_LENS = [15, 30, 45, 60, 90, 120, 180, 240]; // choices in the edit dialog, minutes
+
+const toMin = (hm) => {
+  const [h, m] = String(hm).split(':');
+  return (+h || 0) * 60 + (+m || 0);
+};
+const fromMin = (min) => String(Math.floor(min / 60)).padStart(2, '0') + ':' + String(min % 60).padStart(2, '0');
+const hmText = (min) =>
+  fmt(new Date(2000, 0, 1, Math.floor(min / 60) % 24, min % 60), { hour: 'numeric', minute: '2-digit' });
+const blockLen = (t) => t.dur || 60;
+const lenText = (m) => (m < 60 ? m + L2(' min', ' د') : (m % 60 ? (m / 60).toFixed(1) : m / 60) + L2(' h', ' س'));
+const isBlock = (t) => !!(t.start && t.due);
+/** "9:00 AM – 10:00 AM" for a scheduled task. */
+const blockTime = (t) => hmText(toMin(t.start)) + ' – ' + hmText(Math.min(1440, toMin(t.start) + blockLen(t)));
+
+/** Lays overlapping blocks side by side: returns [{t, s, e, col, n}] (n = columns in its overlap group). */
+function layoutBlocks(tasks) {
+  const ev = tasks
+    .map((t) => ({ t, s: toMin(t.start), e: Math.min(1440, toMin(t.start) + blockLen(t)) }))
+    .sort((a, b) => a.s - b.s || b.e - a.e);
+  let group = [],
+    groupEnd = 0;
+  const flush = () => {
+    const cols = [];
+    for (const x of group) {
+      let c = cols.findIndex((end) => end <= x.s);
+      if (c < 0) c = cols.length;
+      cols[c] = x.e;
+      x.col = c;
+    }
+    group.forEach((x) => (x.n = cols.length));
+    group = [];
+  };
+  for (const x of ev) {
+    if (group.length && x.s >= groupEnd) flush();
+    group.push(x);
+    groupEnd = Math.max(groupEnd, x.e);
+  }
+  flush();
+  return ev;
+}
+
+function planView() {
+  const today = TODAY(),
+    day = PLAN.day || today;
+  const blocks = S.tasks.filter((t) => !t.archived && t.due === day && t.start);
+  const lay = layoutBlocks(blocks);
+  // Show 6:00 to 22:00 by default, and stretch to fit anything earlier or later.
+  const first = lay.length ? Math.min(...lay.map((x) => x.s)) : 1440,
+    last = lay.length ? Math.max(...lay.map((x) => x.e)) : 0;
+  const s0 = Math.max(0, Math.min(6 * 60, Math.floor(first / 60) * 60)),
+    e0 = Math.min(1440, Math.max(22 * 60, Math.ceil(last / 60) * 60));
+  const pr = (t) => ({ high: 0, med: 1, low: 2 })[t.priority] ?? 2;
+  const tray = S.tasks
+    .filter((t) => !t.archived && !t.done && !t.start && t.due && (t.due === day || (day === today && t.due < today)))
+    .sort((a, b) => pr(a) - pr(b))
+    .slice(0, 30);
+  const pick = PLAN.pick && tray.find((t) => t.id === PLAN.pick);
+  if (!pick) PLAN.pick = null;
+  const planned = lay.reduce((n, x) => n + (x.e - x.s), 0);
+
+  let rows = '';
+  for (let h = s0 / 60; h < e0 / 60; h++) {
+    rows += `<div class="pl-hr"><span class="pl-lab">${hmText(h * 60)}</span>
+      <button type="button" class="pl-slot" data-action="plan-slot" data-min="${h * 60}" aria-label="${hmText(h * 60)}"></button>
+      <button type="button" class="pl-slot half" data-action="plan-slot" data-min="${h * 60 + 30}" aria-label="${hmText(h * 60 + 30)}"></button></div>`;
+  }
+  const blk = lay
+    .map((x) => {
+      const t = x.t,
+        h = Math.max(24, ((x.e - x.s) / 60) * PLAN_PX - 2);
+      return `<div class="pl-b pr-${t.priority || 'low'} ${t.done ? 'done' : ''}" style="top:${((x.s - s0) / 60) * PLAN_PX}px;height:${h}px;inset-inline-start:${(x.col / x.n) * 100}%;width:${100 / x.n}%" data-action="info-task" data-id="${t.id}" role="button" tabindex="0">
+        <button type="button" class="pl-ck" data-action="toggle-task" data-id="${t.id}" aria-label="${L2('Mark done', 'تم')}">${t.done ? '✓' : ''}</button>
+        <b>${iconPrefix(t)}${esc(t.title)}</b>${h >= 40 ? `<span>${hmText(x.s)} – ${hmText(x.e)}</span>` : ''}</div>`;
+    })
+    .join('');
+  const nowMin = new Date().getHours() * 60 + new Date().getMinutes();
+  const now =
+    day === today && nowMin >= s0 && nowMin <= e0
+      ? `<div class="pl-now" style="top:${((nowMin - s0) / 60) * PLAN_PX}px"></div>`
+      : '';
+
+  return `<div class="card plan">
+    <div class="cal-nav"><button type="button" class="icon" data-action="plan-day" data-d="-1" aria-label="${L2('Previous day', 'اليوم السابق')}">‹</button><b>${fmtDay(day)}</b><button type="button" class="icon" data-action="plan-day" data-d="1" aria-label="${L2('Next day', 'اليوم التالي')}">›</button></div>
+    <div class="meta pl-sum">${blocks.length ? L2(blocks.length + ' blocks · ' + lenText(planned) + ' planned', blocks.length + ' فترات · ' + lenText(planned) + ' مخطّطة') : L2('Nothing scheduled yet.', 'لا شيء مجدول بعد.')}${day !== today ? ` <button type="button" class="chip" data-action="plan-today">${L2('Today', 'اليوم')}</button>` : ''}</div>
+    ${
+      tray.length
+        ? `<div class="pl-tray"><div class="meta">${pick ? L2('Now tap a time for “' + pick.title + '”', 'اضغط على وقت لـ«' + pick.title + '»') : L2('Not scheduled · tap one, then tap a time', 'غير مجدولة · اضغط على مهمة ثم على وقت')}</div>
+      <div class="pl-chips">${tray.map((t) => `<button type="button" class="chip ${PLAN.pick === t.id ? 'on' : ''}" data-action="plan-pick" data-id="${t.id}" aria-pressed="${PLAN.pick === t.id}">${iconPrefix(t)}${esc(t.title)}</button>`).join('')}</div></div>`
+        : ''
+    }
+    <div class="pl-grid" style="--plh:${PLAN_PX}px">${rows}<div class="pl-layer">${blk}${now}</div></div>
+    <div class="meta pl-hint">${L2('Tap an empty time to add a block. Tap a block for details.', 'اضغط على وقت فارغ لإضافة فترة. اضغط على فترة للتفاصيل.')}</div></div>`;
 }
 /**
  * Completion sounds and the default settings (CFG_DEF) with saveCfg().
@@ -8658,6 +8904,9 @@ const AR = {
     'اهزم زعماء الأسابيع وأنجز الأهداف الشهرية لتضرب الحارس. الحرّاس والأهداف السنوية تضرب زعيم العام.',
   '📅 Calendar': '📅 التقويم',
   '☰ List': '☰ القائمة',
+  '🕐 Plan': '🕐 المخطِّط',
+  'Start time': 'وقت البدء',
+  Length: 'المدة',
   'Add a task on this day…': 'أضف مهمة في هذا اليوم…',
   'Nothing on this day.': 'لا شيء في هذا اليوم.',
   Focus: 'تركيز',
@@ -9877,6 +10126,8 @@ async function onTaskDone(t) {
       notes: t.notes || '',
       repeat: t.repeat,
       due: nextDue(t),
+      start: t.start || null,
+      dur: t.dur || null,
       priority: t.priority,
       goalId: t.goalId || null,
       tag: t.tag || '',
@@ -10008,7 +10259,62 @@ const actions = {
   },
   'tasks-cal'() {
     S.tcalOn = !S.tcalOn;
+    S.planOn = false;
     if (S.selMode) S.selMode = null;
+  },
+  /* ----- Time blocking (Plan view) ----- */
+  'tasks-plan'() {
+    S.planOn = !S.planOn;
+    S.tcalOn = false;
+    PLAN.pick = null;
+    if (S.selMode) S.selMode = null;
+    if (S.planOn) setTimeout(scrollPlan, 80);
+  },
+  'plan-day'(el) {
+    PLAN.day = ds(addDays(new Date((PLAN.day || TODAY()) + 'T00:00'), +el.dataset.d));
+    PLAN.pick = null;
+  },
+  'plan-today'() {
+    PLAN.day = null;
+    setTimeout(scrollPlan, 80);
+  },
+  'plan-pick'(el) {
+    PLAN.pick = PLAN.pick === el.dataset.id ? null : el.dataset.id;
+  },
+  async 'plan-slot'(el) {
+    const min = +el.dataset.min,
+      day = PLAN.day || TODAY();
+    let t = PLAN.pick && S.tasks.find((x) => x.id === PLAN.pick);
+    if (t) {
+      PLAN.pick = null;
+      t.due = day;
+    } else {
+      const title = await askPrompt(L2('New block at ' + hmText(min), 'فترة جديدة عند ' + hmText(min)));
+      if (!title || !title.trim()) return false;
+      t = {
+        id: uid(),
+        title: title.trim(),
+        notes: '',
+        repeat: '',
+        tag: '',
+        items: [],
+        due: day,
+        priority: S.cfg.prio,
+        goalId: null,
+        done: false,
+        created: Date.now(),
+      };
+      S.tasks.push(t);
+    }
+    t.start = fromMin(min);
+    t.dur = t.dur || 60;
+    await DB.put('tasks', t);
+  },
+  async 'plan-unset'(el) {
+    const t = S.tasks.find((x) => x.id === el.dataset.id);
+    if (!t) return;
+    t.start = null;
+    await DB.put('tasks', t);
   },
   'tcal-day'(el) {
     tcal.sel = el.dataset.date;
@@ -11146,6 +11452,12 @@ document.addEventListener('submit', async (e) => {
   const first = kind === 'ltask' ? $(`#app form[data-goal="${gl}"] input`) : $('#app form input[type=text]');
   if (first) first.focus();
 });
+
+/** Scrolls the Plan timeline to the current time (today) or to the first block. */
+function scrollPlan() {
+  const e = document.querySelector('.pl-now') || document.querySelector('.pl-b');
+  if (e) e.scrollIntoView({ block: 'center' });
+}
 /**
  * Student mode: spaced repetition, today's picks, exams and quizzes, and the class timetable.
  * (All src/js files are joined, in filename order, into one shared scope. See src/README.md.)

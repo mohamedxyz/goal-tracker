@@ -51,6 +51,7 @@ function taskItem(t) {
         ${(t.items || []).length ? `<span title="Checklist">☑ ${t.items.filter((i) => i.done).length}/${t.items.length}</span>` : ''}
         ${t.done && t.doneAt ? `<span>Done ${fmtWhen(t.doneAt)}</span>` : ''}
         ${t.done && t.due && !(t.doneAt && ds(new Date(t.doneAt)) === t.due) ? `<span>${fmtDate(t.due)}</span>` : ''}
+        ${isBlock(t) && !t.done ? `<span title="${L2('Scheduled', 'مجدولة')}">🕐 ${blockTime(t)}</span>` : ''}
         ${t.tag ? `<span class="tag">#${esc(t.tag)}</span>` : ''}
         ${t.focus ? `<span title="Focus time">⏱ ${fmtMin(t.focus)}</span>` : ''}
         ${(t.pushes || []).length ? `<span title="Pushed back: ${esc(t.pushes[t.pushes.length - 1].why)}">↻ ${t.pushes.length}×</span>` : ''}

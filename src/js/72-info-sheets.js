@@ -19,7 +19,7 @@ function openInfo(kind, id) {
       items = t.items || [];
     const pr = { high: L2('High', 'عالية'), med: L2('Medium', 'متوسطة'), low: L2('Low', 'منخفضة') }[t.priority] || '';
     const body = `<div class="inf-sub">${t.done ? L2('Done', 'منجزة') + (t.doneAt ? ' · ' + fmtWhen(t.doneAt) : '') : t.due ? dueLeft(t.due) : L2('No due date', 'بلا موعد')}</div>
-      ${irow(L2('Due', 'الموعد'), t.due ? fmtDay(t.due) : '')}${irow(L2('Priority', 'الأولوية'), pr)}${irow(L2('Goal', 'الهدف'), g ? esc(g.title) : '')}${irow(L2('Folder', 'المجلد'), t.tag ? '#' + esc(t.tag) : '')}
+      ${irow(L2('Due', 'الموعد'), t.due ? fmtDay(t.due) : '')}${irow(L2('Time block', 'الفترة'), isBlock(t) ? blockTime(t) : '')}${irow(L2('Priority', 'الأولوية'), pr)}${irow(L2('Goal', 'الهدف'), g ? esc(g.title) : '')}${irow(L2('Folder', 'المجلد'), t.tag ? '#' + esc(t.tag) : '')}
       ${irow(L2('Repeats', 'التكرار'), t.repeat ? REPEAT_LABEL[t.repeat] || '' : '')}${irow(L2('Focus time', 'وقت التركيز'), t.focus ? fmtMin(t.focus) : '')}
       ${irow(L2('Pushed back', 'أُجّلت'), (t.pushes || []).length ? t.pushes.length + '×' : '')}${irow(L2('Created', 'أُنشئت'), t.created ? fmtDate(ds(new Date(t.created))) : '')}
       ${t.notes ? `<div class="inf-notes">${esc(t.notes)}</div>` : ''}
@@ -29,6 +29,7 @@ function openInfo(kind, id) {
       body,
       iBtn(t.done ? L2('Reopen', 'إعادة فتح') : '✓ ' + L2('Done', 'تم'), 'toggle-task', id) +
         (t.done ? '' : iBtn('⏱ ' + L2('Focus', 'تركيز'), 'ft-start', id)) +
+        (isBlock(t) ? iBtn('✕ ' + L2('Unschedule', 'إلغاء الجدولة'), 'plan-unset', id) : '') +
         iBtn('✎ ' + L2('Edit', 'تعديل'), 'edit-task', id, 'btn')
     );
   } else if (kind === 'goal') {

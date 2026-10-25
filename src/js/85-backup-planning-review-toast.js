@@ -313,6 +313,8 @@ async function onTaskDone(t) {
       notes: t.notes || '',
       repeat: t.repeat,
       due: nextDue(t),
+      start: t.start || null,
+      dur: t.dur || null,
       priority: t.priority,
       goalId: t.goalId || null,
       tag: t.tag || '',

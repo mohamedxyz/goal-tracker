@@ -172,7 +172,7 @@ function viewDash() {
   </div><div>
     ${S.cfg.dHabits ? `<h2>Today's habits</h2>${habitList(false)}` : ''}
   </div></div>
-  ${planCta ? `<div class="card plan-cta"><div class="grow"><div class="title">${wk.length ? `${openSlots} weekly slot${openSlots > 1 ? 's' : ''} still to plan` : `Plan ${currentPeriod('weekly')}`}</div><div class="meta">${wk.length ? "Fill in this week's steps toward your monthly goals." : "No weekly goals yet. Pick this week's steps."}</div></div><button class="btn" data-action="open-plan">Plan week</button></div>` : ''}${rpgCard()}<div class="stats dstats">
+  ${planCta ? `<div class="card plan-cta"><div class="grow"><div class="title">${wk.length ? L2(`${openSlots} weekly slot${openSlots > 1 ? 's' : ''} still to plan`, `${openSlots} خانات أسبوعية للتخطيط`) : `Plan ${currentPeriod('weekly')}`}</div><div class="meta">${wk.length ? L2("Fill in this week's steps toward your monthly goals.", 'املأ خطوات هذا الأسبوع نحو أهدافك الشهرية.') : L2("No weekly goals yet. Pick this week's steps.", 'لا أهداف أسبوعية بعد. اختر خطوات هذا الأسبوع.')}</div></div><button class="btn" data-action="open-plan">Plan week</button></div>` : ''}${rpgCard()}<div class="stats dstats">
     <div class="card stat"><div class="n">${todaysDone}/${todays.length}</div><div class="l">Today's tasks done</div></div>
     <div class="card stat"><div class="n">${hd}/${dueHabits.length}</div><div class="l">Habits done today</div></div>
     <div class="card stat"><div class="n">${active}</div><div class="l">Active goals</div></div>
@@ -236,7 +236,10 @@ function viewTasks() {
   if (f === 'today') list = list.filter((t) => t.due === today);
   if (f === 'overdue') list = list.filter((t) => !t.done && t.due && t.due < today);
   if (f === 'done') list = list.filter((t) => t.done);
-  const byDue = (a, b) => (a.due || '9999').localeCompare(b.due || '9999') || pr(a) - pr(b);
+  const byDue = (a, b) =>
+    (a.due || '9999').localeCompare(b.due || '9999') ||
+    (a.start || '99').localeCompare(b.start || '99') ||
+    pr(a) - pr(b);
   const sorter =
     {
       due: byDue,
@@ -268,9 +271,11 @@ function viewTasks() {
     <textarea name="items" placeholder="Checklist (optional, one item per line)" style="min-height:40px"></textarea>
     </div></details></form>
   ${
-    S.tcalOn
-      ? `<div class="filters"><button class="chip" data-action="tasks-cal">☰ List</button></div>${calView()}`
-      : `<div class="filters fbar"><div class="fscroll">${chip('all', 'All')}${chip('today', 'Due today')}${chip('overdue', 'Overdue' + (nOver ? ' · ' + nOver : ''))}${chip('done', 'Done')}</div><button class="chip ${selOn('tasks') ? 'on' : ''}" data-action="sel-mode" data-k="tasks" aria-pressed="${selOn('tasks')}">${selOn('tasks') ? '✓ Selecting' : '☑ Select'}</button><button class="chip" data-action="tasks-cal">📅 Calendar</button></div>
+    S.planOn
+      ? `<div class="filters"><button class="chip" data-action="tasks-plan">☰ List</button><button class="chip" data-action="tasks-cal">📅 Calendar</button></div>${planView()}`
+      : S.tcalOn
+        ? `<div class="filters"><button class="chip" data-action="tasks-cal">☰ List</button><button class="chip" data-action="tasks-plan">🕐 Plan</button></div>${calView()}`
+        : `<div class="filters fbar"><div class="fscroll">${chip('all', 'All')}${chip('today', 'Due today')}${chip('overdue', 'Overdue' + (nOver ? ' · ' + nOver : ''))}${chip('done', 'Done')}</div><button class="chip ${selOn('tasks') ? 'on' : ''}" data-action="sel-mode" data-k="tasks" aria-pressed="${selOn('tasks')}">${selOn('tasks') ? '✓ Selecting' : '☑ Select'}</button><button class="chip" data-action="tasks-cal">📅 Calendar</button><button class="chip" data-action="tasks-plan">🕐 Plan</button></div>
   ${open.length ? taskGroups(open) : done.length && showDone ? '' : `<div class="empty">No tasks here.</div>`}
   ${done.length && showDone ? `${f === 'done' ? '' : `<button class="chip" style="margin-top:12px" data-action="toggle-done-list" aria-expanded="${!!S.doneOpen}">${S.doneOpen ? '▾' : '▸'} ${L2(done.length + ' done', done.length + ' منجزة')}</button>`}${f === 'done' || S.doneOpen ? `<ul class="list">${(S.doneAll ? done : done.slice(0, 40)).map(taskItem).join('')}</ul>` : ''}${done.length > 40 && (f === 'done' || S.doneOpen) ? `<button class="chip" style="margin-top:8px" data-action="toggle-done-all">${S.doneAll ? 'Show fewer' : 'Show all ' + done.length + ' completed'}</button>` : ''}` : ''}`
   }`;
