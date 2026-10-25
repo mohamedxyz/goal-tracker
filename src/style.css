@@ -4068,3 +4068,9 @@ form.kbdock {
 .pl-btns .chip {
   padding: 6px 10px;
 }
+.pl-b.clash {
+  border-color: var(--warn);
+}
+.pl-warn {
+  color: var(--warn);
+}

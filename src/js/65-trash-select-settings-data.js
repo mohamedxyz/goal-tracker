@@ -357,6 +357,27 @@ function settingsCard() {
       c.breakLen
     )}
     ${sel(
+      'timeFmt',
+      'Clock',
+      [
+        ['auto', L2('Automatic', 'تلقائي')],
+        ['12', L2('12-hour', '12 ساعة')],
+        ['24', L2('24-hour', '24 ساعة')],
+      ],
+      c.timeFmt
+    )}
+    ${sel(
+      'weekStart',
+      'Calendar week starts on',
+      [
+        ['mon', L2('Monday', 'الاثنين')],
+        ['sun', L2('Sunday', 'الأحد')],
+        ['sat', L2('Saturday', 'السبت')],
+      ],
+      c.weekStart
+    )}
+    ${sw('planSwipe', 'Swipe between days', 'Swipe sideways on the Plan timeline or the calendar', c.planSwipe)}
+    ${sel(
       'planFrom',
       'Plan: day starts at',
       [...Array(11)].map((_, h) => [String(h).padStart(2, '0') + ':00', hmText(h * 60)]),
@@ -367,7 +388,7 @@ function settingsCard() {
       'Plan: day ends at',
       [...Array(8)]
         .map((_, i) => [String(17 + i).padStart(2, '0') + ':00', hmText((17 + i) * 60)])
-        .concat([['24:00', hmText(1439).replace(/59/, '00')]]),
+        .concat([['24:00', L2('Midnight', 'منتصف الليل')]]),
       c.planTo
     )}
     ${sel(

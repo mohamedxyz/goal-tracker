@@ -5,6 +5,7 @@
     PATCH = bug fix · MINOR = new feature · MAJOR = breaks old backups or data
 
   Changelog
+  0.80.0 Plan view, part 3: Undo after moving, resizing, adding or unscheduling a block; a ⚠ marks blocks that overlap and the toolbar names what they overlap with; swipe sideways to change the day (Plan) or month (calendar), which you can switch off; new Settings for the clock (12 or 24 hour) and for which day the calendar week starts on.
   0.79.0 Plan view fixes: choose when your day starts and ends (Settings, default 6:00 to midnight); the block toolbar stays on screen while you scroll and is more compact; in Arabic the tick box no longer covers the title; unscheduled tasks with no date can be placed too; the calendar and Plan open on the same day; the red now line keeps moving.
   0.78.0 Time blocking, part 2: tap a block in the Plan view to select it, then nudge it 15 minutes earlier or later, make it shorter or longer, or tap a time to move it there. Quick add understands times and lengths ("Gym at 6pm for 1h", "Call 18:30 for 45 min"). New reminders before each block starts (Settings > Notifications: on/off and how long before).
   0.77.0 Time blocking: a new Plan view on the Tasks tab shows your day as a timeline. Give a task a start time and length (Edit task, or tap an empty time), or pick an unscheduled task and tap a time to place it. Overlapping blocks sit side by side, tap a block for details or tick it done, and Unschedule from its info sheet.
@@ -4184,6 +4185,12 @@ form.kbdock {
 .pl-btns .chip {
   padding: 6px 10px;
 }
+.pl-b.clash {
+  border-color: var(--warn);
+}
+.pl-warn {
+  color: var(--warn);
+}
 </style>
 </head>
 <body>
@@ -4554,7 +4561,7 @@ function rate30(h) {
 }
 
 /* ---------- Version ---------- */
-const APP_VERSION = '0.79.0';
+const APP_VERSION = '0.80.0';
 
 /* Pick the English or Arabic text for the current language. Call it at render time, never while the file is loading. */
 const L2 = (en, ar) => (S.cfg.lang === 'ar' ? ar : en);
@@ -7124,7 +7131,8 @@ function calView() {
     }
   }
   const first = new Date(tcal.y, tcal.m, 1),
-    lead = (first.getDay() + 6) % 7,
+    ws = { mon: 1, sun: 0, sat: 6 }[S.cfg.weekStart] ?? 1,
+    lead = (first.getDay() - ws + 7) % 7,
     days = new Date(tcal.y, tcal.m + 1, 0).getDate();
   let cells = '<span></span>'.repeat(lead);
   for (let d = 1; d <= days; d++) {
@@ -7135,7 +7143,7 @@ function calView() {
     cells += `<button type="button" class="cd tcd ${k === today ? 'tod' : ''} ${tcal.sel === k ? 'sel' : ''} ${late ? 'late' : ''}" data-action="tcal-day" data-date="${k}" aria-label="${fmtDay(k)}: ${o} due, ${n} done"><span>${d}</span><span class="tcb">${o ? `<i class="cc o">${o}</i>` : ''}${n ? `<i class="cc d">✓${n}</i>` : ''}</span></button>`;
   }
   const wk = [...Array(7)]
-    .map((_, i) => `<span>${fmt(new Date(2024, 0, 1 + i), { weekday: 'narrow' })}</span>`)
+    .map((_, i) => `<span>${fmt(new Date(2024, 0, 7 + ((ws + i) % 7)), { weekday: 'narrow' })}</span>`)
     .join('');
   const sel = tcal.sel,
     so = (due[sel] || []).sort(
@@ -7669,6 +7677,27 @@ function settingsCard() {
       c.breakLen
     )}
     ${sel(
+      'timeFmt',
+      'Clock',
+      [
+        ['auto', L2('Automatic', 'تلقائي')],
+        ['12', L2('12-hour', '12 ساعة')],
+        ['24', L2('24-hour', '24 ساعة')],
+      ],
+      c.timeFmt
+    )}
+    ${sel(
+      'weekStart',
+      'Calendar week starts on',
+      [
+        ['mon', L2('Monday', 'الاثنين')],
+        ['sun', L2('Sunday', 'الأحد')],
+        ['sat', L2('Saturday', 'السبت')],
+      ],
+      c.weekStart
+    )}
+    ${sw('planSwipe', 'Swipe between days', 'Swipe sideways on the Plan timeline or the calendar', c.planSwipe)}
+    ${sel(
       'planFrom',
       'Plan: day starts at',
       [...Array(11)].map((_, h) => [String(h).padStart(2, '0') + ':00', hmText(h * 60)]),
@@ -7679,7 +7708,7 @@ function settingsCard() {
       'Plan: day ends at',
       [...Array(8)]
         .map((_, i) => [String(17 + i).padStart(2, '0') + ':00', hmText((17 + i) * 60)])
-        .concat([['24:00', hmText(1439).replace(/59/, '00')]]),
+        .concat([['24:00', L2('Midnight', 'منتصف الليل')]]),
       c.planTo
     )}
     ${sel(
@@ -8647,7 +8676,13 @@ const toMin = (hm) => {
 };
 const fromMin = (min) => String(Math.floor(min / 60)).padStart(2, '0') + ':' + String(min % 60).padStart(2, '0');
 const hmText = (min) =>
-  fmt(new Date(2000, 0, 1, Math.floor(min / 60) % 24, min % 60), { hour: 'numeric', minute: '2-digit' });
+  fmt(
+    new Date(2000, 0, 1, Math.floor(min / 60) % 24, min % 60),
+    Object.assign(
+      { hour: 'numeric', minute: '2-digit' },
+      S.cfg.timeFmt === '12' ? { hour12: true } : S.cfg.timeFmt === '24' ? { hourCycle: 'h23' } : {}
+    )
+  );
 const blockLen = (t) => t.dur || 60;
 const lenText = (m) => (m < 60 ? m + L2(' min', ' د') : (m % 60 ? (m / 60).toFixed(1) : m / 60) + L2(' h', ' س'));
 const isBlock = (t) => !!(t.start && t.due);
@@ -8681,6 +8716,25 @@ function layoutBlocks(tasks) {
   return ev;
 }
 
+/** Applies a change to a block, saves it, and shows a toast with Undo. */
+async function planChange(t, msg, change) {
+  const before = { due: t.due, start: t.start, dur: t.dur, pick: PLAN.pick };
+  change();
+  await DB.put('tasks', t);
+  toastUndo(msg, async () => {
+    Object.assign(t, { due: before.due, start: before.start, dur: before.dur });
+    PLAN.pick = before.pick;
+    await DB.put('tasks', t);
+  });
+}
+/** Which blocks overlap in time: Map of task id to the titles of the blocks it overlaps. */
+function blockClashes(lay) {
+  const m = new Map();
+  for (const a of lay)
+    for (const b of lay) if (a !== b && a.s < b.e && b.s < a.e) m.set(a.t.id, (m.get(a.t.id) || []).concat(b.t.title));
+  return m;
+}
+
 function planView() {
   const today = TODAY(),
     day = PLAN.day || today;
@@ -8700,6 +8754,7 @@ function planView() {
     .slice(0, 30);
   const pick = PLAN.pick && S.tasks.find((t) => t.id === PLAN.pick && !t.done && !t.archived);
   if (!pick) PLAN.pick = null;
+  const clash = blockClashes(lay);
   const planned = lay.reduce((n, x) => n + (x.e - x.s), 0);
 
   let rows = '';
@@ -8712,9 +8767,9 @@ function planView() {
     .map((x) => {
       const t = x.t,
         h = Math.max(24, ((x.e - x.s) / 60) * PLAN_PX - 2);
-      return `<div class="pl-b pr-${t.priority || 'low'} ${t.done ? 'done' : ''} ${PLAN.pick === t.id ? 'sel' : ''}" style="top:${((x.s - s0) / 60) * PLAN_PX}px;height:${h}px;inset-inline-start:${(x.col / x.n) * 100}%;width:${100 / x.n}%" data-action="plan-pick" data-id="${t.id}" role="button" tabindex="0">
+      return `<div class="pl-b pr-${t.priority || 'low'} ${t.done ? 'done' : ''} ${PLAN.pick === t.id ? 'sel' : ''} ${clash.has(t.id) && !t.done ? 'clash' : ''}" style="top:${((x.s - s0) / 60) * PLAN_PX}px;height:${h}px;inset-inline-start:${(x.col / x.n) * 100}%;width:${100 / x.n}%" data-action="plan-pick" data-id="${t.id}" role="button" tabindex="0">
         <button type="button" class="pl-ck" data-action="toggle-task" data-id="${t.id}" aria-label="${L2('Mark done', 'تم')}">${t.done ? '✓' : ''}</button>
-        <b>${iconPrefix(t)}${esc(t.title)}</b>${h >= 40 ? `<span>${hmText(x.s)} – ${hmText(x.e)}</span>` : ''}</div>`;
+        <b>${clash.has(t.id) && !t.done ? '⚠ ' : ''}${iconPrefix(t)}${esc(t.title)}</b>${h >= 40 ? `<span>${hmText(x.s)} – ${hmText(x.e)}</span>` : ''}</div>`;
     })
     .join('');
   const nowMin = new Date().getHours() * 60 + new Date().getMinutes();
@@ -8725,10 +8780,11 @@ function planView() {
 
   return `<div class="card plan">
     <div class="cal-nav"><button type="button" class="icon" data-action="plan-day" data-d="-1" aria-label="${L2('Previous day', 'اليوم السابق')}">‹</button><b>${fmtDay(day)}</b><button type="button" class="icon" data-action="plan-day" data-d="1" aria-label="${L2('Next day', 'اليوم التالي')}">›</button></div>
-    <div class="meta pl-sum">${blocks.length ? L2(blocks.length + ' blocks · ' + lenText(planned) + ' planned', blocks.length + ' فترات · ' + lenText(planned) + ' مخطّطة') : L2('Nothing scheduled yet.', 'لا شيء مجدول بعد.')}${day !== today ? ` <button type="button" class="chip" data-action="plan-today">${L2('Today', 'اليوم')}</button>` : ''}</div>
+    <div class="meta pl-sum">${blocks.length ? L2(blocks.length + ' blocks · ' + lenText(planned) + ' planned', blocks.length + ' فترات · ' + lenText(planned) + ' مخطّطة') + (clash.size ? ' · ⚠ ' + L2(clash.size + ' overlapping', clash.size + ' متداخلة') : '') : L2('Nothing scheduled yet.', 'لا شيء مجدول بعد.')}${day !== today ? ` <button type="button" class="chip" data-action="plan-today">${L2('Today', 'اليوم')}</button>` : ''}</div>
     ${
       pick && pick.start
         ? `<div class="pl-bar"><div class="meta"><b>${esc(pick.title)}</b> · ${blockTime(pick)} · ${L2('tap a time to move it', 'اضغط على وقت لنقلها')}</div>
+      ${clash.has(pick.id) ? `<div class="meta pl-warn">⚠ ${L2('Overlaps with ', 'تتداخل مع ')}${clash.get(pick.id).map(esc).join('، ')}</div>` : ''}
       <div class="pl-btns">${[
         ['plan-nudge', -15, '▲ 15', L2('15 minutes earlier', 'أبكر بـ15 دقيقة')],
         ['plan-nudge', 15, '▼ 15', L2('15 minutes later', 'أبعد بـ15 دقيقة')],
@@ -8753,6 +8809,49 @@ function planView() {
     <div class="pl-grid" style="--plh:${PLAN_PX}px" data-s0="${s0}">${rows}<div class="pl-layer">${blk}${now}</div></div>
     <div class="meta pl-hint">${L2('Tap an empty time to add a block. Tap a block to move or resize it.', 'اضغط على وقت فارغ لإضافة فترة. اضغط على فترة لنقلها أو تغيير مدتها.')}</div></div>`;
 }
+
+/* Swipe sideways on the timeline to change the day, or on the month calendar to change the month. */
+(() => {
+  let x0 = 0,
+    y0 = 0,
+    t0 = 0,
+    on = null;
+  document.addEventListener(
+    'touchstart',
+    (e) => {
+      on = e.target.closest && (e.target.closest('.pl-grid') ? 'day' : e.target.closest('.tcal') ? 'month' : null);
+      if (!on || e.touches.length !== 1) return (on = null);
+      x0 = e.touches[0].clientX;
+      y0 = e.touches[0].clientY;
+      t0 = Date.now();
+    },
+    { passive: true }
+  );
+  document.addEventListener(
+    'touchend',
+    (e) => {
+      if (!on || S.cfg.planSwipe === false) return;
+      const k = on;
+      on = null;
+      const c = e.changedTouches[0],
+        dx = c.clientX - x0,
+        dy = c.clientY - y0;
+      if (Date.now() - t0 > 700 || Math.abs(dx) < 70 || Math.abs(dx) < 2 * Math.abs(dy)) return;
+      // Swiping towards the end of the line moves forward: right-to-left in English, left-to-right in Arabic.
+      const next = dx < 0 === (document.documentElement.dir !== 'rtl') ? 1 : -1;
+      if (k === 'day' && S.planOn) {
+        PLAN.day = ds(addDays(new Date((PLAN.day || TODAY()) + 'T00:00'), next));
+        PLAN.pick = null;
+      } else if (k === 'month' && S.tcalOn && tcal) {
+        const d = new Date(tcal.y, tcal.m + next, 1);
+        tcal.y = d.getFullYear();
+        tcal.m = d.getMonth();
+      } else return;
+      render();
+    },
+    { passive: true }
+  );
+})();
 /**
  * Completion sounds and the default settings (CFG_DEF) with saveCfg().
  * (All src/js files are joined, in filename order, into one shared scope. See src/README.md.)
@@ -8858,6 +8957,9 @@ const CFG_DEF = {
   nEvening: '20:00',
   nClasses: true,
   nExams: true,
+  timeFmt: 'auto',
+  weekStart: 'mon',
+  planSwipe: true,
   planFrom: '06:00',
   planTo: '24:00',
   nBlocks: true,
@@ -8949,6 +9051,10 @@ const AR = {
   'Time-block reminders': 'تذكير فترات الجدول',
   'A reminder before each scheduled block starts': 'تذكير قبل بدء كل فترة مجدولة',
   'Remind me': 'ذكّرني',
+  Clock: 'الساعة',
+  'Calendar week starts on': 'يبدأ أسبوع التقويم يوم',
+  'Swipe between days': 'السحب بين الأيام',
+  'Swipe sideways on the Plan timeline or the calendar': 'اسحب جانبيًا على جدول المخطِّط أو التقويم',
   'Plan: day starts at': 'المخطِّط: يبدأ اليوم عند',
   'Plan: day ends at': 'المخطِّط: ينتهي اليوم عند',
   'Exam reminders': 'تذكير الامتحانات',
@@ -10416,62 +10522,67 @@ const actions = {
   async 'plan-slot'(el) {
     const min = +el.dataset.min,
       day = PLAN.day || TODAY();
-    let t = PLAN.pick && S.tasks.find((x) => x.id === PLAN.pick);
+    const t = PLAN.pick && S.tasks.find((x) => x.id === PLAN.pick);
     if (t) {
       PLAN.pick = null;
-      t.due = day;
-      t.start = fromMin(min);
-    } else {
-      const raw = await askPrompt(
-        L2(
-          'New block at ' + hmText(min) + ' (tip: add "for 90 min")',
-          'فترة جديدة عند ' + hmText(min) + ' (نصيحة: أضف «لمدة 90 دقيقة»)'
-        )
-      );
-      if (!raw || !raw.trim()) return false;
-      // You can type a time and length too, e.g. "Study at 4pm for 90 min"; otherwise the tapped time is used.
-      const q = parseQuick(raw + ' ' + fromMin(min));
-      const typed = parseQuick(raw);
-      if (typed.start) Object.assign(q, typed);
-      t = {
-        id: uid(),
-        title: q.title,
-        start: q.start,
-        dur: q.dur,
-        notes: '',
-        repeat: '',
-        tag: q.tag || '',
-        items: [],
-        due: day,
-        priority: q.priority || S.cfg.prio,
-        goalId: null,
-        done: false,
-        created: Date.now(),
-      };
-      S.tasks.push(t);
+      await planChange(t, L2('Scheduled at ' + hmText(min), 'جُدولت عند ' + hmText(min)), () => {
+        t.due = day;
+        t.start = fromMin(min);
+        t.dur = t.dur || 60;
+      });
+      return;
     }
-    t.dur = t.dur || 60;
-    await DB.put('tasks', t);
+    const raw = await askPrompt(
+      L2(
+        'New block at ' + hmText(min) + ' (tip: add "for 90 min")',
+        'فترة جديدة عند ' + hmText(min) + ' (نصيحة: أضف «لمدة 90 دقيقة»)'
+      )
+    );
+    if (!raw || !raw.trim()) return false;
+    // You can type a time and length too, e.g. "Study at 4pm for 90 min"; otherwise the tapped time is used.
+    const q = parseQuick(raw + ' ' + fromMin(min));
+    const typed = parseQuick(raw);
+    if (typed.start) Object.assign(q, typed);
+    const nb = {
+      id: uid(),
+      title: q.title,
+      start: q.start,
+      dur: q.dur || 60,
+      notes: '',
+      repeat: '',
+      tag: q.tag || '',
+      items: [],
+      due: day,
+      priority: q.priority || S.cfg.prio,
+      goalId: null,
+      done: false,
+      created: Date.now(),
+    };
+    S.tasks.push(nb);
+    await DB.put('tasks', nb);
+    toastUndo(L2('Block added', 'أُضيفت الفترة'), async () => {
+      S.tasks = S.tasks.filter((x) => x.id !== nb.id);
+      await DB.del('tasks', nb.id);
+    });
   },
   /* Selected block: move it 15 minutes, or make it 15 minutes shorter or longer. */
   async 'plan-nudge'(el) {
     const t = S.tasks.find((x) => x.id === el.dataset.id);
     if (!t || !t.start) return;
-    t.start = fromMin(Math.max(0, Math.min(1440 - blockLen(t), toMin(t.start) + +el.dataset.d)));
-    await DB.put('tasks', t);
+    const to = Math.max(0, Math.min(1440 - blockLen(t), toMin(t.start) + +el.dataset.d));
+    await planChange(t, L2('Moved to ' + hmText(to), 'نُقلت إلى ' + hmText(to)), () => (t.start = fromMin(to)));
   },
   async 'plan-len'(el) {
     const t = S.tasks.find((x) => x.id === el.dataset.id);
     if (!t || !t.start) return;
-    t.dur = Math.max(15, Math.min(480, blockLen(t) + +el.dataset.d, 1440 - toMin(t.start)));
-    await DB.put('tasks', t);
+    const len = Math.max(15, Math.min(480, blockLen(t) + +el.dataset.d, 1440 - toMin(t.start)));
+    await planChange(t, L2('Length ' + lenText(len), 'المدة ' + lenText(len)), () => (t.dur = len));
   },
   async 'plan-unset'(el) {
     const t = S.tasks.find((x) => x.id === el.dataset.id);
     if (!t) return;
-    t.start = null;
     PLAN.pick = null;
-    await DB.put('tasks', t);
+    await planChange(t, L2('Unscheduled', 'أُلغيت الجدولة'), () => (t.start = null));
   },
   'tcal-day'(el) {
     tcal.sel = el.dataset.date;

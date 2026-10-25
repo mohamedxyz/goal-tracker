@@ -14,7 +14,13 @@ const toMin = (hm) => {
 };
 const fromMin = (min) => String(Math.floor(min / 60)).padStart(2, '0') + ':' + String(min % 60).padStart(2, '0');
 const hmText = (min) =>
-  fmt(new Date(2000, 0, 1, Math.floor(min / 60) % 24, min % 60), { hour: 'numeric', minute: '2-digit' });
+  fmt(
+    new Date(2000, 0, 1, Math.floor(min / 60) % 24, min % 60),
+    Object.assign(
+      { hour: 'numeric', minute: '2-digit' },
+      S.cfg.timeFmt === '12' ? { hour12: true } : S.cfg.timeFmt === '24' ? { hourCycle: 'h23' } : {}
+    )
+  );
 const blockLen = (t) => t.dur || 60;
 const lenText = (m) => (m < 60 ? m + L2(' min', ' د') : (m % 60 ? (m / 60).toFixed(1) : m / 60) + L2(' h', ' س'));
 const isBlock = (t) => !!(t.start && t.due);
@@ -48,6 +54,25 @@ function layoutBlocks(tasks) {
   return ev;
 }
 
+/** Applies a change to a block, saves it, and shows a toast with Undo. */
+async function planChange(t, msg, change) {
+  const before = { due: t.due, start: t.start, dur: t.dur, pick: PLAN.pick };
+  change();
+  await DB.put('tasks', t);
+  toastUndo(msg, async () => {
+    Object.assign(t, { due: before.due, start: before.start, dur: before.dur });
+    PLAN.pick = before.pick;
+    await DB.put('tasks', t);
+  });
+}
+/** Which blocks overlap in time: Map of task id to the titles of the blocks it overlaps. */
+function blockClashes(lay) {
+  const m = new Map();
+  for (const a of lay)
+    for (const b of lay) if (a !== b && a.s < b.e && b.s < a.e) m.set(a.t.id, (m.get(a.t.id) || []).concat(b.t.title));
+  return m;
+}
+
 function planView() {
   const today = TODAY(),
     day = PLAN.day || today;
@@ -67,6 +92,7 @@ function planView() {
     .slice(0, 30);
   const pick = PLAN.pick && S.tasks.find((t) => t.id === PLAN.pick && !t.done && !t.archived);
   if (!pick) PLAN.pick = null;
+  const clash = blockClashes(lay);
   const planned = lay.reduce((n, x) => n + (x.e - x.s), 0);
 
   let rows = '';
@@ -79,9 +105,9 @@ function planView() {
     .map((x) => {
       const t = x.t,
         h = Math.max(24, ((x.e - x.s) / 60) * PLAN_PX - 2);
-      return `<div class="pl-b pr-${t.priority || 'low'} ${t.done ? 'done' : ''} ${PLAN.pick === t.id ? 'sel' : ''}" style="top:${((x.s - s0) / 60) * PLAN_PX}px;height:${h}px;inset-inline-start:${(x.col / x.n) * 100}%;width:${100 / x.n}%" data-action="plan-pick" data-id="${t.id}" role="button" tabindex="0">
+      return `<div class="pl-b pr-${t.priority || 'low'} ${t.done ? 'done' : ''} ${PLAN.pick === t.id ? 'sel' : ''} ${clash.has(t.id) && !t.done ? 'clash' : ''}" style="top:${((x.s - s0) / 60) * PLAN_PX}px;height:${h}px;inset-inline-start:${(x.col / x.n) * 100}%;width:${100 / x.n}%" data-action="plan-pick" data-id="${t.id}" role="button" tabindex="0">
         <button type="button" class="pl-ck" data-action="toggle-task" data-id="${t.id}" aria-label="${L2('Mark done', 'تم')}">${t.done ? '✓' : ''}</button>
-        <b>${iconPrefix(t)}${esc(t.title)}</b>${h >= 40 ? `<span>${hmText(x.s)} – ${hmText(x.e)}</span>` : ''}</div>`;
+        <b>${clash.has(t.id) && !t.done ? '⚠ ' : ''}${iconPrefix(t)}${esc(t.title)}</b>${h >= 40 ? `<span>${hmText(x.s)} – ${hmText(x.e)}</span>` : ''}</div>`;
     })
     .join('');
   const nowMin = new Date().getHours() * 60 + new Date().getMinutes();
@@ -92,10 +118,11 @@ function planView() {
 
   return `<div class="card plan">
     <div class="cal-nav"><button type="button" class="icon" data-action="plan-day" data-d="-1" aria-label="${L2('Previous day', 'اليوم السابق')}">‹</button><b>${fmtDay(day)}</b><button type="button" class="icon" data-action="plan-day" data-d="1" aria-label="${L2('Next day', 'اليوم التالي')}">›</button></div>
-    <div class="meta pl-sum">${blocks.length ? L2(blocks.length + ' blocks · ' + lenText(planned) + ' planned', blocks.length + ' فترات · ' + lenText(planned) + ' مخطّطة') : L2('Nothing scheduled yet.', 'لا شيء مجدول بعد.')}${day !== today ? ` <button type="button" class="chip" data-action="plan-today">${L2('Today', 'اليوم')}</button>` : ''}</div>
+    <div class="meta pl-sum">${blocks.length ? L2(blocks.length + ' blocks · ' + lenText(planned) + ' planned', blocks.length + ' فترات · ' + lenText(planned) + ' مخطّطة') + (clash.size ? ' · ⚠ ' + L2(clash.size + ' overlapping', clash.size + ' متداخلة') : '') : L2('Nothing scheduled yet.', 'لا شيء مجدول بعد.')}${day !== today ? ` <button type="button" class="chip" data-action="plan-today">${L2('Today', 'اليوم')}</button>` : ''}</div>
     ${
       pick && pick.start
         ? `<div class="pl-bar"><div class="meta"><b>${esc(pick.title)}</b> · ${blockTime(pick)} · ${L2('tap a time to move it', 'اضغط على وقت لنقلها')}</div>
+      ${clash.has(pick.id) ? `<div class="meta pl-warn">⚠ ${L2('Overlaps with ', 'تتداخل مع ')}${clash.get(pick.id).map(esc).join('، ')}</div>` : ''}
       <div class="pl-btns">${[
         ['plan-nudge', -15, '▲ 15', L2('15 minutes earlier', 'أبكر بـ15 دقيقة')],
         ['plan-nudge', 15, '▼ 15', L2('15 minutes later', 'أبعد بـ15 دقيقة')],
@@ -120,3 +147,46 @@ function planView() {
     <div class="pl-grid" style="--plh:${PLAN_PX}px" data-s0="${s0}">${rows}<div class="pl-layer">${blk}${now}</div></div>
     <div class="meta pl-hint">${L2('Tap an empty time to add a block. Tap a block to move or resize it.', 'اضغط على وقت فارغ لإضافة فترة. اضغط على فترة لنقلها أو تغيير مدتها.')}</div></div>`;
 }
+
+/* Swipe sideways on the timeline to change the day, or on the month calendar to change the month. */
+(() => {
+  let x0 = 0,
+    y0 = 0,
+    t0 = 0,
+    on = null;
+  document.addEventListener(
+    'touchstart',
+    (e) => {
+      on = e.target.closest && (e.target.closest('.pl-grid') ? 'day' : e.target.closest('.tcal') ? 'month' : null);
+      if (!on || e.touches.length !== 1) return (on = null);
+      x0 = e.touches[0].clientX;
+      y0 = e.touches[0].clientY;
+      t0 = Date.now();
+    },
+    { passive: true }
+  );
+  document.addEventListener(
+    'touchend',
+    (e) => {
+      if (!on || S.cfg.planSwipe === false) return;
+      const k = on;
+      on = null;
+      const c = e.changedTouches[0],
+        dx = c.clientX - x0,
+        dy = c.clientY - y0;
+      if (Date.now() - t0 > 700 || Math.abs(dx) < 70 || Math.abs(dx) < 2 * Math.abs(dy)) return;
+      // Swiping towards the end of the line moves forward: right-to-left in English, left-to-right in Arabic.
+      const next = dx < 0 === (document.documentElement.dir !== 'rtl') ? 1 : -1;
+      if (k === 'day' && S.planOn) {
+        PLAN.day = ds(addDays(new Date((PLAN.day || TODAY()) + 'T00:00'), next));
+        PLAN.pick = null;
+      } else if (k === 'month' && S.tcalOn && tcal) {
+        const d = new Date(tcal.y, tcal.m + next, 1);
+        tcal.y = d.getFullYear();
+        tcal.m = d.getMonth();
+      } else return;
+      render();
+    },
+    { passive: true }
+  );
+})();

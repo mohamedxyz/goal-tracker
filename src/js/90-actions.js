@@ -136,62 +136,67 @@ const actions = {
   async 'plan-slot'(el) {
     const min = +el.dataset.min,
       day = PLAN.day || TODAY();
-    let t = PLAN.pick && S.tasks.find((x) => x.id === PLAN.pick);
+    const t = PLAN.pick && S.tasks.find((x) => x.id === PLAN.pick);
     if (t) {
       PLAN.pick = null;
-      t.due = day;
-      t.start = fromMin(min);
-    } else {
-      const raw = await askPrompt(
-        L2(
-          'New block at ' + hmText(min) + ' (tip: add "for 90 min")',
-          'فترة جديدة عند ' + hmText(min) + ' (نصيحة: أضف «لمدة 90 دقيقة»)'
-        )
-      );
-      if (!raw || !raw.trim()) return false;
-      // You can type a time and length too, e.g. "Study at 4pm for 90 min"; otherwise the tapped time is used.
-      const q = parseQuick(raw + ' ' + fromMin(min));
-      const typed = parseQuick(raw);
-      if (typed.start) Object.assign(q, typed);
-      t = {
-        id: uid(),
-        title: q.title,
-        start: q.start,
-        dur: q.dur,
-        notes: '',
-        repeat: '',
-        tag: q.tag || '',
-        items: [],
-        due: day,
-        priority: q.priority || S.cfg.prio,
-        goalId: null,
-        done: false,
-        created: Date.now(),
-      };
-      S.tasks.push(t);
+      await planChange(t, L2('Scheduled at ' + hmText(min), 'جُدولت عند ' + hmText(min)), () => {
+        t.due = day;
+        t.start = fromMin(min);
+        t.dur = t.dur || 60;
+      });
+      return;
     }
-    t.dur = t.dur || 60;
-    await DB.put('tasks', t);
+    const raw = await askPrompt(
+      L2(
+        'New block at ' + hmText(min) + ' (tip: add "for 90 min")',
+        'فترة جديدة عند ' + hmText(min) + ' (نصيحة: أضف «لمدة 90 دقيقة»)'
+      )
+    );
+    if (!raw || !raw.trim()) return false;
+    // You can type a time and length too, e.g. "Study at 4pm for 90 min"; otherwise the tapped time is used.
+    const q = parseQuick(raw + ' ' + fromMin(min));
+    const typed = parseQuick(raw);
+    if (typed.start) Object.assign(q, typed);
+    const nb = {
+      id: uid(),
+      title: q.title,
+      start: q.start,
+      dur: q.dur || 60,
+      notes: '',
+      repeat: '',
+      tag: q.tag || '',
+      items: [],
+      due: day,
+      priority: q.priority || S.cfg.prio,
+      goalId: null,
+      done: false,
+      created: Date.now(),
+    };
+    S.tasks.push(nb);
+    await DB.put('tasks', nb);
+    toastUndo(L2('Block added', 'أُضيفت الفترة'), async () => {
+      S.tasks = S.tasks.filter((x) => x.id !== nb.id);
+      await DB.del('tasks', nb.id);
+    });
   },
   /* Selected block: move it 15 minutes, or make it 15 minutes shorter or longer. */
   async 'plan-nudge'(el) {
     const t = S.tasks.find((x) => x.id === el.dataset.id);
     if (!t || !t.start) return;
-    t.start = fromMin(Math.max(0, Math.min(1440 - blockLen(t), toMin(t.start) + +el.dataset.d)));
-    await DB.put('tasks', t);
+    const to = Math.max(0, Math.min(1440 - blockLen(t), toMin(t.start) + +el.dataset.d));
+    await planChange(t, L2('Moved to ' + hmText(to), 'نُقلت إلى ' + hmText(to)), () => (t.start = fromMin(to)));
   },
   async 'plan-len'(el) {
     const t = S.tasks.find((x) => x.id === el.dataset.id);
     if (!t || !t.start) return;
-    t.dur = Math.max(15, Math.min(480, blockLen(t) + +el.dataset.d, 1440 - toMin(t.start)));
-    await DB.put('tasks', t);
+    const len = Math.max(15, Math.min(480, blockLen(t) + +el.dataset.d, 1440 - toMin(t.start)));
+    await planChange(t, L2('Length ' + lenText(len), 'المدة ' + lenText(len)), () => (t.dur = len));
   },
   async 'plan-unset'(el) {
     const t = S.tasks.find((x) => x.id === el.dataset.id);
     if (!t) return;
-    t.start = null;
     PLAN.pick = null;
-    await DB.put('tasks', t);
+    await planChange(t, L2('Unscheduled', 'أُلغيت الجدولة'), () => (t.start = null));
   },
   'tcal-day'(el) {
     tcal.sel = el.dataset.date;

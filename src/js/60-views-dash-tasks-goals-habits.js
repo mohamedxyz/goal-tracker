@@ -297,7 +297,8 @@ function calView() {
     }
   }
   const first = new Date(tcal.y, tcal.m, 1),
-    lead = (first.getDay() + 6) % 7,
+    ws = { mon: 1, sun: 0, sat: 6 }[S.cfg.weekStart] ?? 1,
+    lead = (first.getDay() - ws + 7) % 7,
     days = new Date(tcal.y, tcal.m + 1, 0).getDate();
   let cells = '<span></span>'.repeat(lead);
   for (let d = 1; d <= days; d++) {
@@ -308,7 +309,7 @@ function calView() {
     cells += `<button type="button" class="cd tcd ${k === today ? 'tod' : ''} ${tcal.sel === k ? 'sel' : ''} ${late ? 'late' : ''}" data-action="tcal-day" data-date="${k}" aria-label="${fmtDay(k)}: ${o} due, ${n} done"><span>${d}</span><span class="tcb">${o ? `<i class="cc o">${o}</i>` : ''}${n ? `<i class="cc d">✓${n}</i>` : ''}</span></button>`;
   }
   const wk = [...Array(7)]
-    .map((_, i) => `<span>${fmt(new Date(2024, 0, 1 + i), { weekday: 'narrow' })}</span>`)
+    .map((_, i) => `<span>${fmt(new Date(2024, 0, 7 + ((ws + i) % 7)), { weekday: 'narrow' })}</span>`)
     .join('');
   const sel = tcal.sel,
     so = (due[sel] || []).sort(
