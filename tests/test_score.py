@@ -29,7 +29,7 @@ async def main():
       chk(tag+' explainer opens',r)
       if lang=='ar':
         L=[x for x in await latin(pg) if 'GoalTerra' not in x and x!='English'];chk(tag+' latin '+str(L),L==[])
-      await pg.screenshot(path=f'tests/out/score-{scheme}-{lang}.png')
+      await pg.screenshot(path=f'{SHOTS}/score-{scheme}-{lang}.png')
       await pg.evaluate("document.getElementById('askDlg').close();window.__noAuto=false")
       ov=await pg.evaluate("document.documentElement.scrollWidth>innerWidth")
       chk(tag+' no overflow',not ov);chk(tag+' no errors '+str(errs),not errs)
