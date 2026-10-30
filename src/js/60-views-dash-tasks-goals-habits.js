@@ -134,6 +134,12 @@ function consistencyCard() {
     av = S.habits.filter(isNeg);
   return `<div class="card vcard"><div class="vhead"><div class="title">Habit consistency</div><div class="sub">Last 30 days</div></div>${bl.length ? `<div class="hbars">${mk(bl, false)}</div>` : ''}${av.length ? `<div class="hsub">🛡 Staying clean</div><div class="hbars">${mk(av, true)}</div>` : ''}</div>`;
 }
+/* One always-visible field on Today: type a task, press Add. Dates like "tomorrow 5pm" work. */
+function todayAdd() {
+  const due = S.cfg.dueDef === 'none' ? '' : S.cfg.dueDef === 'tomorrow' ? ds(addDays(new Date(), 1)) : TODAY();
+  return `<form class="add taskadd card" data-form="task"><div class="qa"><input type="text" name="title" placeholder="${L2('Add a task… try: call mom tomorrow 5pm', 'أضف مهمة… جرّب: اتصل بأمي غدًا 5م')}" required autocomplete="off" aria-describedby="qaHint"><button class="btn">${L2('Add', 'أضف')}</button></div>
+    <div class="qa-hint" id="qaHint" aria-live="polite" hidden></div><input type="hidden" name="due" value="${due}"><input type="hidden" name="priority" value="${S.cfg.prio || 'low'}"></form>`;
+}
 function viewDash() {
   const today = TODAY();
   const open = S.tasks.filter((t) => !t.done && !t.archived);
@@ -161,10 +167,11 @@ function viewDash() {
   const openSlots = planTargets().reduce((a, g) => a + planLeft(g), 0),
     dow = new Date().getDay();
   const planCta = !wk.length || ((dow === 0 || dow === 1) && openSlots > 0);
-  return `${sampleBanner()}${dayBanner()}${autoCard()}${autoAskCard()}${!backupNudge() && lb !== null && lb > 0 ? `<div class="meta" style="margin:2px 2px 8px">${L2('Last backup', 'آخر نسخة')} ${agoText(lb)} · <button class="chip" data-action="backup-now">${L2('Back up now', 'انسخ الآن')}</button></div>` : ''}${backupNudge() ? `<div class="card backup-cta ${backupLevel() > 1 ? 'urgent' : ''}"><div class="grow"><div class="title">${lb === null ? 'No backup yet' : 'Last backup ' + agoText(lb)}</div><div class="meta">${backupLevel() > 1 ? 'If this browser clears its storage, everything since your last backup is gone. Back up now.' : 'Your data lives only in this browser. Save a backup and keep it somewhere safe.'}</div></div><button class="btn" data-action="backup-now">Back up now</button><button class="icon" data-action="backup-snooze" title="Remind me later" aria-label="Dismiss backup reminder">✕</button></div>` : ''}${nRv ? `<div class="card review-cta"><div class="grow"><div class="title">${nRv} goal${nRv > 1 ? 's' : ''} from past periods need${nRv > 1 ? '' : 's'} a review</div><div class="meta">Hit it, missed, or carry over. About a minute.</div></div><button class="btn" data-action="open-review">Review</button></div>` : ''}  <div class="grid2" style="margin-top:6px"><div>
+  const housekeeping = `${autoCard()}${autoAskCard()}${!backupNudge() && lb !== null && lb > 0 ? `<div class="meta" style="margin:2px 2px 8px">${L2('Last backup', 'آخر نسخة')} ${agoText(lb)} · <button class="chip" data-action="backup-now">${L2('Back up now', 'انسخ الآن')}</button></div>` : ''}${backupNudge() ? `<div class="card backup-cta ${backupLevel() > 1 ? 'urgent' : ''}"><div class="grow"><div class="title">${lb === null ? 'No backup yet' : 'Last backup ' + agoText(lb)}</div><div class="meta">${backupLevel() > 1 ? 'If this browser clears its storage, everything since your last backup is gone. Back up now.' : 'Your data lives only in this browser. Save a backup and keep it somewhere safe.'}</div></div><button class="btn" data-action="backup-now">Back up now</button><button class="icon" data-action="backup-snooze" title="Remind me later" aria-label="Dismiss backup reminder">✕</button></div>` : ''}`;
+  return `${sampleBanner()}${dayBanner()}${nRv ? `<div class="card review-cta"><div class="grow"><div class="title">${nRv} goal${nRv > 1 ? 's' : ''} from past periods need${nRv > 1 ? '' : 's'} a review</div><div class="meta">Hit it, missed, or carry over. About a minute.</div></div><button class="btn" data-action="open-review">Review</button></div>` : ''}  <div class="grid2" style="margin-top:6px"><div>
     ${
       S.cfg.dTasks
-        ? `<h2>Today's tasks</h2>${todays.length ? `<ul class="list">${todays.map(taskItem).join('')}</ul>` : `<div class="empty">Nothing due today.</div>`}
+        ? `<h2>Today's tasks</h2>${todayAdd()}${todays.length ? `<ul class="list">${todays.map(taskItem).join('')}</ul>` : `<div class="empty">Nothing due today.</div>`}
     ${overdue && !S.cfg.dOverdue ? `<button class="chip" style="margin-top:10px" data-action="see-overdue">${overdue} overdue from earlier days →</button>` : ''}`
         : ''
     }
@@ -172,18 +179,18 @@ function viewDash() {
   </div><div>
     ${S.cfg.dHabits ? `${habitRing()}<h2>Today's habits</h2>${habitList(false)}` : ''}
   </div></div>
-  ${planCta ? `<div class="card plan-cta"><div class="grow"><div class="title">${wk.length ? L2(`${openSlots} weekly slot${openSlots > 1 ? 's' : ''} still to plan`, `${openSlots} خانات أسبوعية للتخطيط`) : `Plan ${currentPeriod('weekly')}`}</div><div class="meta">${wk.length ? L2("Fill in this week's steps toward your monthly goals.", 'املأ خطوات هذا الأسبوع نحو أهدافك الشهرية.') : L2("No weekly goals yet. Pick this week's steps.", 'لا أهداف أسبوعية بعد. اختر خطوات هذا الأسبوع.')}</div></div><button class="btn" data-action="open-plan">Plan week</button></div>` : ''}${rpgCard()}<div class="stats dstats">
+  ${planCta ? `<div class="card plan-cta"><div class="grow"><div class="title">${wk.length ? L2(`${openSlots} weekly slot${openSlots > 1 ? 's' : ''} still to plan`, `${openSlots} خانات أسبوعية للتخطيط`) : `Plan ${currentPeriod('weekly')}`}</div><div class="meta">${wk.length ? L2("Fill in this week's steps toward your monthly goals.", 'املأ خطوات هذا الأسبوع نحو أهدافك الشهرية.') : L2("No weekly goals yet. Pick this week's steps.", 'لا أهداف أسبوعية بعد. اختر خطوات هذا الأسبوع.')}</div></div><button class="btn" data-action="open-plan">Plan week</button></div>` : ''}${rpgCard()}<div class="stats dstats" ${S.cfg.dStats ? '' : 'hidden'}>
     <div class="card stat"><div class="n">${todaysDone}/${todays.length}</div><div class="l">Today's tasks done</div></div>
     <div class="card stat"><div class="n">${hd}/${dueHabits.length}</div><div class="l">Habits done today</div></div>
     <div class="card stat"><div class="n">${active}</div><div class="l">Active goals</div></div>
     <div class="card stat"><div class="n">🔥 ${best}</div><div class="l">Best habit streak</div></div>
     ${avd.length ? `<div class="card stat avoidstat"><div class="n">🛡 ${avOk}/${dueAvoid.length}</div><div class="l">Staying clean</div></div>` : ''}
   </div>
-  ${coachCard()}
+  ${planCta ? '' : coachCard()}
   ${studyCard()}
   ${
     S.cfg.dCharts
-      ? `<button class="card insbtn" data-action="toggle-ins" aria-expanded="${!!S.insOpen}"><span>📊 Insights <small>activity, charts, habit consistency</small></span><span>${S.insOpen ? '▾' : '▸'}</span></button>
+      ? `<button class="card insbtn" data-action="toggle-ins" aria-expanded="${!!S.insOpen}"><span>Insights <small>activity, charts, habit consistency</small></span><span>${S.insOpen ? '▾' : '▸'}</span></button>
   ${
     S.insOpen
       ? `${heatmapCard()}
@@ -192,7 +199,8 @@ function viewDash() {
       : ''
   }`
       : ''
-  }`;
+  }
+  ${housekeeping}`;
 }
 const tagOf = (t) => (t.tag || '').trim();
 function tagList(id) {
@@ -274,8 +282,8 @@ function viewTasks() {
     S.planOn
       ? `<div class="filters"><button class="chip" data-action="tasks-plan">☰ List</button><button class="chip" data-action="tasks-cal">📅 Calendar</button></div>${planView()}`
       : S.tcalOn
-        ? `<div class="filters"><button class="chip" data-action="tasks-cal">☰ List</button><button class="chip" data-action="tasks-plan">🕐 Plan</button></div>${calView()}`
-        : `<div class="filters fbar"><div class="fscroll">${chip('all', 'All')}${chip('today', 'Due today')}${chip('overdue', 'Overdue' + (nOver ? ' · ' + nOver : ''))}${chip('done', 'Done')}</div><button class="chip ${selOn('tasks') ? 'on' : ''}" data-action="sel-mode" data-k="tasks" aria-pressed="${selOn('tasks')}">${selOn('tasks') ? '✓ Selecting' : '☑ Select'}</button><button class="chip" data-action="tasks-cal">📅 Calendar</button><button class="chip" data-action="tasks-plan">🕐 Plan</button></div>
+        ? `<div class="filters"><button class="chip" data-action="tasks-cal">☰ List</button>${S.cfg.mTime ? '<button class="chip" data-action="tasks-plan">🕐 Plan</button>' : ''}</div>${calView()}`
+        : `<div class="filters fbar"><div class="fscroll">${chip('all', 'All')}${chip('today', 'Due today')}${chip('overdue', 'Overdue' + (nOver ? ' · ' + nOver : ''))}${chip('done', 'Done')}</div><button class="chip ${selOn('tasks') ? 'on' : ''}" data-action="sel-mode" data-k="tasks" aria-pressed="${selOn('tasks')}">${selOn('tasks') ? '✓ Selecting' : '☑ Select'}</button><button class="chip" data-action="tasks-cal">📅 Calendar</button>${S.cfg.mTime ? '<button class="chip" data-action="tasks-plan">🕐 Plan</button>' : ''}</div>
   ${open.length ? taskGroups(open) : done.length && showDone ? '' : `<div class="empty">No tasks here.</div>`}
   ${done.length && showDone ? `${f === 'done' ? '' : `<button class="chip" style="margin-top:12px" data-action="toggle-done-list" aria-expanded="${!!S.doneOpen}">${S.doneOpen ? '▾' : '▸'} ${L2(done.length + ' done', done.length + ' منجزة')}</button>`}${f === 'done' || S.doneOpen ? `<ul class="list">${(S.doneAll ? done : done.slice(0, 40)).map(taskItem).join('')}</ul>` : ''}${done.length > 40 && (f === 'done' || S.doneOpen) ? `<button class="chip" style="margin-top:8px" data-action="toggle-done-all">${S.doneAll ? 'Show fewer' : 'Show all ' + done.length + ' completed'}</button>` : ''}` : ''}`
   }`;

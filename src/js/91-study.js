@@ -238,7 +238,7 @@ function timetableCard() {
     hm = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0'),
     td = now.getDay();
   const days = ttOrder().filter((d) => classesOn(d).length);
-  return `<div class="card scard"><div class="shead"><div class="title">🗓 Timetable</div><label class="tt-st"><span class="meta">Week starts</span><select data-action="set" data-k="ttStart" aria-label="Week starts">${[
+  return `<div class="card scard"><div class="shead"><div class="title">Timetable</div><label class="tt-st"><span class="meta">Week starts</span><select data-action="set" data-k="ttStart" aria-label="Week starts">${[
     ['sat', dayName(6)],
     ['sun', dayName(0)],
     ['mon', dayName(1)],
@@ -286,7 +286,7 @@ function studyCard() {
       .filter((e) => daysTo(e.date) <= 14)
       .slice(0, 3),
     miss = S.exams.filter(needsResult).length;
-  return `<div class="card"><div class="title">📚 Study today</div>${todayClassesLine()}
+  return `<div class="card"><div class="title">Study today</div>${todayClassesLine()}
     ${
       S.topics.length
         ? `<div class="meta"><span>${studiedToday()} studied today</span><span>${weak} weak</span><span>${fresh} not started</span>${(() => {
@@ -357,9 +357,23 @@ function pickRow(t) {
     ${due ? '<span class="chip2 due">Due for review</span>' : `<span class="chip2"><i class="cdot c${c}"></i>${CONF_LABEL[c]}</span>`}${l ? `<span class="chip2 mute">Last: ${agoDays(l.d)}</span>` : ''}</div></div>
     <div class="rate" role="group" aria-label="${esc(t.name)}"><button type="button" class="rb c1" data-action="topic-rate" data-id="${t.id}" data-c="1">Weak</button><button type="button" class="rb c2" data-action="topic-rate" data-id="${t.id}" data-c="2">OK</button><button type="button" class="rb c3" data-action="topic-rate" data-id="${t.id}" data-c="3">Strong</button></div></div>`;
 }
+function missingStrip() {
+  const m = S.exams.filter(needsResult);
+  if (!m.length) return '';
+  return `<div class="card backup-cta"><div class="grow"><div class="title">${L2('Results to log', 'نتائج بانتظارك')}</div><div class="meta">${m
+    .slice(0, 3)
+    .map((e) => `<span translate="no">${esc(e.title)}</span>`)
+    .join(
+      ' · '
+    )}</div></div><button class="btn" data-action="edit-exam" data-id="${m[0].id}">${L2('Log result', 'سجّل النتيجة')}</button></div>`;
+}
+function timetableFold() {
+  const n = classesOn(new Date().getDay()).length;
+  return `<details class="more fold" style="margin-top:12px"><summary>${L2('Timetable', 'الجدول')} · ${n ? L2(`${n} class(es) today`, `${n} حصص اليوم`) : L2('no classes today', 'لا حصص اليوم')}</summary>${timetableCard()}</details>`;
+}
 function viewStudy() {
   const picksAll = topicPicks(),
-    picks = picksAll.slice(0, 5);
+    picks = S.picksAll ? picksAll : picksAll.slice(0, 5);
   const bySub = new Map();
   for (const t of S.topics) {
     if (!bySub.has(t.subject)) bySub.set(t.subject, []);
@@ -395,10 +409,13 @@ function viewStudy() {
   const tile = (n, l, cls) => `<div class="stile ${cls || ''}"><b>${n}</b><span>${l}</span></div>`;
   return `<h2>Study</h2>
   <div class="stiles">${tile(dueN, 'To review', dueN ? 'hot' : '')}${tile(studiedToday(), 'Studied today', 'ok')}${tile(nd === null ? '—' : nd, 'Days to next exam', nd !== null && nd <= 3 ? 'hot' : '')}</div>
-  ${examsCard()}
-  ${timetableCard()}
+${missingStrip()}
   <div class="card scard"><div class="shead"><div class="title">Today's picks</div>${picksAll.length ? `<span class="pill">${picksAll.length} to go</span>` : ''}</div>
-    ${picks.length ? `<p class="meta" style="margin:0 0 6px">How did each topic feel today? Weak and untouched topics come first.</p>${picks.map(pickRow).join('')}` : `<div class="empty celebrate">${S.topics.length ? '<span class="party">🎉</span> Everything has been studied today' : 'Add topics below to get daily picks.'}</div>`}</div>
+    ${picks.length ? `<p class="meta" style="margin:0 0 6px">How did each topic feel today? Weak and untouched topics come first.</p>${picks.map(pickRow).join('')}${picksAll.length > 5 ? `<button class="chip" style="margin-top:8px" data-action="picks-all">${S.picksAll ? L2('Show fewer', 'عرض أقل') : L2(`Show all ${picksAll.length}`, `عرض الكل (${picksAll.length})`)}</button>` : ''}` : `<div class="empty celebrate">${S.topics.length ? '<span class="party">🎉</span> Everything has been studied today' : 'Add topics below to get daily picks.'}</div>`}</div>
+  ${examsCard()}
+  <p class="meta legend">Tap a day to rate it: <i class="cdot c1"></i>Weak <i class="cdot c2"></i>OK <i class="cdot c3"></i>Strong. <span>Backfill past days to build your retrospective timetable.</span></p>
+  ${sections || `<div class="empty">No subjects yet.</div>`}
+  ${timetableFold()}
   ${(() => {
     const ins = insightsCard();
     return ins
@@ -409,7 +426,5 @@ function viewStudy() {
   <form class="add" data-form="topics" style="margin-top:10px;border:0;padding:0;background:none">
     <input type="text" name="subject" list="subjListAdd" placeholder="Subject (e.g. Biochemistry)" required autocomplete="off">${subjList('subjListAdd')}
     <textarea name="names" placeholder="Topics, one per line" required style="min-height:70px"></textarea>
-    <button class="btn">Add topics</button></form></details>
-  <p class="meta legend">Tap a day to rate it: <i class="cdot c1"></i>Weak <i class="cdot c2"></i>OK <i class="cdot c3"></i>Strong. <span>Backfill past days to build your retrospective timetable.</span></p>
-  ${sections || `<div class="empty">No subjects yet.</div>`}`;
+    <button class="btn">Add topics</button></form></details>`;
 }

@@ -35,6 +35,9 @@ Note: `main` once held a 0.75.0 rollback to the 0.71.1 app; 0.76.0 supersedes it
 ## Habits (0.83.0)
 `src/js/77-habit-craft.js` holds the Atomic Habits features: optional per-habit fields (`ident`, `after`, `at`, `where`, `treat`, `mini`, `env`), `habitHint`, `habitRing`, `stackOrder`, `easierCard`. `streak()`/`bestStreak()` use "never miss twice" (one missed due day is forgiven). Half-ticks are check-in rows with `mini:true`, mirrored in `S.mini`. Rewards run in `habitWin()` (90-actions.js) and can be switched off with `cfg.habitFx`. Note: inside `rpgAll()` the local names `streak`/`bestStreak` shadow the habit functions.
 
+## Simpler app (0.84.0)
+Modules are opt-in add-ons (Settings > Add-ons): `student`, `mTime` (start time/length, Plan chips), `rpg` (game), coach (`coachTone`, default off). `dStats` hides the Today stat grid by default. Existing users keep modules they already use via the `mig84` migration in `99-boot-theme-keyboard.js`. Settings shows 6 cards plus a collapsed Advanced block (`<!--adv-->` marker in `settingsCard()`). Intro is one screen (`drawIntro`, `STARTERS`). `buzz(kind)` vibrates when `cfg.haptics` (unverified on device). Housekeeping cards (backup nudge, auto-backup) sit at the bottom of Today. In tests, `helpers.page(..., legacy=True)` turns the add-ons on; pass `legacy=False` to test the fresh-user defaults. Study: top 5 picks + "Show all", timetable in a fold.
+
 ## Known to-do (not yet done)
 - README is out of date: "Import" is now "Restore", screenshots predate 0.72, no mention of info sheets, tip cards or auto backup. `tests/screenshots.py` needs tips dismissed and Settings sections opened before it will give good images.
 - Game (done in 0.81.0): boss death is permanent, overkill bonus, 25% growth cap, how-it-works sheet, badges. Still open: anti-grind rules (tiny tasks ticked straight after creating them), more badges.

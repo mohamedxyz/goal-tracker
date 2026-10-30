@@ -292,6 +292,7 @@ const AR = {
   Archive: 'أرشفة',
   '🗑 Delete': '🗑 حذف',
   Trash: 'سلة المحذوفات',
+  Timetable: 'الجدول',
   'Open trash →': 'فتح السلة ←',
   'Trash is empty.': 'السلة فارغة.',
   'Empty trash': 'إفراغ السلة',

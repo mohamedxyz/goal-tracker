@@ -20,12 +20,10 @@ async def run(scheme):
     print(scheme,'ar intro overflow',await ov())
     await pg.screenshot(path=f'{OUT}/intro0-ar-{scheme}.png')
     await pg.click('[data-action=intro-lang][data-v=en]')
-    for i in range(4): await pg.click('[data-action=intro-step][data-d="1"]');await pg.wait_for_timeout(80)
-    await pg.click('[data-action=intro-student]')
-    await pg.click('[data-action=intro-step][data-d="1"]')
     await pg.screenshot(path=f'{OUT}/intro5-{scheme}.png')
     print(scheme,'intro overflow',await ov())
     await pg.click('[data-action=intro-done]:not([data-go])')
+    await pg.evaluate("S.cfg.student=true;S.cfg.coachTone='on';saveCfg()")
     # seed tasks done on several past days via IndexedDB put through app DB
     await pg.evaluate("""async()=>{const now=Date.now();const per=[1,3,6,0,2,5,4,8,1];
       for(let d=0;d<per.length;d++)for(let j=0;j<per[d];j++){const t={id:uid(),title:'Task '+d+'-'+j+' with a fairly long title to test wrapping',notes:'',repeat:'',tag:'',items:[],due:null,priority:'low',goalId:'',done:true,doneAt:now-d*864e5,created:now-d*864e5};S.tasks.push(t);await DB.put('tasks',t)}
@@ -42,9 +40,10 @@ async def run(scheme):
     print(scheme,'levels overflow',await ov())
     await pg.click('[data-action=lvl-month][data-d="-1"]');await pg.click('[data-action=lvl-month][data-d="1"]')
     await pg.click('[data-action=dlg-close]')
-    await pg.click('.coach .cmsg');await pg.wait_for_timeout(150)
-    assert await pg.locator('#editDlg[open] .cd.lc').count()>0,'coach tap'
-    await pg.click('[data-action=dlg-close]')
+    if await pg.locator('.coach .cmsg').count():  # the coach card yields to the weekly-plan card since 0.84
+      await pg.click('.coach .cmsg');await pg.wait_for_timeout(150)
+      assert await pg.locator('#editDlg[open] .cd.lc').count()>0,'coach tap'
+      await pg.click('[data-action=dlg-close]')
     # Arabic levels
     await pg.evaluate("S.cfg.lang='ar';saveCfg();applyLang();render()");await pg.wait_for_timeout(200)
     await pg.screenshot(path=f'{OUT}/dash-ar-{scheme}.png')

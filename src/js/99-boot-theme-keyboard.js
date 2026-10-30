@@ -101,6 +101,12 @@ async function autoArchive() {
 (async () => {
   applyLang();
   await load();
+  if (!S.cfg.mig84) {
+    // 0.84.0: time blocking became an add-on; keep it on for anyone who already uses it
+    S.cfg.mig84 = true;
+    if (S.tasks.some((t) => t.start)) S.cfg.mTime = true;
+    saveCfg();
+  }
   await autoArchive();
   if (S.cfg.rpg && !S.cfg.rpgSince) {
     S.cfg.rpgSince = TODAY();

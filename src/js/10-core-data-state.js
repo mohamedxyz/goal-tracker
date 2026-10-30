@@ -348,7 +348,7 @@ function rate30(h) {
 }
 
 /* ---------- Version ---------- */
-const APP_VERSION = '0.83.0';
+const APP_VERSION = '0.84.0';
 
 /* Pick the English or Arabic text for the current language. Call it at render time, never while the file is loading. */
 const L2 = (en, ar) => (S.cfg.lang === 'ar' ? ar : en);

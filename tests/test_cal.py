@@ -11,9 +11,12 @@ async def m():
       print(sc,'cells',await pg.locator('.tcd').count(),'late',await pg.locator('.tcd.late').count(),'ov',await overflow(pg))
       await pg.screenshot(path=f'{SHOTS}/cal-{sc}.png',full_page=True)
       tgt=await pg.evaluate("ds(addDays(new Date(),3))")
+      moved=not await pg.locator(f'[data-action=tcal-day][data-date="{tgt}"]').count()
+      if moved:await pg.click('[data-action=tcal-month][data-d="1"]')  # day +3 can fall in next month
       await pg.click(f'[data-action=tcal-day][data-date="{tgt}"]');await pg.wait_for_timeout(200)
       await pg.fill('form[data-form=caltask] input','Dentist !high');await pg.press('form[data-form=caltask] input','Enter');await pg.wait_for_timeout(300)
       print(sc,'added',await pg.evaluate(f"(({{title,due,priority}})=>[title,due,priority])(S.tasks.at(-1))"),'focus kept',await pg.evaluate("document.activeElement.closest('form[data-form=caltask]')!==null"))
+      if moved:await pg.click('[data-action=tcal-month][data-d="-1"]')
       await pg.click('[data-action=toggle-task]:not(:checked) >> nth=0');await pg.wait_for_timeout(200)
       await pg.click('[data-action=tcal-month][data-d="1"]');await pg.click('[data-action=tcal-month][data-d="-1"]');await pg.click('[data-action=tcal-month][data-d="-1"]')
       print(sc,'today chip',await pg.locator('[data-action=tcal-today]').count());await pg.click('[data-action=tcal-today]')

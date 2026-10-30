@@ -4,6 +4,13 @@
  */
 
 /* ---------- Completion sounds (synthesised, no audio files) ---------- */
+/* A short vibration with the tick sounds, where the phone lets the web view do it. */
+function buzz(kind) {
+  try {
+    if (S.cfg && S.cfg.haptics !== false && navigator.vibrate && ['task', 'habit', 'goal'].includes(kind))
+      navigator.vibrate(kind === 'goal' ? [12, 40, 12] : 10);
+  } catch (e) {}
+}
 const Sound = {
   ctx: null,
   on: true,
@@ -19,6 +26,7 @@ const Sound = {
     } catch (e) {}
   },
   play(kind) {
+    buzz(kind);
     if (!this.on) return;
     try {
       const C = this.ctx || (this.ctx = new (window.AudioContext || window.webkitAudioContext)());
@@ -123,7 +131,11 @@ const CFG_DEF = {
   focusLen: '25',
   breakLen: '5',
   rpg: false,
-  coachTone: 'on',
+  coachTone: 'off',
+  mTime: false,
+  dStats: false,
+  mig84: false,
+  haptics: true,
   lvl2: '3',
   lvl3: '5',
   stuCompact: false,

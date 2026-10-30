@@ -174,7 +174,10 @@ function render() {
       : S.view === 'bestiary'
         ? 'dash'
         : S.view;
+  if (!S.cfg.mTime) S.planOn = false;
+  const attn = backupNudge();
   document.querySelectorAll('#nav button,#tabbar button').forEach((b) => {
+    b.classList.toggle('attn', b.dataset.view === 'data' && attn);
     const on = b.dataset.view === nv;
     b.classList.toggle('on', on);
     on ? b.setAttribute('aria-current', 'page') : b.removeAttribute('aria-current');
@@ -226,8 +229,12 @@ function openEdit(kind, id) {
       ]
         .map(([v, l]) => `<option value="${v}" ${t.priority === v ? 'selected' : ''}>${l}</option>`)
         .join('')}</select></div></div>
-      <div class="two"><div><label>Start time</label><input type="time" name="start" value="${t.start || ''}"></div>
-      <div><label>Length</label><select name="dur">${PLAN_LENS.map((m) => `<option value="${m}" ${blockLen(t) === m ? 'selected' : ''}>${lenText(m)}</option>`).join('')}</select></div></div>
+      ${
+        S.cfg.mTime || t.start
+          ? `<div class="two"><div><label>Start time</label><input type="time" name="start" value="${t.start || ''}"></div>
+      <div><label>Length</label><select name="dur">${PLAN_LENS.map((m) => `<option value="${m}" ${blockLen(t) === m ? 'selected' : ''}>${lenText(m)}</option>`).join('')}</select></div></div>`
+          : ''
+      }
       <label>Weekly goal</label><select name="goalId">${goals}</select>
       <label>Tag folder</label><input type="text" name="tag" list="tagListEdit" value="${esc(t.tag || '')}" placeholder="None" autocomplete="off">${tagList('tagListEdit')}
       <label>Repeat</label><select name="repeat">${REPEATS.map(([r, l]) => `<option value="${r}" ${(t.repeat || '') === r ? 'selected' : ''}>${l}</option>`).join('')}</select>
@@ -345,8 +352,8 @@ dlg.addEventListener('submit', async (e) => {
       icon: v.icon || '',
       title: v.title.trim(),
       due: v.due || (v.start ? TODAY() : null),
-      start: v.start || null,
-      dur: +v.dur || 60,
+      start: 'start' in v ? v.start || null : t.start,
+      dur: 'dur' in v ? +v.dur || 60 : t.dur,
       priority: v.priority,
       goalId: v.goalId || null,
       notes: (v.notes || '').trim(),
@@ -594,70 +601,24 @@ function openIntro() {
   drawIntro();
   if (!dlg.open) dlg.showModal();
 }
+const STARTERS = [
+  ['water', '💧', 'Drink water', 'اشرب الماء', 'drink one glass', 'اشرب كوبًا'],
+  ['read', '📖', 'Read', 'القراءة', 'read one page', 'اقرأ صفحة'],
+  ['move', '🏃', 'Move your body', 'حرّك جسمك', 'five minutes', 'خمس دقائق'],
+  ['calm', '🧘', 'Breathe', 'تنفّس بهدوء', 'three deep breaths', 'ثلاثة أنفاس عميقة'],
+  ['sleep', '🛏', 'Sleep on time', 'نم في موعدك', 'phone down at bedtime', 'ضع الهاتف عند النوم'],
+];
 function drawIntro() {
-  const L = lvlAt(),
-    stu = !!S.cfg.student,
-    ar = S.cfg.lang === 'ar';
-  const steps = [
-    {
-      i: '<svg viewBox="0 0 100 100" width="76" height="76" aria-hidden="true"><defs><clipPath id="introGlobe"><circle cx="50" cy="50" r="27"/></clipPath></defs><g transform="rotate(-22 50 50)"><ellipse cx="50" cy="50" rx="45" ry="15" fill="none" style="stroke:var(--logo-orbit)" stroke-width="3.6"/></g><circle cx="50" cy="50" r="27" fill="#0E4F5C" style="stroke:var(--logo-ring)" stroke-width="1.8"/><g clip-path="url(#introGlobe)"><ellipse cx="50" cy="50" rx="27" ry="9" fill="none" stroke="#2F8C8A" stroke-width="1.5"/><path d="M20 54 C28 43 39 45 46 51 C52 57 60 50 68 54 C73 57 77 61 80 68 L80 82 L20 82 Z" fill="#2E9E6B"/></g><g transform="rotate(-22 50 50)"><path d="M5 50 A45 15 0 0 0 95 50" fill="none" style="stroke:var(--logo-orbit)" stroke-width="3.6" stroke-linecap="round"/><circle cx="78.9" cy="61.5" r="7" fill="#E8803A" style="stroke:var(--card)" stroke-width="2.6"/></g></svg>',
-      t: L2('Welcome to GoalTerra', 'أهلاً بك في GoalTerra'),
-      p: L2(
-        "Turn big goals into this week's steps, and show up every day. No account, no internet: everything stays on this phone.",
-        'حوّل أهدافك الكبيرة إلى خطوات لهذا الأسبوع، والتزم بها كل يوم. بلا حساب وبلا إنترنت: كل شيء يبقى على هذا الهاتف.'
-      ),
-      x: `<div class="intro-row"><button type="button" class="${ar ? 'ghost' : 'btn'}" data-action="intro-lang" data-v="en">English</button><button type="button" class="${ar ? 'btn' : 'ghost'}" data-action="intro-lang" data-v="ar">العربية</button></div>`,
-    },
-    {
-      i: '🪜',
-      t: L2('The goal ladder', 'سلّم الأهداف'),
-      p: L2(
-        'Start with a 5-year goal, then break it into annual, monthly and weekly goals. Finish the small steps and progress climbs the ladder by itself.',
-        'ابدأ بهدف لخمس سنوات، ثم قسّمه إلى أهداف سنوية وشهرية وأسبوعية. أنجز الخطوات الصغيرة وسيصعد التقدم في السلّم تلقائيًا.'
-      ),
-    },
-    {
-      i: '⚡',
-      t: L2('Day levels', 'مستويات الأيام'),
-      p: L2(
-        `Every task you finish today raises your level: ⚡ Spark, 🔥 Blaze at ${L[1]}, ⚔️ Titan at ${L[2]}. Titan days get tougher on purpose. Tap the banner on the Dashboard to see your level calendar.`,
-        `كل مهمة تنجزها اليوم ترفع مستواك: ⚡ شرارة، 🔥 لهب عند ${L[1]}، ⚔️ جبّار عند ${L[2]}. أيام الجبّار أصعب عن قصد. اضغط على الشريط في الرئيسية لترى تقويم مستوياتك.`
-      ),
-    },
-    {
-      i: '🔁',
-      t: L2('Habits', 'العادات'),
-      p: L2(
-        'Add habits you want to build, and "avoid" habits for things you\'re quitting. Every clean day grows your 🛡 streak.',
-        'أضف عادات تريد بناءها، وعادات "تجنّب" لأشياء تريد تركها. كل يوم نظيف يزيد سلسلتك 🛡.'
-      ),
-    },
-    {
-      i: '🎓',
-      t: L2('Studying?', 'هل تدرس؟'),
-      p: L2(
-        'Student mode adds a Study tab: a revision timetable with Weak/OK/Strong ratings, spaced repetition and exam countdowns.',
-        'وضع الطالب يضيف تبويب الدراسة: جدول مراجعة بتقييم ضعيف/مقبول/قوي، ومراجعة متباعدة، وعدّ تنازلي للامتحانات.'
-      ),
-      x: `<div class="intro-row"><button type="button" class="${stu ? 'btn' : 'ghost'}" data-action="intro-student">${stu ? L2('✓ Student mode on', '✓ وضع الطالب مفعّل') : L2('Turn on student mode', 'تفعيل وضع الطالب')}</button></div>`,
-    },
-    {
-      i: '🚀',
-      t: L2("You're set", 'أنت جاهز'),
-      p: L2(
-        'Your data lives only in this browser, so copy a backup from Settings now and then. Start with one goal for this week.',
-        'بياناتك محفوظة في هذا المتصفح فقط، لذا انسخ نسخة احتياطية من الإعدادات بين حين وآخر. ابدأ بهدف واحد لهذا الأسبوع.'
-      ),
-      x: `<div class="intro-row"><button type="button" class="ghost" data-action="tpl-open">${L2('Use a template', 'استخدم قالبًا')}</button><button type="button" class="ghost" data-action="sample-add">${L2('Try sample data', 'جرّب بيانات تجريبية')}</button></div>`,
-    },
-  ];
-  const st = steps[introStep],
-    last = introStep === steps.length - 1;
+  S.introPick = S.introPick || new Set();
   dlg.innerHTML = `<div class="intro">
-    <div class="ii" aria-hidden="true">${st.i}</div><h3>${st.t}</h3><p>${st.p}</p>${st.x || ''}
-    <div class="intro-dots" aria-hidden="true">${steps.map((_, i) => `<i class="${i === introStep ? 'on' : ''}"></i>`).join('')}</div>
-    <div class="intro-nav">${introStep ? `<button type="button" class="ghost" data-action="intro-step" data-d="-1">${L2('Back', 'رجوع')}</button>` : `<button type="button" class="ghost" data-action="intro-done">${L2('Skip', 'تخطٍّ')}</button>`}<span class="grow"></span>
-    ${last ? `<button type="button" class="ghost" data-action="intro-done" data-go="goals">${L2('Set my first goal', 'حدّد هدفي الأول')}</button><button type="button" class="btn" data-action="intro-done">${L2("Let's go", 'لنبدأ')}</button>` : `<button type="button" class="btn" data-action="intro-step" data-d="1">${L2('Next', 'التالي')}</button>`}</div></div>`;
+    <div class="ii" aria-hidden="true"><svg viewBox="0 0 100 100" width="64" height="64"><g transform="rotate(-22 50 50)"><ellipse cx="50" cy="50" rx="45" ry="15" fill="none" style="stroke:var(--accent)" stroke-width="6"/></g><circle cx="50" cy="50" r="24" style="fill:var(--ok)"/></svg></div>
+    <div class="intro-row"><button type="button" class="${S.cfg.lang === 'ar' ? 'ghost' : 'btn'}" data-action="intro-lang" data-v="en">English</button><button type="button" class="${S.cfg.lang === 'ar' ? 'btn' : 'ghost'}" data-action="intro-lang" data-v="ar">العربية</button></div>
+    <h3>${L2('What do you want to do every day?', 'ماذا تريد أن تفعل كل يوم؟')}</h3>
+    <p>${L2('Pick a few, or type your own. You can change anything later.', 'اختر بعضها أو اكتب عادتك. يمكنك تغيير أي شيء لاحقًا.')}</p>
+    <div class="intro-picks">${STARTERS.map(([k, ic, en, ar]) => `<button type="button" class="chip ${S.introPick.has(k) ? 'on' : ''}" data-action="intro-pick" data-k="${k}" aria-pressed="${S.introPick.has(k)}">${ic} ${L2(en, ar)}</button>`).join('')}</div>
+    <input type="text" id="introOwn" placeholder="${L2('Or type your own habit', 'أو اكتب عادتك')}" autocomplete="off">
+    <div class="intro-nav"><button type="button" class="ghost" data-action="intro-done">${L2('Skip', 'تخطٍّ')}</button><button type="button" class="btn" data-action="intro-go">${L2('Start', 'ابدأ')}</button></div>
+    <p class="meta" style="margin-top:10px"><button type="button" class="chip" data-action="tpl-open">${L2('Use a template', 'استخدم قالبًا')}</button> <button type="button" class="chip" data-action="sample-add">${L2('Try sample data', 'جرّب بيانات تجريبية')}</button></p></div>`;
 }
 dlg.addEventListener('close', () => {
   if (introOn) {

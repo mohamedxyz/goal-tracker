@@ -656,11 +656,24 @@ const actions = {
       if (!matchMedia('(prefers-reduced-motion: reduce)').matches) await new Promise((r) => setTimeout(r, 260));
     }
     t.sessions = t.sessions || [];
+    const prev0 = t.sessions.find((x) => x.d === d),
+      prevC = prev0 ? prev0.c : null;
     const i = t.sessions.findIndex((x) => x.d === d);
     if (i < 0) t.sessions.push({ d, c });
     else t.sessions[i].c = c;
     Sound.play(c === 3 ? 'task' : 'habit');
     await DB.put('topics', t);
+    toastUndo(L2('Rated.', 'تم التقييم.'), async () => {
+      const k = t.sessions.findIndex((x) => x.d === d);
+      if (prevC === null) {
+        if (k >= 0) t.sessions.splice(k, 1);
+      } else if (k >= 0) t.sessions[k].c = prevC;
+      else t.sessions.push({ d, c: prevC });
+      await DB.put('topics', t);
+    });
+  },
+  'picks-all'() {
+    S.picksAll = !S.picksAll;
   },
   'goto-study'() {
     S.view = 'study';
@@ -1059,6 +1072,47 @@ const actions = {
       date,
       true
     );
+  },
+  'addon-coach'(el) {
+    S.cfg.coachTone = el.checked ? 'on' : 'off';
+    saveCfg();
+  },
+  'intro-pick'(el) {
+    S.introPick = S.introPick || new Set();
+    const k = el.dataset.k;
+    S.introPick.has(k) ? S.introPick.delete(k) : S.introPick.add(k);
+    el.classList.toggle('on', S.introPick.has(k));
+    el.setAttribute('aria-pressed', S.introPick.has(k));
+    return false;
+  },
+  async 'intro-go'() {
+    const own = ((document.getElementById('introOwn') || {}).value || '').trim(),
+      mk = (name, icon, mini) => ({
+        id: uid(),
+        name,
+        icon: icon || '',
+        kind: '',
+        mode: '',
+        target: 7,
+        group: '',
+        days: [],
+        mini: mini || '',
+        created: Date.now(),
+      });
+    const list = STARTERS.filter((x) => (S.introPick || new Set()).has(x[0])).map((x) =>
+      mk(L2(x[2], x[3]), x[1], L2(x[4], x[5]))
+    );
+    if (own) list.push(mk(own));
+    for (const h of list) {
+      S.habits.push(h);
+      await DB.put('habits', h);
+    }
+    S.introPick = null;
+    introOn = false;
+    markIntro();
+    dlg.close();
+    S.view = list.length ? 'dash' : S.view;
+    if (list.length) toast(L2('Tick them off on Today. Small is fine.', 'علّمها في اليوم. الصغير يكفي.'));
   },
   'info-habits'() {
     openInfo('habits');

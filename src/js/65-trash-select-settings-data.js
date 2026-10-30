@@ -252,6 +252,15 @@ const sw = (k, label, hint, on) =>
   `<label class="swrow"><span>${label}${hint ? `<small>${hint}</small>` : ''}</span><input type="checkbox" class="sw" data-action="set" data-k="${k}" ${on ? 'checked' : ''}></label>`;
 const sel = (k, label, opts, cur) =>
   `<label class="swrow"><span>${label}</span><select data-action="set" data-k="${k}">${opts.map(([v, l]) => `<option value="${v}" ${v === cur ? 'selected' : ''}>${l}</option>`).join('')}</select></label>`;
+function addonsCard() {
+  const c = S.cfg;
+  return `<div class="card settings addons"><div class="title">${L2('Add-ons', 'الإضافات')}</div>
+    <p class="meta">${L2('GoalTerra works fine with just tasks, goals and habits. Turn on only what you use.', 'يعمل GoalTerra جيدًا بالمهام والأهداف والعادات فقط. فعّل ما تستخدمه فقط.')}</p>
+    ${sw('student', L2('Study', 'الدراسة'), L2('Revision timetable, exams and spaced review', 'جدول مراجعة وامتحانات ومراجعة متباعدة'), c.student)}
+    ${sw('mTime', L2('Time blocking', 'تقسيم الوقت'), L2('Give tasks a start time and length, and plan the day on a timeline', 'امنح المهام وقت بداية ومدة وخطط يومك على جدول زمني'), c.mTime)}
+    ${sw('rpg', L2('Game', 'اللعبة'), L2('A weekly boss you beat by finishing things', 'زعيم أسبوعي تهزمه بإنجاز أعمالك'), c.rpg)}
+    <label class="swrow"><span>${L2('Coach and day levels', 'المدرب ومستويات اليوم')}<small>${L2('A banner on Today that grades your day', 'شريط في اليوم يقيّم يومك')}</small></span><input type="checkbox" class="sw" data-action="addon-coach" ${coachTone() !== 'off' ? 'checked' : ''}></label></div>`;
+}
 function settingsCard() {
   const c = S.cfg;
   return `<h2>Settings</h2>
@@ -290,7 +299,7 @@ function settingsCard() {
     )}
     ${sw('showDone', 'Show completed tasks', 'The dimmed "Completed" list under your tasks', c.showDone)}
   </div>
-  <div class="card settings setacc ${S.setOpen && S.setOpen.has('Student mode') ? 'open' : ''}" style="margin-top:12px"><div class="title" data-action="set-acc" data-k="Student mode" role="button" tabindex="0">Student mode</div>
+<!--adv-->  <div class="card settings setacc ${S.setOpen && S.setOpen.has('Student mode') ? 'open' : ''}" style="margin-top:12px"><div class="title" data-action="set-acc" data-k="Student mode" role="button" tabindex="0">Student mode</div>
     ${sw('srOn', 'Spaced repetition', 'Topics come back for review when their date arrives', c.srOn)}
     ${sel(
       'srWeak',
@@ -504,10 +513,8 @@ function settingsCard() {
 function viewData() {
   const lb = daysSince(lastBackup()),
     st = S.storage;
-  return `${settingsCard()}
-  <div class="card settings setacc ${S.setOpen && S.setOpen.has('Share with friends') ? 'open' : ''}" style="margin-top:12px"><div class="title" data-action="set-acc" data-k="Share with friends" role="button" tabindex="0">Share with friends</div><p class="meta">Send habits, tasks or homework, exams and quizzes, and study topics to a friend as a small JSON file or text. Your history, check-ins and scores are never included.</p>
-    <div class="row"><button class="ghost" data-action="open-share">Share items…</button><button class="ghost" data-action="open-share-import">Import shared items…</button></div></div>
-    <div class="card settings setacc ${S.setOpen && S.setOpen.has('Templates and sample data') ? 'open' : ''}"><div class="title" data-action="set-acc" data-k="Templates and sample data" role="button" tabindex="0">Templates and sample data</div><p class="meta">Start a goal ladder from a template, or explore the app with sample data you can clear later.</p><div class="row"><button class="ghost" data-action="tpl-open">Templates</button>${hasSample() ? '<button class="ghost" data-action="sample-clear">Clear sample data</button>' : '<button class="ghost" data-action="sample-add">Load sample data</button>'}</div></div>
+  const parts = settingsCard().split('<!--adv-->');
+  return `${addonsCard()}${parts[0]}
   <div class="card settings setacc ${S.setOpen && S.setOpen.has('Storage & backup') ? 'open' : ''}"><div class="title" data-action="set-acc" data-k="Storage & backup" role="button" tabindex="0">Storage &amp; backup</div>
     <div class="row" style="margin:6px 0"><button class="btn" data-action="backup-now">Back up now</button><button class="ghost" data-action="import">Restore</button></div>
     ${sw('abOn', L2('Automatic daily backup', 'نسخ احتياطي يومي تلقائي'), window.GTNative ? L2('Saved to Documents/GoalTerra (last 7 kept) when the app is open after this time, with a reminder at that time.', 'يُحفظ في مجلد المستندات (آخر 7 نسخ) عند فتح التطبيق بعد هذا الوقت، مع تذكير في ذلك الوقت.') : L2('A browser cannot save files silently, so you get a Back up now card at this time.', 'المتصفح لا يحفظ الملفات بصمت، فستظهر بطاقة نسخ احتياطي في هذا الوقت.'), S.cfg.abOn)}
@@ -535,5 +542,9 @@ function viewData() {
   <div class="card settings setacc ${S.setOpen && S.setOpen.has('Safety copies') ? 'open' : ''}" style="margin-top:12px"><div class="title" data-action="set-acc" data-k="Safety copies" role="button" tabindex="0">${L2('Safety copies', 'نسخ الأمان')}</div>
     <div class="meta">${L2('Automatic copies kept on this device, for undoing a bad restore, an erase or a mistake.', 'نسخ تلقائية على هذا الجهاز للتراجع عن استعادة خاطئة أو مسح أو خطأ.')}</div>
     <div class="row"><button class="ghost" data-action="open-safety">${L2('Open safety copies →', 'فتح نسخ الأمان ←')}</button><button class="ghost" data-action="data-check">${L2('Check my data', 'افحص بياناتي')}</button></div>
-  </div>`;
+  </div>
+  <details class="more adv" style="margin-top:12px"><summary>${L2('Advanced', 'متقدم')}</summary>${parts[1] || ''}  <div class="card settings setacc ${S.setOpen && S.setOpen.has('Share with friends') ? 'open' : ''}" style="margin-top:12px"><div class="title" data-action="set-acc" data-k="Share with friends" role="button" tabindex="0">Share with friends</div><p class="meta">Send habits, tasks or homework, exams and quizzes, and study topics to a friend as a small JSON file or text. Your history, check-ins and scores are never included.</p>
+    <div class="row"><button class="ghost" data-action="open-share">Share items…</button><button class="ghost" data-action="open-share-import">Import shared items…</button></div></div>
+    <div class="card settings setacc ${S.setOpen && S.setOpen.has('Templates and sample data') ? 'open' : ''}"><div class="title" data-action="set-acc" data-k="Templates and sample data" role="button" tabindex="0">Templates and sample data</div><p class="meta">Start a goal ladder from a template, or explore the app with sample data you can clear later.</p><div class="row"><button class="ghost" data-action="tpl-open">Templates</button>${hasSample() ? '<button class="ghost" data-action="sample-clear">Clear sample data</button>' : '<button class="ghost" data-action="sample-add">Load sample data</button>'}</div></div>
+</details>`;
 }

@@ -6,7 +6,6 @@ async def m():
     for sc in ['light','dark']:
       b,pg,errs=await page(p,sc,fresh=False)
       # intro last step offers template + sample
-      for i in range(5):await pg.click('[data-action=intro-step][data-d="1"]')
       print(sc,'intro buttons',await pg.locator('#editDlg [data-action=tpl-open],#editDlg [data-action=sample-add]').count())
       await pg.click('#editDlg [data-action=tpl-open]');await pg.wait_for_timeout(150);print(sc,'templates',await pg.locator('#editDlg .tpl').count())
       await pg.click('#editDlg [data-action=tpl-use][data-k=school]');await pg.wait_for_timeout(300)

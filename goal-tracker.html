@@ -5,6 +5,7 @@
     PATCH = bug fix · MINOR = new feature · MAJOR = breaks old backups or data
 
   Changelog
+  0.84.0 Simpler and calmer: Today shows your tasks, goals and habits with a one-line add field, and backup reminders moved to the bottom (with a dot on Settings); Study, Time blocking, Game and Coach are now Add-ons you switch on in Settings (existing users keep what they use); Settings shows six cards plus Advanced; a one-screen first run (pick starter habits); the stat tiles are hidden by default; a short vibration with the tick sounds where the phone allows it; Study puts Today's picks first, with Undo for ratings, Show all, results-to-log on top and the timetable collapsed.
   0.83.0 Habits built on Atomic Habits: a +XP pop-up when you tick a habit, a daily ring with a Perfect day celebration, milestones at 3, 7, 14, 30, 60 and 100 days, and four new badges; never miss twice (one missed day no longer resets a streak, two in a row do) with a Best streak on each card and a Missed yesterday nudge; an optional Make it stick section per habit (identity votes, two-minute version with a ½ tick, stack after another habit, time and place with a reminder, a treat, an environment note); a Hardest habit card offering a two-minute version; a How habits work sheet; Habit rewards can be switched off in Settings.
   0.82.0 Harder to lose data: automatic safety copies kept in a separate store (daily, before app updates, before a restore, before erasing) with a Restore list in Settings; deleted goals, exams and topics now go to Trash for 30 days like tasks and habits (linked tasks are relinked on restore); Undo for bulk Done, Archive and Edit and for removing a long-streak check-in; Erase everything needs a typed word and can be undone; the last 5 titles and notes of a task or goal can be brought back from the edit screen; a one-time offer to turn on the automatic daily backup in the app, and a Last backup line on the dashboard; a Check my data tool that finds and fixes broken links.
   0.81.0 Game fixes: a defeated week boss stays defeated (no counterattacks after it dies, and a knockout can no longer undo a win); damage beyond the boss HP gives a small overkill XP bonus; one huge week raises the next boss by at most 25%; a "How the game works" sheet in plain words (tap ? on the game card); 11 badges that you keep once earned, with a toast; and a weeks-won-in-a-row counter.
@@ -4292,13 +4293,56 @@ form.kbdock {
     display: none;
   }
 }
+
+/* 0.84 simplify */
+.dstats[hidden] {
+  display: none;
+}
+#tabbar button.attn .ti,
+#nav button.attn {
+  position: relative;
+}
+#tabbar button.attn .ti::after {
+  content: '';
+  position: absolute;
+  top: -2px;
+  right: -4px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+#nav button.attn::after {
+  content: '';
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin-inline-start: 5px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+.intro-picks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  margin: 10px 0;
+}
+.intro-picks .chip.on {
+  background: var(--accent);
+  color: var(--on-accent, #fff);
+  border-color: var(--accent);
+}
+#introOwn {
+  width: 100%;
+}
 </style>
 </head>
 <body>
 <header><div class="wrap">
   <div class="top"><h1><svg viewBox="0 0 100 100" width="26" height="26" aria-hidden="true"><g transform="rotate(-22 50 50)"><ellipse cx="50" cy="50" rx="45" ry="15" fill="none" style="stroke:var(--logo-orbit)" stroke-width="7"/></g><circle cx="50" cy="50" r="27" fill="#0E4F5C" style="stroke:var(--logo-ring)" stroke-width="3"/><path d="M23.5 56 C30 46 39 47 46 52 C52 57 60 51 68 55 C72 57 75 60 77 64 A27 27 0 0 1 23.5 56 Z" fill="#2E9E6B"/><g transform="rotate(-22 50 50)"><path d="M5 50 A45 15 0 0 0 95 50" fill="none" style="stroke:var(--logo-orbit)" stroke-width="7" stroke-linecap="round"/><circle cx="78.9" cy="61.5" r="10.5" fill="#E8803A" style="stroke:var(--bg)" stroke-width="4"/></g></svg><span translate="no" dir="ltr">Goal<span class="lt">Terra</span></span></h1><div class="right"><span class="date" id="today"></span><button id="searchBtn" type="button" aria-label="Search" title="Search">🔍</button><button id="themeBtn" type="button"></button></div></div>
   <nav id="nav">
-    <button data-view="dash" class="on">Dashboard</button>
+    <button data-view="dash" class="on">Today</button>
     <button data-view="tasks">Tasks</button>
     <button data-view="goals">Goals</button>
     <button data-view="habits">Habits</button>
@@ -4308,7 +4352,7 @@ form.kbdock {
 </div></header>
 <main class="wrap" id="app"></main>
 <nav id="tabbar" aria-label="Sections">
-  <button type="button" data-view="dash" class="on"><span class="ti"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h5v-6h4v6h5V10"/></svg></span>Home</button>
+  <button type="button" data-view="dash" class="on"><span class="ti"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h5v-6h4v6h5V10"/></svg></span>Today</button>
   <button type="button" data-view="tasks"><span class="ti"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M8.5 12l2.5 2.5 4.5-5"/></svg></span>Tasks</button>
   <button type="button" data-view="goals"><span class="ti"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1" fill="currentColor"/></svg></span>Goals</button>
   <button type="button" data-view="habits"><span class="ti"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.3-5.6"/><path d="M4 4v4h4"/><path d="M12 8v4l3 2"/></svg></span>Habits</button>
@@ -4673,7 +4717,7 @@ function rate30(h) {
 }
 
 /* ---------- Version ---------- */
-const APP_VERSION = '0.83.0';
+const APP_VERSION = '0.84.0';
 
 /* Pick the English or Arabic text for the current language. Call it at render time, never while the file is loading. */
 const L2 = (en, ar) => (S.cfg.lang === 'ar' ? ar : en);
@@ -7259,6 +7303,12 @@ function consistencyCard() {
     av = S.habits.filter(isNeg);
   return `<div class="card vcard"><div class="vhead"><div class="title">Habit consistency</div><div class="sub">Last 30 days</div></div>${bl.length ? `<div class="hbars">${mk(bl, false)}</div>` : ''}${av.length ? `<div class="hsub">🛡 Staying clean</div><div class="hbars">${mk(av, true)}</div>` : ''}</div>`;
 }
+/* One always-visible field on Today: type a task, press Add. Dates like "tomorrow 5pm" work. */
+function todayAdd() {
+  const due = S.cfg.dueDef === 'none' ? '' : S.cfg.dueDef === 'tomorrow' ? ds(addDays(new Date(), 1)) : TODAY();
+  return `<form class="add taskadd card" data-form="task"><div class="qa"><input type="text" name="title" placeholder="${L2('Add a task… try: call mom tomorrow 5pm', 'أضف مهمة… جرّب: اتصل بأمي غدًا 5م')}" required autocomplete="off" aria-describedby="qaHint"><button class="btn">${L2('Add', 'أضف')}</button></div>
+    <div class="qa-hint" id="qaHint" aria-live="polite" hidden></div><input type="hidden" name="due" value="${due}"><input type="hidden" name="priority" value="${S.cfg.prio || 'low'}"></form>`;
+}
 function viewDash() {
   const today = TODAY();
   const open = S.tasks.filter((t) => !t.done && !t.archived);
@@ -7286,10 +7336,11 @@ function viewDash() {
   const openSlots = planTargets().reduce((a, g) => a + planLeft(g), 0),
     dow = new Date().getDay();
   const planCta = !wk.length || ((dow === 0 || dow === 1) && openSlots > 0);
-  return `${sampleBanner()}${dayBanner()}${autoCard()}${autoAskCard()}${!backupNudge() && lb !== null && lb > 0 ? `<div class="meta" style="margin:2px 2px 8px">${L2('Last backup', 'آخر نسخة')} ${agoText(lb)} · <button class="chip" data-action="backup-now">${L2('Back up now', 'انسخ الآن')}</button></div>` : ''}${backupNudge() ? `<div class="card backup-cta ${backupLevel() > 1 ? 'urgent' : ''}"><div class="grow"><div class="title">${lb === null ? 'No backup yet' : 'Last backup ' + agoText(lb)}</div><div class="meta">${backupLevel() > 1 ? 'If this browser clears its storage, everything since your last backup is gone. Back up now.' : 'Your data lives only in this browser. Save a backup and keep it somewhere safe.'}</div></div><button class="btn" data-action="backup-now">Back up now</button><button class="icon" data-action="backup-snooze" title="Remind me later" aria-label="Dismiss backup reminder">✕</button></div>` : ''}${nRv ? `<div class="card review-cta"><div class="grow"><div class="title">${nRv} goal${nRv > 1 ? 's' : ''} from past periods need${nRv > 1 ? '' : 's'} a review</div><div class="meta">Hit it, missed, or carry over. About a minute.</div></div><button class="btn" data-action="open-review">Review</button></div>` : ''}  <div class="grid2" style="margin-top:6px"><div>
+  const housekeeping = `${autoCard()}${autoAskCard()}${!backupNudge() && lb !== null && lb > 0 ? `<div class="meta" style="margin:2px 2px 8px">${L2('Last backup', 'آخر نسخة')} ${agoText(lb)} · <button class="chip" data-action="backup-now">${L2('Back up now', 'انسخ الآن')}</button></div>` : ''}${backupNudge() ? `<div class="card backup-cta ${backupLevel() > 1 ? 'urgent' : ''}"><div class="grow"><div class="title">${lb === null ? 'No backup yet' : 'Last backup ' + agoText(lb)}</div><div class="meta">${backupLevel() > 1 ? 'If this browser clears its storage, everything since your last backup is gone. Back up now.' : 'Your data lives only in this browser. Save a backup and keep it somewhere safe.'}</div></div><button class="btn" data-action="backup-now">Back up now</button><button class="icon" data-action="backup-snooze" title="Remind me later" aria-label="Dismiss backup reminder">✕</button></div>` : ''}`;
+  return `${sampleBanner()}${dayBanner()}${nRv ? `<div class="card review-cta"><div class="grow"><div class="title">${nRv} goal${nRv > 1 ? 's' : ''} from past periods need${nRv > 1 ? '' : 's'} a review</div><div class="meta">Hit it, missed, or carry over. About a minute.</div></div><button class="btn" data-action="open-review">Review</button></div>` : ''}  <div class="grid2" style="margin-top:6px"><div>
     ${
       S.cfg.dTasks
-        ? `<h2>Today's tasks</h2>${todays.length ? `<ul class="list">${todays.map(taskItem).join('')}</ul>` : `<div class="empty">Nothing due today.</div>`}
+        ? `<h2>Today's tasks</h2>${todayAdd()}${todays.length ? `<ul class="list">${todays.map(taskItem).join('')}</ul>` : `<div class="empty">Nothing due today.</div>`}
     ${overdue && !S.cfg.dOverdue ? `<button class="chip" style="margin-top:10px" data-action="see-overdue">${overdue} overdue from earlier days →</button>` : ''}`
         : ''
     }
@@ -7297,18 +7348,18 @@ function viewDash() {
   </div><div>
     ${S.cfg.dHabits ? `${habitRing()}<h2>Today's habits</h2>${habitList(false)}` : ''}
   </div></div>
-  ${planCta ? `<div class="card plan-cta"><div class="grow"><div class="title">${wk.length ? L2(`${openSlots} weekly slot${openSlots > 1 ? 's' : ''} still to plan`, `${openSlots} خانات أسبوعية للتخطيط`) : `Plan ${currentPeriod('weekly')}`}</div><div class="meta">${wk.length ? L2("Fill in this week's steps toward your monthly goals.", 'املأ خطوات هذا الأسبوع نحو أهدافك الشهرية.') : L2("No weekly goals yet. Pick this week's steps.", 'لا أهداف أسبوعية بعد. اختر خطوات هذا الأسبوع.')}</div></div><button class="btn" data-action="open-plan">Plan week</button></div>` : ''}${rpgCard()}<div class="stats dstats">
+  ${planCta ? `<div class="card plan-cta"><div class="grow"><div class="title">${wk.length ? L2(`${openSlots} weekly slot${openSlots > 1 ? 's' : ''} still to plan`, `${openSlots} خانات أسبوعية للتخطيط`) : `Plan ${currentPeriod('weekly')}`}</div><div class="meta">${wk.length ? L2("Fill in this week's steps toward your monthly goals.", 'املأ خطوات هذا الأسبوع نحو أهدافك الشهرية.') : L2("No weekly goals yet. Pick this week's steps.", 'لا أهداف أسبوعية بعد. اختر خطوات هذا الأسبوع.')}</div></div><button class="btn" data-action="open-plan">Plan week</button></div>` : ''}${rpgCard()}<div class="stats dstats" ${S.cfg.dStats ? '' : 'hidden'}>
     <div class="card stat"><div class="n">${todaysDone}/${todays.length}</div><div class="l">Today's tasks done</div></div>
     <div class="card stat"><div class="n">${hd}/${dueHabits.length}</div><div class="l">Habits done today</div></div>
     <div class="card stat"><div class="n">${active}</div><div class="l">Active goals</div></div>
     <div class="card stat"><div class="n">🔥 ${best}</div><div class="l">Best habit streak</div></div>
     ${avd.length ? `<div class="card stat avoidstat"><div class="n">🛡 ${avOk}/${dueAvoid.length}</div><div class="l">Staying clean</div></div>` : ''}
   </div>
-  ${coachCard()}
+  ${planCta ? '' : coachCard()}
   ${studyCard()}
   ${
     S.cfg.dCharts
-      ? `<button class="card insbtn" data-action="toggle-ins" aria-expanded="${!!S.insOpen}"><span>📊 Insights <small>activity, charts, habit consistency</small></span><span>${S.insOpen ? '▾' : '▸'}</span></button>
+      ? `<button class="card insbtn" data-action="toggle-ins" aria-expanded="${!!S.insOpen}"><span>Insights <small>activity, charts, habit consistency</small></span><span>${S.insOpen ? '▾' : '▸'}</span></button>
   ${
     S.insOpen
       ? `${heatmapCard()}
@@ -7317,7 +7368,8 @@ function viewDash() {
       : ''
   }`
       : ''
-  }`;
+  }
+  ${housekeeping}`;
 }
 const tagOf = (t) => (t.tag || '').trim();
 function tagList(id) {
@@ -7399,8 +7451,8 @@ function viewTasks() {
     S.planOn
       ? `<div class="filters"><button class="chip" data-action="tasks-plan">☰ List</button><button class="chip" data-action="tasks-cal">📅 Calendar</button></div>${planView()}`
       : S.tcalOn
-        ? `<div class="filters"><button class="chip" data-action="tasks-cal">☰ List</button><button class="chip" data-action="tasks-plan">🕐 Plan</button></div>${calView()}`
-        : `<div class="filters fbar"><div class="fscroll">${chip('all', 'All')}${chip('today', 'Due today')}${chip('overdue', 'Overdue' + (nOver ? ' · ' + nOver : ''))}${chip('done', 'Done')}</div><button class="chip ${selOn('tasks') ? 'on' : ''}" data-action="sel-mode" data-k="tasks" aria-pressed="${selOn('tasks')}">${selOn('tasks') ? '✓ Selecting' : '☑ Select'}</button><button class="chip" data-action="tasks-cal">📅 Calendar</button><button class="chip" data-action="tasks-plan">🕐 Plan</button></div>
+        ? `<div class="filters"><button class="chip" data-action="tasks-cal">☰ List</button>${S.cfg.mTime ? '<button class="chip" data-action="tasks-plan">🕐 Plan</button>' : ''}</div>${calView()}`
+        : `<div class="filters fbar"><div class="fscroll">${chip('all', 'All')}${chip('today', 'Due today')}${chip('overdue', 'Overdue' + (nOver ? ' · ' + nOver : ''))}${chip('done', 'Done')}</div><button class="chip ${selOn('tasks') ? 'on' : ''}" data-action="sel-mode" data-k="tasks" aria-pressed="${selOn('tasks')}">${selOn('tasks') ? '✓ Selecting' : '☑ Select'}</button><button class="chip" data-action="tasks-cal">📅 Calendar</button>${S.cfg.mTime ? '<button class="chip" data-action="tasks-plan">🕐 Plan</button>' : ''}</div>
   ${open.length ? taskGroups(open) : done.length && showDone ? '' : `<div class="empty">No tasks here.</div>`}
   ${done.length && showDone ? `${f === 'done' ? '' : `<button class="chip" style="margin-top:12px" data-action="toggle-done-list" aria-expanded="${!!S.doneOpen}">${S.doneOpen ? '▾' : '▸'} ${L2(done.length + ' done', done.length + ' منجزة')}</button>`}${f === 'done' || S.doneOpen ? `<ul class="list">${(S.doneAll ? done : done.slice(0, 40)).map(taskItem).join('')}</ul>` : ''}${done.length > 40 && (f === 'done' || S.doneOpen) ? `<button class="chip" style="margin-top:8px" data-action="toggle-done-all">${S.doneAll ? 'Show fewer' : 'Show all ' + done.length + ' completed'}</button>` : ''}` : ''}`
   }`;
@@ -7864,6 +7916,15 @@ const sw = (k, label, hint, on) =>
   `<label class="swrow"><span>${label}${hint ? `<small>${hint}</small>` : ''}</span><input type="checkbox" class="sw" data-action="set" data-k="${k}" ${on ? 'checked' : ''}></label>`;
 const sel = (k, label, opts, cur) =>
   `<label class="swrow"><span>${label}</span><select data-action="set" data-k="${k}">${opts.map(([v, l]) => `<option value="${v}" ${v === cur ? 'selected' : ''}>${l}</option>`).join('')}</select></label>`;
+function addonsCard() {
+  const c = S.cfg;
+  return `<div class="card settings addons"><div class="title">${L2('Add-ons', 'الإضافات')}</div>
+    <p class="meta">${L2('GoalTerra works fine with just tasks, goals and habits. Turn on only what you use.', 'يعمل GoalTerra جيدًا بالمهام والأهداف والعادات فقط. فعّل ما تستخدمه فقط.')}</p>
+    ${sw('student', L2('Study', 'الدراسة'), L2('Revision timetable, exams and spaced review', 'جدول مراجعة وامتحانات ومراجعة متباعدة'), c.student)}
+    ${sw('mTime', L2('Time blocking', 'تقسيم الوقت'), L2('Give tasks a start time and length, and plan the day on a timeline', 'امنح المهام وقت بداية ومدة وخطط يومك على جدول زمني'), c.mTime)}
+    ${sw('rpg', L2('Game', 'اللعبة'), L2('A weekly boss you beat by finishing things', 'زعيم أسبوعي تهزمه بإنجاز أعمالك'), c.rpg)}
+    <label class="swrow"><span>${L2('Coach and day levels', 'المدرب ومستويات اليوم')}<small>${L2('A banner on Today that grades your day', 'شريط في اليوم يقيّم يومك')}</small></span><input type="checkbox" class="sw" data-action="addon-coach" ${coachTone() !== 'off' ? 'checked' : ''}></label></div>`;
+}
 function settingsCard() {
   const c = S.cfg;
   return `<h2>Settings</h2>
@@ -7902,7 +7963,7 @@ function settingsCard() {
     )}
     ${sw('showDone', 'Show completed tasks', 'The dimmed "Completed" list under your tasks', c.showDone)}
   </div>
-  <div class="card settings setacc ${S.setOpen && S.setOpen.has('Student mode') ? 'open' : ''}" style="margin-top:12px"><div class="title" data-action="set-acc" data-k="Student mode" role="button" tabindex="0">Student mode</div>
+<!--adv-->  <div class="card settings setacc ${S.setOpen && S.setOpen.has('Student mode') ? 'open' : ''}" style="margin-top:12px"><div class="title" data-action="set-acc" data-k="Student mode" role="button" tabindex="0">Student mode</div>
     ${sw('srOn', 'Spaced repetition', 'Topics come back for review when their date arrives', c.srOn)}
     ${sel(
       'srWeak',
@@ -8116,10 +8177,8 @@ function settingsCard() {
 function viewData() {
   const lb = daysSince(lastBackup()),
     st = S.storage;
-  return `${settingsCard()}
-  <div class="card settings setacc ${S.setOpen && S.setOpen.has('Share with friends') ? 'open' : ''}" style="margin-top:12px"><div class="title" data-action="set-acc" data-k="Share with friends" role="button" tabindex="0">Share with friends</div><p class="meta">Send habits, tasks or homework, exams and quizzes, and study topics to a friend as a small JSON file or text. Your history, check-ins and scores are never included.</p>
-    <div class="row"><button class="ghost" data-action="open-share">Share items…</button><button class="ghost" data-action="open-share-import">Import shared items…</button></div></div>
-    <div class="card settings setacc ${S.setOpen && S.setOpen.has('Templates and sample data') ? 'open' : ''}"><div class="title" data-action="set-acc" data-k="Templates and sample data" role="button" tabindex="0">Templates and sample data</div><p class="meta">Start a goal ladder from a template, or explore the app with sample data you can clear later.</p><div class="row"><button class="ghost" data-action="tpl-open">Templates</button>${hasSample() ? '<button class="ghost" data-action="sample-clear">Clear sample data</button>' : '<button class="ghost" data-action="sample-add">Load sample data</button>'}</div></div>
+  const parts = settingsCard().split('<!--adv-->');
+  return `${addonsCard()}${parts[0]}
   <div class="card settings setacc ${S.setOpen && S.setOpen.has('Storage & backup') ? 'open' : ''}"><div class="title" data-action="set-acc" data-k="Storage & backup" role="button" tabindex="0">Storage &amp; backup</div>
     <div class="row" style="margin:6px 0"><button class="btn" data-action="backup-now">Back up now</button><button class="ghost" data-action="import">Restore</button></div>
     ${sw('abOn', L2('Automatic daily backup', 'نسخ احتياطي يومي تلقائي'), window.GTNative ? L2('Saved to Documents/GoalTerra (last 7 kept) when the app is open after this time, with a reminder at that time.', 'يُحفظ في مجلد المستندات (آخر 7 نسخ) عند فتح التطبيق بعد هذا الوقت، مع تذكير في ذلك الوقت.') : L2('A browser cannot save files silently, so you get a Back up now card at this time.', 'المتصفح لا يحفظ الملفات بصمت، فستظهر بطاقة نسخ احتياطي في هذا الوقت.'), S.cfg.abOn)}
@@ -8147,7 +8206,11 @@ function viewData() {
   <div class="card settings setacc ${S.setOpen && S.setOpen.has('Safety copies') ? 'open' : ''}" style="margin-top:12px"><div class="title" data-action="set-acc" data-k="Safety copies" role="button" tabindex="0">${L2('Safety copies', 'نسخ الأمان')}</div>
     <div class="meta">${L2('Automatic copies kept on this device, for undoing a bad restore, an erase or a mistake.', 'نسخ تلقائية على هذا الجهاز للتراجع عن استعادة خاطئة أو مسح أو خطأ.')}</div>
     <div class="row"><button class="ghost" data-action="open-safety">${L2('Open safety copies →', 'فتح نسخ الأمان ←')}</button><button class="ghost" data-action="data-check">${L2('Check my data', 'افحص بياناتي')}</button></div>
-  </div>`;
+  </div>
+  <details class="more adv" style="margin-top:12px"><summary>${L2('Advanced', 'متقدم')}</summary>${parts[1] || ''}  <div class="card settings setacc ${S.setOpen && S.setOpen.has('Share with friends') ? 'open' : ''}" style="margin-top:12px"><div class="title" data-action="set-acc" data-k="Share with friends" role="button" tabindex="0">Share with friends</div><p class="meta">Send habits, tasks or homework, exams and quizzes, and study topics to a friend as a small JSON file or text. Your history, check-ins and scores are never included.</p>
+    <div class="row"><button class="ghost" data-action="open-share">Share items…</button><button class="ghost" data-action="open-share-import">Import shared items…</button></div></div>
+    <div class="card settings setacc ${S.setOpen && S.setOpen.has('Templates and sample data') ? 'open' : ''}"><div class="title" data-action="set-acc" data-k="Templates and sample data" role="button" tabindex="0">Templates and sample data</div><p class="meta">Start a goal ladder from a template, or explore the app with sample data you can clear later.</p><div class="row"><button class="ghost" data-action="tpl-open">Templates</button>${hasSample() ? '<button class="ghost" data-action="sample-clear">Clear sample data</button>' : '<button class="ghost" data-action="sample-add">Load sample data</button>'}</div></div>
+</details>`;
 }
 /**
  * render(), the single function that redraws the page; tip cards; the edit dialog and its save handler; the level calendar; the first-run intro; the habit history dialog.
@@ -8325,7 +8388,10 @@ function render() {
       : S.view === 'bestiary'
         ? 'dash'
         : S.view;
+  if (!S.cfg.mTime) S.planOn = false;
+  const attn = backupNudge();
   document.querySelectorAll('#nav button,#tabbar button').forEach((b) => {
+    b.classList.toggle('attn', b.dataset.view === 'data' && attn);
     const on = b.dataset.view === nv;
     b.classList.toggle('on', on);
     on ? b.setAttribute('aria-current', 'page') : b.removeAttribute('aria-current');
@@ -8377,8 +8443,12 @@ function openEdit(kind, id) {
       ]
         .map(([v, l]) => `<option value="${v}" ${t.priority === v ? 'selected' : ''}>${l}</option>`)
         .join('')}</select></div></div>
-      <div class="two"><div><label>Start time</label><input type="time" name="start" value="${t.start || ''}"></div>
-      <div><label>Length</label><select name="dur">${PLAN_LENS.map((m) => `<option value="${m}" ${blockLen(t) === m ? 'selected' : ''}>${lenText(m)}</option>`).join('')}</select></div></div>
+      ${
+        S.cfg.mTime || t.start
+          ? `<div class="two"><div><label>Start time</label><input type="time" name="start" value="${t.start || ''}"></div>
+      <div><label>Length</label><select name="dur">${PLAN_LENS.map((m) => `<option value="${m}" ${blockLen(t) === m ? 'selected' : ''}>${lenText(m)}</option>`).join('')}</select></div></div>`
+          : ''
+      }
       <label>Weekly goal</label><select name="goalId">${goals}</select>
       <label>Tag folder</label><input type="text" name="tag" list="tagListEdit" value="${esc(t.tag || '')}" placeholder="None" autocomplete="off">${tagList('tagListEdit')}
       <label>Repeat</label><select name="repeat">${REPEATS.map(([r, l]) => `<option value="${r}" ${(t.repeat || '') === r ? 'selected' : ''}>${l}</option>`).join('')}</select>
@@ -8496,8 +8566,8 @@ dlg.addEventListener('submit', async (e) => {
       icon: v.icon || '',
       title: v.title.trim(),
       due: v.due || (v.start ? TODAY() : null),
-      start: v.start || null,
-      dur: +v.dur || 60,
+      start: 'start' in v ? v.start || null : t.start,
+      dur: 'dur' in v ? +v.dur || 60 : t.dur,
       priority: v.priority,
       goalId: v.goalId || null,
       notes: (v.notes || '').trim(),
@@ -8745,70 +8815,24 @@ function openIntro() {
   drawIntro();
   if (!dlg.open) dlg.showModal();
 }
+const STARTERS = [
+  ['water', '💧', 'Drink water', 'اشرب الماء', 'drink one glass', 'اشرب كوبًا'],
+  ['read', '📖', 'Read', 'القراءة', 'read one page', 'اقرأ صفحة'],
+  ['move', '🏃', 'Move your body', 'حرّك جسمك', 'five minutes', 'خمس دقائق'],
+  ['calm', '🧘', 'Breathe', 'تنفّس بهدوء', 'three deep breaths', 'ثلاثة أنفاس عميقة'],
+  ['sleep', '🛏', 'Sleep on time', 'نم في موعدك', 'phone down at bedtime', 'ضع الهاتف عند النوم'],
+];
 function drawIntro() {
-  const L = lvlAt(),
-    stu = !!S.cfg.student,
-    ar = S.cfg.lang === 'ar';
-  const steps = [
-    {
-      i: '<svg viewBox="0 0 100 100" width="76" height="76" aria-hidden="true"><defs><clipPath id="introGlobe"><circle cx="50" cy="50" r="27"/></clipPath></defs><g transform="rotate(-22 50 50)"><ellipse cx="50" cy="50" rx="45" ry="15" fill="none" style="stroke:var(--logo-orbit)" stroke-width="3.6"/></g><circle cx="50" cy="50" r="27" fill="#0E4F5C" style="stroke:var(--logo-ring)" stroke-width="1.8"/><g clip-path="url(#introGlobe)"><ellipse cx="50" cy="50" rx="27" ry="9" fill="none" stroke="#2F8C8A" stroke-width="1.5"/><path d="M20 54 C28 43 39 45 46 51 C52 57 60 50 68 54 C73 57 77 61 80 68 L80 82 L20 82 Z" fill="#2E9E6B"/></g><g transform="rotate(-22 50 50)"><path d="M5 50 A45 15 0 0 0 95 50" fill="none" style="stroke:var(--logo-orbit)" stroke-width="3.6" stroke-linecap="round"/><circle cx="78.9" cy="61.5" r="7" fill="#E8803A" style="stroke:var(--card)" stroke-width="2.6"/></g></svg>',
-      t: L2('Welcome to GoalTerra', 'أهلاً بك في GoalTerra'),
-      p: L2(
-        "Turn big goals into this week's steps, and show up every day. No account, no internet: everything stays on this phone.",
-        'حوّل أهدافك الكبيرة إلى خطوات لهذا الأسبوع، والتزم بها كل يوم. بلا حساب وبلا إنترنت: كل شيء يبقى على هذا الهاتف.'
-      ),
-      x: `<div class="intro-row"><button type="button" class="${ar ? 'ghost' : 'btn'}" data-action="intro-lang" data-v="en">English</button><button type="button" class="${ar ? 'btn' : 'ghost'}" data-action="intro-lang" data-v="ar">العربية</button></div>`,
-    },
-    {
-      i: '🪜',
-      t: L2('The goal ladder', 'سلّم الأهداف'),
-      p: L2(
-        'Start with a 5-year goal, then break it into annual, monthly and weekly goals. Finish the small steps and progress climbs the ladder by itself.',
-        'ابدأ بهدف لخمس سنوات، ثم قسّمه إلى أهداف سنوية وشهرية وأسبوعية. أنجز الخطوات الصغيرة وسيصعد التقدم في السلّم تلقائيًا.'
-      ),
-    },
-    {
-      i: '⚡',
-      t: L2('Day levels', 'مستويات الأيام'),
-      p: L2(
-        `Every task you finish today raises your level: ⚡ Spark, 🔥 Blaze at ${L[1]}, ⚔️ Titan at ${L[2]}. Titan days get tougher on purpose. Tap the banner on the Dashboard to see your level calendar.`,
-        `كل مهمة تنجزها اليوم ترفع مستواك: ⚡ شرارة، 🔥 لهب عند ${L[1]}، ⚔️ جبّار عند ${L[2]}. أيام الجبّار أصعب عن قصد. اضغط على الشريط في الرئيسية لترى تقويم مستوياتك.`
-      ),
-    },
-    {
-      i: '🔁',
-      t: L2('Habits', 'العادات'),
-      p: L2(
-        'Add habits you want to build, and "avoid" habits for things you\'re quitting. Every clean day grows your 🛡 streak.',
-        'أضف عادات تريد بناءها، وعادات "تجنّب" لأشياء تريد تركها. كل يوم نظيف يزيد سلسلتك 🛡.'
-      ),
-    },
-    {
-      i: '🎓',
-      t: L2('Studying?', 'هل تدرس؟'),
-      p: L2(
-        'Student mode adds a Study tab: a revision timetable with Weak/OK/Strong ratings, spaced repetition and exam countdowns.',
-        'وضع الطالب يضيف تبويب الدراسة: جدول مراجعة بتقييم ضعيف/مقبول/قوي، ومراجعة متباعدة، وعدّ تنازلي للامتحانات.'
-      ),
-      x: `<div class="intro-row"><button type="button" class="${stu ? 'btn' : 'ghost'}" data-action="intro-student">${stu ? L2('✓ Student mode on', '✓ وضع الطالب مفعّل') : L2('Turn on student mode', 'تفعيل وضع الطالب')}</button></div>`,
-    },
-    {
-      i: '🚀',
-      t: L2("You're set", 'أنت جاهز'),
-      p: L2(
-        'Your data lives only in this browser, so copy a backup from Settings now and then. Start with one goal for this week.',
-        'بياناتك محفوظة في هذا المتصفح فقط، لذا انسخ نسخة احتياطية من الإعدادات بين حين وآخر. ابدأ بهدف واحد لهذا الأسبوع.'
-      ),
-      x: `<div class="intro-row"><button type="button" class="ghost" data-action="tpl-open">${L2('Use a template', 'استخدم قالبًا')}</button><button type="button" class="ghost" data-action="sample-add">${L2('Try sample data', 'جرّب بيانات تجريبية')}</button></div>`,
-    },
-  ];
-  const st = steps[introStep],
-    last = introStep === steps.length - 1;
+  S.introPick = S.introPick || new Set();
   dlg.innerHTML = `<div class="intro">
-    <div class="ii" aria-hidden="true">${st.i}</div><h3>${st.t}</h3><p>${st.p}</p>${st.x || ''}
-    <div class="intro-dots" aria-hidden="true">${steps.map((_, i) => `<i class="${i === introStep ? 'on' : ''}"></i>`).join('')}</div>
-    <div class="intro-nav">${introStep ? `<button type="button" class="ghost" data-action="intro-step" data-d="-1">${L2('Back', 'رجوع')}</button>` : `<button type="button" class="ghost" data-action="intro-done">${L2('Skip', 'تخطٍّ')}</button>`}<span class="grow"></span>
-    ${last ? `<button type="button" class="ghost" data-action="intro-done" data-go="goals">${L2('Set my first goal', 'حدّد هدفي الأول')}</button><button type="button" class="btn" data-action="intro-done">${L2("Let's go", 'لنبدأ')}</button>` : `<button type="button" class="btn" data-action="intro-step" data-d="1">${L2('Next', 'التالي')}</button>`}</div></div>`;
+    <div class="ii" aria-hidden="true"><svg viewBox="0 0 100 100" width="64" height="64"><g transform="rotate(-22 50 50)"><ellipse cx="50" cy="50" rx="45" ry="15" fill="none" style="stroke:var(--accent)" stroke-width="6"/></g><circle cx="50" cy="50" r="24" style="fill:var(--ok)"/></svg></div>
+    <div class="intro-row"><button type="button" class="${S.cfg.lang === 'ar' ? 'ghost' : 'btn'}" data-action="intro-lang" data-v="en">English</button><button type="button" class="${S.cfg.lang === 'ar' ? 'btn' : 'ghost'}" data-action="intro-lang" data-v="ar">العربية</button></div>
+    <h3>${L2('What do you want to do every day?', 'ماذا تريد أن تفعل كل يوم؟')}</h3>
+    <p>${L2('Pick a few, or type your own. You can change anything later.', 'اختر بعضها أو اكتب عادتك. يمكنك تغيير أي شيء لاحقًا.')}</p>
+    <div class="intro-picks">${STARTERS.map(([k, ic, en, ar]) => `<button type="button" class="chip ${S.introPick.has(k) ? 'on' : ''}" data-action="intro-pick" data-k="${k}" aria-pressed="${S.introPick.has(k)}">${ic} ${L2(en, ar)}</button>`).join('')}</div>
+    <input type="text" id="introOwn" placeholder="${L2('Or type your own habit', 'أو اكتب عادتك')}" autocomplete="off">
+    <div class="intro-nav"><button type="button" class="ghost" data-action="intro-done">${L2('Skip', 'تخطٍّ')}</button><button type="button" class="btn" data-action="intro-go">${L2('Start', 'ابدأ')}</button></div>
+    <p class="meta" style="margin-top:10px"><button type="button" class="chip" data-action="tpl-open">${L2('Use a template', 'استخدم قالبًا')}</button> <button type="button" class="chip" data-action="sample-add">${L2('Try sample data', 'جرّب بيانات تجريبية')}</button></p></div>`;
 }
 dlg.addEventListener('close', () => {
   if (introOn) {
@@ -9280,6 +9304,13 @@ function planView() {
  */
 
 /* ---------- Completion sounds (synthesised, no audio files) ---------- */
+/* A short vibration with the tick sounds, where the phone lets the web view do it. */
+function buzz(kind) {
+  try {
+    if (S.cfg && S.cfg.haptics !== false && navigator.vibrate && ['task', 'habit', 'goal'].includes(kind))
+      navigator.vibrate(kind === 'goal' ? [12, 40, 12] : 10);
+  } catch (e) {}
+}
 const Sound = {
   ctx: null,
   on: true,
@@ -9295,6 +9326,7 @@ const Sound = {
     } catch (e) {}
   },
   play(kind) {
+    buzz(kind);
     if (!this.on) return;
     try {
       const C = this.ctx || (this.ctx = new (window.AudioContext || window.webkitAudioContext)());
@@ -9399,7 +9431,11 @@ const CFG_DEF = {
   focusLen: '25',
   breakLen: '5',
   rpg: false,
-  coachTone: 'on',
+  coachTone: 'off',
+  mTime: false,
+  dStats: false,
+  mig84: false,
+  haptics: true,
   lvl2: '3',
   lvl3: '5',
   stuCompact: false,
@@ -10031,6 +10067,7 @@ const AR = {
   Archive: 'أرشفة',
   '🗑 Delete': '🗑 حذف',
   Trash: 'سلة المحذوفات',
+  Timetable: 'الجدول',
   'Open trash →': 'فتح السلة ←',
   'Trash is empty.': 'السلة فارغة.',
   'Empty trash': 'إفراغ السلة',
@@ -11770,11 +11807,24 @@ const actions = {
       if (!matchMedia('(prefers-reduced-motion: reduce)').matches) await new Promise((r) => setTimeout(r, 260));
     }
     t.sessions = t.sessions || [];
+    const prev0 = t.sessions.find((x) => x.d === d),
+      prevC = prev0 ? prev0.c : null;
     const i = t.sessions.findIndex((x) => x.d === d);
     if (i < 0) t.sessions.push({ d, c });
     else t.sessions[i].c = c;
     Sound.play(c === 3 ? 'task' : 'habit');
     await DB.put('topics', t);
+    toastUndo(L2('Rated.', 'تم التقييم.'), async () => {
+      const k = t.sessions.findIndex((x) => x.d === d);
+      if (prevC === null) {
+        if (k >= 0) t.sessions.splice(k, 1);
+      } else if (k >= 0) t.sessions[k].c = prevC;
+      else t.sessions.push({ d, c: prevC });
+      await DB.put('topics', t);
+    });
+  },
+  'picks-all'() {
+    S.picksAll = !S.picksAll;
   },
   'goto-study'() {
     S.view = 'study';
@@ -12173,6 +12223,47 @@ const actions = {
       date,
       true
     );
+  },
+  'addon-coach'(el) {
+    S.cfg.coachTone = el.checked ? 'on' : 'off';
+    saveCfg();
+  },
+  'intro-pick'(el) {
+    S.introPick = S.introPick || new Set();
+    const k = el.dataset.k;
+    S.introPick.has(k) ? S.introPick.delete(k) : S.introPick.add(k);
+    el.classList.toggle('on', S.introPick.has(k));
+    el.setAttribute('aria-pressed', S.introPick.has(k));
+    return false;
+  },
+  async 'intro-go'() {
+    const own = ((document.getElementById('introOwn') || {}).value || '').trim(),
+      mk = (name, icon, mini) => ({
+        id: uid(),
+        name,
+        icon: icon || '',
+        kind: '',
+        mode: '',
+        target: 7,
+        group: '',
+        days: [],
+        mini: mini || '',
+        created: Date.now(),
+      });
+    const list = STARTERS.filter((x) => (S.introPick || new Set()).has(x[0])).map((x) =>
+      mk(L2(x[2], x[3]), x[1], L2(x[4], x[5]))
+    );
+    if (own) list.push(mk(own));
+    for (const h of list) {
+      S.habits.push(h);
+      await DB.put('habits', h);
+    }
+    S.introPick = null;
+    introOn = false;
+    markIntro();
+    dlg.close();
+    S.view = list.length ? 'dash' : S.view;
+    if (list.length) toast(L2('Tick them off on Today. Small is fine.', 'علّمها في اليوم. الصغير يكفي.'));
   },
   'info-habits'() {
     openInfo('habits');
@@ -12850,7 +12941,7 @@ function timetableCard() {
     hm = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0'),
     td = now.getDay();
   const days = ttOrder().filter((d) => classesOn(d).length);
-  return `<div class="card scard"><div class="shead"><div class="title">🗓 Timetable</div><label class="tt-st"><span class="meta">Week starts</span><select data-action="set" data-k="ttStart" aria-label="Week starts">${[
+  return `<div class="card scard"><div class="shead"><div class="title">Timetable</div><label class="tt-st"><span class="meta">Week starts</span><select data-action="set" data-k="ttStart" aria-label="Week starts">${[
     ['sat', dayName(6)],
     ['sun', dayName(0)],
     ['mon', dayName(1)],
@@ -12898,7 +12989,7 @@ function studyCard() {
       .filter((e) => daysTo(e.date) <= 14)
       .slice(0, 3),
     miss = S.exams.filter(needsResult).length;
-  return `<div class="card"><div class="title">📚 Study today</div>${todayClassesLine()}
+  return `<div class="card"><div class="title">Study today</div>${todayClassesLine()}
     ${
       S.topics.length
         ? `<div class="meta"><span>${studiedToday()} studied today</span><span>${weak} weak</span><span>${fresh} not started</span>${(() => {
@@ -12969,9 +13060,23 @@ function pickRow(t) {
     ${due ? '<span class="chip2 due">Due for review</span>' : `<span class="chip2"><i class="cdot c${c}"></i>${CONF_LABEL[c]}</span>`}${l ? `<span class="chip2 mute">Last: ${agoDays(l.d)}</span>` : ''}</div></div>
     <div class="rate" role="group" aria-label="${esc(t.name)}"><button type="button" class="rb c1" data-action="topic-rate" data-id="${t.id}" data-c="1">Weak</button><button type="button" class="rb c2" data-action="topic-rate" data-id="${t.id}" data-c="2">OK</button><button type="button" class="rb c3" data-action="topic-rate" data-id="${t.id}" data-c="3">Strong</button></div></div>`;
 }
+function missingStrip() {
+  const m = S.exams.filter(needsResult);
+  if (!m.length) return '';
+  return `<div class="card backup-cta"><div class="grow"><div class="title">${L2('Results to log', 'نتائج بانتظارك')}</div><div class="meta">${m
+    .slice(0, 3)
+    .map((e) => `<span translate="no">${esc(e.title)}</span>`)
+    .join(
+      ' · '
+    )}</div></div><button class="btn" data-action="edit-exam" data-id="${m[0].id}">${L2('Log result', 'سجّل النتيجة')}</button></div>`;
+}
+function timetableFold() {
+  const n = classesOn(new Date().getDay()).length;
+  return `<details class="more fold" style="margin-top:12px"><summary>${L2('Timetable', 'الجدول')} · ${n ? L2(`${n} class(es) today`, `${n} حصص اليوم`) : L2('no classes today', 'لا حصص اليوم')}</summary>${timetableCard()}</details>`;
+}
 function viewStudy() {
   const picksAll = topicPicks(),
-    picks = picksAll.slice(0, 5);
+    picks = S.picksAll ? picksAll : picksAll.slice(0, 5);
   const bySub = new Map();
   for (const t of S.topics) {
     if (!bySub.has(t.subject)) bySub.set(t.subject, []);
@@ -13007,10 +13112,13 @@ function viewStudy() {
   const tile = (n, l, cls) => `<div class="stile ${cls || ''}"><b>${n}</b><span>${l}</span></div>`;
   return `<h2>Study</h2>
   <div class="stiles">${tile(dueN, 'To review', dueN ? 'hot' : '')}${tile(studiedToday(), 'Studied today', 'ok')}${tile(nd === null ? '—' : nd, 'Days to next exam', nd !== null && nd <= 3 ? 'hot' : '')}</div>
-  ${examsCard()}
-  ${timetableCard()}
+${missingStrip()}
   <div class="card scard"><div class="shead"><div class="title">Today's picks</div>${picksAll.length ? `<span class="pill">${picksAll.length} to go</span>` : ''}</div>
-    ${picks.length ? `<p class="meta" style="margin:0 0 6px">How did each topic feel today? Weak and untouched topics come first.</p>${picks.map(pickRow).join('')}` : `<div class="empty celebrate">${S.topics.length ? '<span class="party">🎉</span> Everything has been studied today' : 'Add topics below to get daily picks.'}</div>`}</div>
+    ${picks.length ? `<p class="meta" style="margin:0 0 6px">How did each topic feel today? Weak and untouched topics come first.</p>${picks.map(pickRow).join('')}${picksAll.length > 5 ? `<button class="chip" style="margin-top:8px" data-action="picks-all">${S.picksAll ? L2('Show fewer', 'عرض أقل') : L2(`Show all ${picksAll.length}`, `عرض الكل (${picksAll.length})`)}</button>` : ''}` : `<div class="empty celebrate">${S.topics.length ? '<span class="party">🎉</span> Everything has been studied today' : 'Add topics below to get daily picks.'}</div>`}</div>
+  ${examsCard()}
+  <p class="meta legend">Tap a day to rate it: <i class="cdot c1"></i>Weak <i class="cdot c2"></i>OK <i class="cdot c3"></i>Strong. <span>Backfill past days to build your retrospective timetable.</span></p>
+  ${sections || `<div class="empty">No subjects yet.</div>`}
+  ${timetableFold()}
   ${(() => {
     const ins = insightsCard();
     return ins
@@ -13021,9 +13129,7 @@ function viewStudy() {
   <form class="add" data-form="topics" style="margin-top:10px;border:0;padding:0;background:none">
     <input type="text" name="subject" list="subjListAdd" placeholder="Subject (e.g. Biochemistry)" required autocomplete="off">${subjList('subjListAdd')}
     <textarea name="names" placeholder="Topics, one per line" required style="min-height:70px"></textarea>
-    <button class="btn">Add topics</button></form></details>
-  <p class="meta legend">Tap a day to rate it: <i class="cdot c1"></i>Weak <i class="cdot c2"></i>OK <i class="cdot c3"></i>Strong. <span>Backfill past days to build your retrospective timetable.</span></p>
-  ${sections || `<div class="empty">No subjects yet.</div>`}`;
+    <button class="btn">Add topics</button></form></details>`;
 }
 /**
  * Weekly report, monthly review, search, sharing with friends, and backup and restore.
@@ -13956,6 +14062,12 @@ async function autoArchive() {
 (async () => {
   applyLang();
   await load();
+  if (!S.cfg.mig84) {
+    // 0.84.0: time blocking became an add-on; keep it on for anyone who already uses it
+    S.cfg.mig84 = true;
+    if (S.tasks.some((t) => t.start)) S.cfg.mTime = true;
+    saveCfg();
+  }
   await autoArchive();
   if (S.cfg.rpg && !S.cfg.rpgSince) {
     S.cfg.rpgSince = TODAY();

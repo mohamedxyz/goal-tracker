@@ -14,6 +14,7 @@ async def main():
       await pg.add_init_script("document.addEventListener('DOMContentLoaded',()=>{new MutationObserver(()=>{const a=document.getElementById('askDlg');if(a&&a.open&&!a.dataset.busy){a.dataset.busy=1;const i=a.querySelector('#askIn');if(!i.hidden)i.value='test reason';setTimeout(()=>{a.querySelector('#askYes').click();delete a.dataset.busy},0)}}).observe(document.documentElement,{subtree:true,childList:true,attributes:true,attributeFilter:['open']})})")
       await pg.goto(URL);await pg.wait_for_timeout(500)
       if await pg.locator('#editDlg[open] [data-action=intro-done]').count():await pg.click('[data-action=intro-done] >> nth=0');await pg.wait_for_timeout(100)
+      await pg.evaluate("S.cfg.mTime=true;saveCfg()")
       await pg.evaluate("localStorage.setItem('gt-tips',JSON.stringify(['levels','game','quickadd','ladder','habits','study']))")
       if lang=='ar':await pg.evaluate("S.cfg.lang='ar';saveCfg();applyLang();render()")
       await pg.evaluate("""(async()=>{const mk=async(o)=>{const t={id:uid(),title:o.t,notes:'',repeat:'',tag:'',items:[],due:TODAY(),priority:'med',goalId:null,done:false,created:Date.now(),start:o.s,dur:o.d};S.tasks.push(t);await DB.put('tasks',t);return t};
