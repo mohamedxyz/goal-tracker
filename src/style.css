@@ -4215,3 +4215,28 @@ form.kbdock {
 #introOwn {
   width: 100%;
 }
+
+.perf { display: block; padding: 14px; margin: 6px 0 12px; }
+.perf-top { display: flex; align-items: center; gap: 14px; }
+.perf-ring { position: relative; width: 84px; height: 84px; flex: none; }
+.perf-ring .bg { fill: none; stroke: var(--line); stroke-width: 7; }
+.perf-ring .fg { fill: none; stroke: var(--ok); stroke-width: 7; stroke-linecap: round; transition: stroke-dasharray 0.4s; }
+.perf.full .perf-ring .fg { stroke: var(--accent); }
+.perf-ring b { position: absolute; inset: 0; display: grid; place-items: center; font-size: 18px; }
+.pbars { display: flex; gap: 8px; align-items: flex-end; height: 66px; margin: 12px 0 8px; }
+.pbar { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 3px; }
+.pbar span { width: 100%; border-radius: 5px; background: var(--ok); opacity: 0.55; }
+.pbar.now span { opacity: 1; background: var(--accent); }
+.pbar.none span { background: var(--line); opacity: 1; }
+.pbar i { font-style: normal; font-size: 10px; color: var(--muted); }
+.perf-foot { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; font-size: 13px; color: var(--muted); }
+.perf-foot .chip { margin-inline-start: auto; }
+
+.perf-score { display: flex; align-items: center; gap: 10px; width: 100%; background: none; border: 0; padding: 0 0 10px; margin: 0 0 10px; border-bottom: 1px solid var(--line); color: inherit; font: inherit; text-align: start; }
+.perf-score span { display: flex; flex-direction: column; flex: 1; }
+.perf-score small { font-size: 11px; color: var(--muted); letter-spacing: 0.04em; }
+.perf-score b { font-size: 34px; line-height: 1.1; color: var(--accent); }
+.perf-score em { font-style: normal; font-weight: 700; font-size: 14px; }
+.perf-score em.up { color: var(--ok); }
+.perf-score em.dn { color: #b0402a; }
+.perf-score u { text-decoration: none; color: var(--muted); }

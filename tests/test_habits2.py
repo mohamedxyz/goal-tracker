@@ -27,8 +27,8 @@ async def main():
       chk(tag+' mini chip shown',await pg.locator('[data-action=log-mini]').count()>=1)
       await pg.click('[data-action=log-mini] >> nth=0');await pg.wait_for_timeout(400)
       r=await pg.evaluate("[S.logs.has(__h.id+'|'+TODAY()),isMini(__h.id,TODAY()),streak(__h)]");chk(tag+' half tick counts '+str(r),r==[True,True,4])
-      chk(tag+' ring shown',await pg.locator('.hring').count()==1)
-      chk(tag+' perfect day text',await pg.evaluate("document.querySelector('.hring .title').textContent.length>0 && document.querySelector('.hring').classList.contains('full')"))
+      chk(tag+' ring shown',await pg.locator('.perf').count()==1)
+      chk(tag+' perfect day text',await pg.evaluate("document.querySelector('.perf .title').textContent.length>0 && document.querySelector('.perf').classList.contains('full')"))
       # hints
       await pg.evaluate("S.view='habits';render()")
       t=await pg.inner_text('#app')

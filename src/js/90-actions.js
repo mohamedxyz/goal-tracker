@@ -672,6 +672,16 @@ const actions = {
       await DB.put('topics', t);
     });
   },
+  async 'score-info'() {
+    await askAlert(scoreInfoText());
+    return false;
+  },
+  'dash-all'() {
+    S.dashAll = !S.dashAll;
+  },
+  'dash-hab'() {
+    S.dashHab = !S.dashHab;
+  },
   'picks-all'() {
     S.picksAll = !S.picksAll;
   },

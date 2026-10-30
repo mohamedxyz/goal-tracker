@@ -5,6 +5,7 @@
     PATCH = bug fix · MINOR = new feature · MAJOR = breaks old backups or data
 
   Changelog
+  0.85.0 Today leads with your performance and a GoalTerra Score (0 to 1000, tap ⓘ for the formula): a ring for today, the last 7 days as bars, this week against last week, best streak and active goals. The task list shows the first 4 open tasks (Show all for the rest) and habits fold into one line.
   0.84.0 Simpler and calmer: Today shows your tasks, goals and habits with a one-line add field, and backup reminders moved to the bottom (with a dot on Settings); Study, Time blocking, Game and Coach are now Add-ons you switch on in Settings (existing users keep what they use); Settings shows six cards plus Advanced; a one-screen first run (pick starter habits); the stat tiles are hidden by default; a short vibration with the tick sounds where the phone allows it; Study puts Today's picks first, with Undo for ratings, Show all, results-to-log on top and the timetable collapsed.
   0.83.0 Habits built on Atomic Habits: a +XP pop-up when you tick a habit, a daily ring with a Perfect day celebration, milestones at 3, 7, 14, 30, 60 and 100 days, and four new badges; never miss twice (one missed day no longer resets a streak, two in a row do) with a Best streak on each card and a Missed yesterday nudge; an optional Make it stick section per habit (identity votes, two-minute version with a ½ tick, stack after another habit, time and place with a reminder, a treat, an environment note); a Hardest habit card offering a two-minute version; a How habits work sheet; Habit rewards can be switched off in Settings.
   0.82.0 Harder to lose data: automatic safety copies kept in a separate store (daily, before app updates, before a restore, before erasing) with a Restore list in Settings; deleted goals, exams and topics now go to Trash for 30 days like tasks and habits (linked tasks are relinked on restore); Undo for bulk Done, Archive and Edit and for removing a long-streak check-in; Erase everything needs a typed word and can be undone; the last 5 titles and notes of a task or goal can be brought back from the edit screen; a one-time offer to turn on the automatic daily backup in the app, and a Last backup line on the dashboard; a Check my data tool that finds and fixes broken links.
@@ -4336,6 +4337,31 @@ form.kbdock {
 #introOwn {
   width: 100%;
 }
+
+.perf { display: block; padding: 14px; margin: 6px 0 12px; }
+.perf-top { display: flex; align-items: center; gap: 14px; }
+.perf-ring { position: relative; width: 84px; height: 84px; flex: none; }
+.perf-ring .bg { fill: none; stroke: var(--line); stroke-width: 7; }
+.perf-ring .fg { fill: none; stroke: var(--ok); stroke-width: 7; stroke-linecap: round; transition: stroke-dasharray 0.4s; }
+.perf.full .perf-ring .fg { stroke: var(--accent); }
+.perf-ring b { position: absolute; inset: 0; display: grid; place-items: center; font-size: 18px; }
+.pbars { display: flex; gap: 8px; align-items: flex-end; height: 66px; margin: 12px 0 8px; }
+.pbar { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 3px; }
+.pbar span { width: 100%; border-radius: 5px; background: var(--ok); opacity: 0.55; }
+.pbar.now span { opacity: 1; background: var(--accent); }
+.pbar.none span { background: var(--line); opacity: 1; }
+.pbar i { font-style: normal; font-size: 10px; color: var(--muted); }
+.perf-foot { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; font-size: 13px; color: var(--muted); }
+.perf-foot .chip { margin-inline-start: auto; }
+
+.perf-score { display: flex; align-items: center; gap: 10px; width: 100%; background: none; border: 0; padding: 0 0 10px; margin: 0 0 10px; border-bottom: 1px solid var(--line); color: inherit; font: inherit; text-align: start; }
+.perf-score span { display: flex; flex-direction: column; flex: 1; }
+.perf-score small { font-size: 11px; color: var(--muted); letter-spacing: 0.04em; }
+.perf-score b { font-size: 34px; line-height: 1.1; color: var(--accent); }
+.perf-score em { font-style: normal; font-weight: 700; font-size: 14px; }
+.perf-score em.up { color: var(--ok); }
+.perf-score em.dn { color: #b0402a; }
+.perf-score u { text-decoration: none; color: var(--muted); }
 </style>
 </head>
 <body>
@@ -4717,7 +4743,7 @@ function rate30(h) {
 }
 
 /* ---------- Version ---------- */
-const APP_VERSION = '0.84.0';
+const APP_VERSION = '0.85.0';
 
 /* Pick the English or Arabic text for the current language. Call it at render time, never while the file is loading. */
 const L2 = (en, ar) => (S.cfg.lang === 'ar' ? ar : en);
@@ -7337,16 +7363,16 @@ function viewDash() {
     dow = new Date().getDay();
   const planCta = !wk.length || ((dow === 0 || dow === 1) && openSlots > 0);
   const housekeeping = `${autoCard()}${autoAskCard()}${!backupNudge() && lb !== null && lb > 0 ? `<div class="meta" style="margin:2px 2px 8px">${L2('Last backup', 'آخر نسخة')} ${agoText(lb)} · <button class="chip" data-action="backup-now">${L2('Back up now', 'انسخ الآن')}</button></div>` : ''}${backupNudge() ? `<div class="card backup-cta ${backupLevel() > 1 ? 'urgent' : ''}"><div class="grow"><div class="title">${lb === null ? 'No backup yet' : 'Last backup ' + agoText(lb)}</div><div class="meta">${backupLevel() > 1 ? 'If this browser clears its storage, everything since your last backup is gone. Back up now.' : 'Your data lives only in this browser. Save a backup and keep it somewhere safe.'}</div></div><button class="btn" data-action="backup-now">Back up now</button><button class="icon" data-action="backup-snooze" title="Remind me later" aria-label="Dismiss backup reminder">✕</button></div>` : ''}`;
-  return `${sampleBanner()}${dayBanner()}${nRv ? `<div class="card review-cta"><div class="grow"><div class="title">${nRv} goal${nRv > 1 ? 's' : ''} from past periods need${nRv > 1 ? '' : 's'} a review</div><div class="meta">Hit it, missed, or carry over. About a minute.</div></div><button class="btn" data-action="open-review">Review</button></div>` : ''}  <div class="grid2" style="margin-top:6px"><div>
+  return `${sampleBanner()}${dayBanner()}${perfCard()}${nRv ? `<div class="card review-cta"><div class="grow"><div class="title">${nRv} goal${nRv > 1 ? 's' : ''} from past periods need${nRv > 1 ? '' : 's'} a review</div><div class="meta">Hit it, missed, or carry over. About a minute.</div></div><button class="btn" data-action="open-review">Review</button></div>` : ''}  <div class="grid2" style="margin-top:6px"><div>
     ${
       S.cfg.dTasks
-        ? `<h2>Today's tasks</h2>${todayAdd()}${todays.length ? `<ul class="list">${todays.map(taskItem).join('')}</ul>` : `<div class="empty">Nothing due today.</div>`}
+        ? `<h2>Today's tasks</h2>${todayAdd()}${todays.length ? `<ul class="list">${(S.dashAll ? todays : todays.filter((t) => !t.done).slice(0, 4)).map(taskItem).join('')}</ul>${todays.filter((t) => !t.done).length > 4 || todaysDone ? `<button class="chip" style="margin-top:8px" data-action="dash-all">${S.dashAll ? L2('Show less', 'عرض أقل') : L2(`Show all ${todays.length}`, `عرض الكل ${todays.length}`)}</button>` : ''}` : `<div class="empty">Nothing due today.</div>`}
     ${overdue && !S.cfg.dOverdue ? `<button class="chip" style="margin-top:10px" data-action="see-overdue">${overdue} overdue from earlier days →</button>` : ''}`
         : ''
     }
     ${S.cfg.dGoals ? `<div class="h2row"><h2>This week's goals</h2><span class="hbtns"><button class="chip" data-action="open-plan">Plan this week</button><details class="chipmenu"><summary class="chip" aria-label="More">⋯</summary><div><button class="chip" data-action="open-report">Weekly report</button><button class="chip" data-action="open-month">Monthly review</button></div></details></span></div>${wk.length ? `<div class="goals">${wk.map(goalCard).join('')}</div>` : `<div class="empty">No weekly goals for ${currentPeriod('weekly')}.</div>`}` : ''}
   </div><div>
-    ${S.cfg.dHabits ? `${habitRing()}<h2>Today's habits</h2>${habitList(false)}` : ''}
+    ${S.cfg.dHabits ? `<button class="card insbtn" data-action="dash-hab" aria-expanded="${!!S.dashHab}"><span>${L2("Today's habits", 'عادات اليوم')} <small>${hd}/${dueHabits.length} ${L2('done', 'منجز')}</small></span><span>${S.dashHab ? '▾' : '▸'}</span></button>${S.dashHab ? habitList(false) : ''}` : ''}
   </div></div>
   ${planCta ? `<div class="card plan-cta"><div class="grow"><div class="title">${wk.length ? L2(`${openSlots} weekly slot${openSlots > 1 ? 's' : ''} still to plan`, `${openSlots} خانات أسبوعية للتخطيط`) : `Plan ${currentPeriod('weekly')}`}</div><div class="meta">${wk.length ? L2("Fill in this week's steps toward your monthly goals.", 'املأ خطوات هذا الأسبوع نحو أهدافك الشهرية.') : L2("No weekly goals yet. Pick this week's steps.", 'لا أهداف أسبوعية بعد. اختر خطوات هذا الأسبوع.')}</div></div><button class="btn" data-action="open-plan">Plan week</button></div>` : ''}${rpgCard()}<div class="stats dstats" ${S.cfg.dStats ? '' : 'hidden'}>
     <div class="card stat"><div class="n">${todaysDone}/${todays.length}</div><div class="l">Today's tasks done</div></div>
@@ -9774,6 +9800,99 @@ function easierCard() {
   return `<div class="card backup-cta"><div class="grow"><div class="title">${L2('Hardest one: ', 'الأصعب: ')}<span translate="no">${esc(h.name)}</span> (${rate30(h)}%)</div><div class="meta">${L2('Make it so small you cannot say no, like one page or one push-up. Showing up matters more than the size.', 'اجعلها صغيرة لدرجة لا تستطيع رفضها، كصفحة واحدة أو تمرين واحد. الحضور أهم من الحجم.')}</div></div><button class="btn" data-action="easier" data-id="${h.id}">${L2('Add a 2-minute version', 'أضف نسخة دقيقتين')}</button></div>`;
 }
 /**
+ * Today's performance card: how you are doing, at a glance (ring, last 7 days, week vs last week, streak).
+ * Today shows this first and keeps the task/habit lists short. (All src/js files share one scope.)
+ */
+/* Done / due for one day, tasks and habits together. Tasks count on their due date; past misses count too. */
+function dayScore(d) {
+  const k = ds(d),
+    hs = S.habits.filter((h) => !isNeg(h) && isDue(h, d) && k >= bornK(h));
+  const ts = S.tasks.filter((t) => !t.archived && t.due === k);
+  const due = hs.length + ts.length,
+    done = hs.filter((h) => good(h, k)).length + ts.filter((t) => t.done).length;
+  return { k, d, due, done, pct: due ? Math.round((done / due) * 100) : null };
+}
+function perfStats() {
+  const days = [...Array(14)].map((_, i) => dayScore(addDays(new Date(), i - 13)));
+  const avg = (a) => {
+    const v = a.filter((x) => x.pct !== null);
+    return v.length ? Math.round(v.reduce((s, x) => s + x.pct, 0) / v.length) : null;
+  };
+  return { days, week: days.slice(7), now: avg(days.slice(7)), before: avg(days.slice(0, 7)), today: days[13] };
+}
+/* GoalTerra Score, 0 to 1000, over the 14 days ending `shift` days ago. It is the product of four parts:
+   C completion  = recency-weighted done / due (weight halves every 7 days)
+   K consistency = share of days with something due where you reached at least 50%
+   V volume      = min(1, ln(1+n) / ln(7)), n = average items done per day with something due (6 a day maxes it)
+   T run         = (1 + ln(1+r) / ln(15)) / 2, r = longest run of days at 50% or better inside the window
+   Score = 1000 x C x K x V x T. Perfect days, every day, 6+ items, give 1000. */
+function perfScore(shift) {
+  const ds14 = [...Array(14)].map((_, i) => dayScore(addDays(new Date(), i - 13 - (shift || 0)))),
+    live = ds14.filter((x) => x.due);
+  if (!live.length) return null;
+  let wd = 0,
+    wn = 0;
+  ds14.forEach((x, i) => {
+    const w = Math.pow(0.5, (13 - i) / 7);
+    wd += w * x.due;
+    wn += w * x.done;
+  });
+  let run = 0,
+    r = 0;
+  for (const x of ds14) {
+    run = x.due && x.pct >= 50 ? run + 1 : x.due ? 0 : run;
+    r = Math.max(r, run);
+  }
+  const C = wd ? wn / wd : 0,
+    K = live.filter((x) => x.pct >= 50).length / live.length,
+    n = live.reduce((a, x) => a + x.done, 0) / live.length,
+    V = Math.min(1, Math.log(1 + n) / Math.log(7)),
+    T = (1 + Math.log(1 + r) / Math.log(15)) / 2;
+  return Math.round(1000 * C * K * V * T);
+}
+function scoreInfoText() {
+  return L2(
+    'GoalTerra Score (0 to 1000)\n\nScore = 1000 × C × K × V × T, over the last 14 days.\n\nC completion: done ÷ due, recent days count more (weight halves every 7 days).\nK consistency: share of days with something due where you reached 50% or more.\nV volume: ln(1+n) ÷ ln(7), n = items done per day (6 a day is the max).\nT run: longest run of 50%+ days, from 0.5 (none) to 1.0 (14 days).\n\nDoing more, more days in a row, scores higher. It measures follow-through, not how important your tasks are, and many tiny tasks can inflate it, so keep it honest.',
+    'نتيجة GoalTerra (من 0 إلى 1000)\n\nالنتيجة = 1000 × C × K × V × T خلال آخر 14 يومًا.\n\nC الإنجاز: المنجز ÷ المستحق، والأيام الأحدث أثقل (يتناقص الوزن للنصف كل 7 أيام).\nK الاستمرارية: نسبة الأيام التي بلغت فيها 50% أو أكثر.\nV الحجم: ln(1+n) ÷ ln(7)، n = العناصر المنجزة يوميًا (6 يوميًا هو الأقصى).\nT السلسلة: أطول سلسلة أيام 50% فأكثر، من 0.5 (لا شيء) إلى 1.0 (14 يومًا).\n\nكلما أنجزت أكثر ولأيام متتالية ارتفعت النتيجة. تقيس الالتزام لا أهمية المهام، والمهام الصغيرة الكثيرة قد تضخّمها، فكن صادقًا.'
+  );
+}
+function perfCard() {
+  if (!S.tasks.length && !S.habits.length && !S.goals.length) return '';
+  const p = perfStats(),
+    t = p.today;
+  const pct = t.due ? t.pct : 0,
+    C = 2 * Math.PI * 34,
+    full = t.due && t.done === t.due;
+  const delta = p.now !== null && p.before !== null ? p.now - p.before : null;
+  const bld = S.habits.filter((h) => !isNeg(h)),
+    best = bld.length ? Math.max(...bld.map(streak)) : 0,
+    active = S.goals.filter((g) => !g.done && g.status !== 'missed').length;
+  const bars = p.week
+    .map((x, i) => {
+      const h = x.pct === null ? 4 : Math.max(4, Math.round((x.pct / 100) * 44)),
+        lab = fmt(x.d, { weekday: 'short' });
+      return `<div class="pbar ${i === 6 ? 'now' : ''} ${x.pct === null ? 'none' : ''}" title="${esc(lab)}: ${x.pct === null ? '–' : x.pct + '%'}"><span style="height:${h}px"></span><i>${esc(lab.slice(0, 2))}</i></div>`;
+    })
+    .join('');
+  const sc = perfScore(0),
+    sc0 = perfScore(14),
+    sd = sc !== null && sc0 !== null ? sc - sc0 : null;
+  const trend =
+    delta === null
+      ? L2('Your first week. Keep going.', 'أسبوعك الأول. استمر.')
+      : delta === 0
+        ? L2('Same as last week', 'مثل الأسبوع الماضي')
+        : delta > 0
+          ? L2(`Up ${delta} points on last week`, `أفضل بـ ${delta} نقطة من الأسبوع الماضي`)
+          : L2(`Down ${-delta} points on last week`, `أقل بـ ${-delta} نقطة من الأسبوع الماضي`);
+  return `<div class="card perf ${full ? 'full' : ''}">
+    ${sc !== null ? `<button class="perf-score" data-action="score-info" aria-label="${L2('How the score works', 'كيف تُحسب النتيجة')}"><span><small><span translate="no">GoalTerra</span> ${L2('Score', 'النتيجة')}</small><b>${sc}</b></span>${sd !== null && sd !== 0 ? `<em class="${sd > 0 ? 'up' : 'dn'}">${sd > 0 ? '▲' : '▼'} ${Math.abs(sd)}</em>` : ''}<u>ⓘ</u></button>` : ''}<div class="perf-top"><div class="perf-ring"><svg viewBox="0 0 80 80" width="84" height="84" aria-hidden="true"><circle cx="40" cy="40" r="34" class="bg"/><circle cx="40" cy="40" r="34" class="fg" stroke-dasharray="${((pct / 100) * C).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 40 40)"/></svg><b>${t.due ? pct + '%' : '–'}</b></div>
+      <div class="grow"><div class="title">${full ? L2('Perfect day 🎉', 'يوم مثالي 🎉') : t.due ? L2(`${t.done} of ${t.due} done today`, `${t.done} من ${t.due} اليوم`) : L2('Nothing due today', 'لا شيء مستحق اليوم')}</div>
+      <div class="meta">${trend}${p.now !== null ? ` · ${L2('week', 'الأسبوع')} ${p.now}%` : ''}</div></div></div>
+    <div class="pbars" aria-label="${L2('Last 7 days', 'آخر 7 أيام')}">${bars}</div>
+    <div class="perf-foot"><span>🔥 <b>${best}</b> ${L2('best streak', 'أفضل سلسلة')}</span><span>🎯 <b>${active}</b> ${L2('active goals', 'أهداف نشطة')}</span>${S.cfg.dCharts ? `<button class="chip" data-action="toggle-ins">${L2('More charts', 'المزيد')}</button>` : ''}</div></div>`;
+}
+/**
  * English and Arabic.
  * The AR dictionary and PAT patterns drive a MutationObserver that translates the page; also habit ordering and collapsed-section helpers.
  * (All src/js files are joined, in filename order, into one shared scope. See src/README.md.)
@@ -11822,6 +11941,16 @@ const actions = {
       else t.sessions.push({ d, c: prevC });
       await DB.put('topics', t);
     });
+  },
+  async 'score-info'() {
+    await askAlert(scoreInfoText());
+    return false;
+  },
+  'dash-all'() {
+    S.dashAll = !S.dashAll;
+  },
+  'dash-hab'() {
+    S.dashHab = !S.dashHab;
   },
   'picks-all'() {
     S.picksAll = !S.picksAll;

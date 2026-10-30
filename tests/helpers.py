@@ -30,7 +30,7 @@ async def page(p,scheme='light',fresh=True,vw=390,vh=844,legacy=True):
   await pg.goto(URL);await pg.wait_for_timeout(500)
   if fresh and await pg.locator('#editDlg[open] [data-action=intro-done]').count():
     await pg.click('[data-action=intro-done] >> nth=0');await pg.wait_for_timeout(100)
-  if legacy:await pg.evaluate("S.cfg.coachTone='on';S.cfg.mTime=true;S.cfg.dStats=true;saveCfg();render()")
+  if legacy:await pg.evaluate("S.cfg.coachTone='on';S.cfg.mTime=true;S.cfg.dStats=true;S.dashHab=true;S.dashAll=true;saveCfg();render()")
   return b,pg,errs
 async def overflow(pg):
   return await pg.evaluate("document.documentElement.scrollWidth>innerWidth+1")
