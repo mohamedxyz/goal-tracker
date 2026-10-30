@@ -131,6 +131,7 @@ const CFG_DEF = {
   focusLen: '25',
   breakLen: '5',
   rpg: false,
+  taskTarget: 6,
   coachTone: 'off',
   mTime: false,
   dStats: false,

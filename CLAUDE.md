@@ -38,6 +38,9 @@ Note: `main` once held a 0.75.0 rollback to the 0.71.1 app; 0.76.0 supersedes it
 ## Simpler app (0.84.0)
 Modules are opt-in add-ons (Settings > Add-ons): `student`, `mTime` (start time/length, Plan chips), `rpg` (game), coach (`coachTone`, default off). `dStats` hides the Today stat grid by default. Existing users keep modules they already use via the `mig84` migration in `99-boot-theme-keyboard.js`. Settings shows 6 cards plus a collapsed Advanced block (`<!--adv-->` marker in `settingsCard()`). Intro is one screen (`drawIntro`, `STARTERS`). `buzz(kind)` vibrates when `cfg.haptics` (unverified on device). Housekeeping cards (backup nudge, auto-backup) sit at the bottom of Today. In tests, `helpers.page(..., legacy=True)` turns the add-ons on; pass `legacy=False` to test the fresh-user defaults. Study: top 5 picks + "Show all", timetable in a fold.
 
+## Scores (0.86.0)
+`src/js/78-performance.js`: `perfCard()` leads Today. `habitScore/taskScore/overallScore(shift)` are 42-day EMAs (seeded with the first 7 live days, 84-day window), 0 to 1000; overall is the geometric mean. Habit day value: done 1, half-tick 0.7, isolated miss 0.5. Task points: 3/2/1 by priority + min(1, dur/120), low-priority capped at 3 a day, target `cfg.taskTarget` (6). Weights are judgment, not validated. Today caps open tasks at 4 (`S.dashAll`) and folds habits (`S.dashHab`); `helpers.page(legacy=True)` opens both.
+
 ## Known to-do (not yet done)
 - README is out of date: "Import" is now "Restore", screenshots predate 0.72, no mention of info sheets, tip cards or auto backup. `tests/screenshots.py` needs tips dismissed and Settings sections opened before it will give good images.
 - Game (done in 0.81.0): boss death is permanent, overkill bonus, 25% growth cap, how-it-works sheet, badges. Still open: anti-grind rules (tiny tasks ticked straight after creating them), more badges.

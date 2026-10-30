@@ -4240,3 +4240,10 @@ form.kbdock {
 .perf-score em.up { color: var(--ok); }
 .perf-score em.dn { color: #b0402a; }
 .perf-score u { text-decoration: none; color: var(--muted); }
+
+.sub-scores { display: flex; gap: 18px; margin: -4px 0 10px; font-size: 13px; color: var(--muted); }
+.sub-scores b { color: var(--text, inherit); font-size: 16px; }
+.sub-scores em { font-style: normal; font-size: 11px; margin-inline-start: 4px; }
+.sub-scores em.up { color: var(--ok); }
+.sub-scores em.dn { color: #b0402a; }
+.perf .warn { margin: 0 0 10px; color: #b0402a; }
