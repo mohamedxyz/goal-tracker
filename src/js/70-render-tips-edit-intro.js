@@ -81,13 +81,14 @@ function tipCard() {
   const seen = tipSeen(),
     t = (TIPS()[S.view] || []).find((x) => !seen.includes(x[0]) && x[1]());
   return t
-    ? `<div class="card tipcard" role="note"><div class="grow"><b>💡 ${t[2]}</b><p>${t[3]}</p></div><button class="chip" data-action="tip-ok" data-k="${t[0]}">${L2('Got it', 'فهمت')}</button></div>`
+    ? `<div class="tipbar"><details class="tipline" role="note"><summary><span class="tl-t">💡 <b>${t[2]}</b> <span class="tl-b">${t[3]}</span></span></summary></details><button class="tipx" data-action="tip-ok" data-k="${t[0]}" aria-label="${L2('Got it', 'فهمت')}" title="${L2('Got it', 'فهمت')}">✕</button></div>`
     : '';
 }
 function render() {
   _exMap = null;
   _srMemo = new Map();
   _rest = null;
+  ensureHabitColors();
   const newly = syncGoals();
   rpgTick();
   if (window.GTNative) planNotifications();
@@ -103,6 +104,7 @@ function render() {
     S.sel.clear();
   }
   document.body.classList.toggle('selmode', !!S.selMode);
+  fabSync();
   document.body.classList.toggle('cmp', !!(S.cfg.student && S.cfg.stuCompact));
   if (S.view === 'bestiary' && !rpgOn()) S.view = 'dash';
   const v =
@@ -281,6 +283,7 @@ function openEdit(kind, id) {
     body = `<label>Name</label><input type="text" name="name" value="${esc(h.name)}" required>${iconField(h.icon)}
       <label>Type</label><select name="kind"><option value="">✅ Build: tick it when done</option><option value="avoid" ${slipMode(h) ? 'selected' : ''}>🚫 Avoid: clean unless you slip</option><option value="avoid-confirm" ${isNeg(h) && !slipMode(h) ? 'selected' : ''}>🚫 Avoid: tick each clean day</option></select>
       <label>Target</label><select name="target">${[7, 6, 5, 4, 3, 2, 1].map((n) => `<option value="${n}" ${(h.target || 7) === n ? 'selected' : ''}>${n}× per week</option>`).join('')}</select>
+      ${colorField(habitColor(h))}
       <label>Folder</label><input type="text" name="group" list="folderListEdit" value="${esc(h.group || '')}" placeholder="None. Type a name to create one" autocomplete="off">${folderList('folderListEdit')}
       <label>Schedule</label>${dayPicker(h.days || [])}${isNeg(h) ? '' : stickFields(h)}`;
   }
@@ -466,6 +469,7 @@ dlg.addEventListener('submit', async (e) => {
     }
     Object.assign(h, {
       icon: v.icon || '',
+      color: HC.includes(v.color) ? v.color : habitColor(h),
       mode: newMode,
       name: v.name.trim(),
       kind: av ? 'avoid' : '',

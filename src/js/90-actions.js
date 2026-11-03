@@ -680,7 +680,34 @@ const actions = {
     S.dashAll = !S.dashAll;
   },
   'dash-hab'() {
-    S.dashHab = !S.dashHab;
+    S.dashHab = S.dashHab === false;
+  },
+  fab() {
+    openAddSheet();
+    return false;
+  },
+  'add-kind'(el) {
+    openAddSheet(el.dataset.v);
+    return false;
+  },
+  'add-hz'(el) {
+    S.horizon = el.dataset.v;
+    openAddSheet('goal');
+    return false;
+  },
+  'goal-menu'(el) {
+    goalMenu(el.dataset.id);
+    return false;
+  },
+  'habit-menu'(el) {
+    habitMenu(el.dataset.id);
+    return false;
+  },
+  'toggle-week'() {
+    S.weekOpen = !S.weekOpen;
+    try {
+      localStorage.setItem('gt-week', S.weekOpen ? '1' : '0');
+    } catch (e) {}
   },
   'picks-all'() {
     S.picksAll = !S.picksAll;
@@ -1540,6 +1567,7 @@ document.addEventListener('submit', async (e) => {
       name: v.name.trim(),
       kind: av ? 'avoid' : '',
       mode: av && S.cfg.avoidMode === 'confirm' ? 'confirm' : '',
+      color: HC.includes(v.color) ? v.color : HC[S.habits.length % HC.length],
       target: av ? 7 : +v.target,
       group: (v.group || '').trim(),
       days: av ? [] : readDays(f),
@@ -1548,6 +1576,12 @@ document.addEventListener('submit', async (e) => {
     };
     S.habits.push(h);
     await DB.put('habits', h);
+  }
+  if (f.dataset.sheet) {
+    dlg.close();
+    render();
+    toast(L2('Added', 'تمت الإضافة'));
+    return;
   }
   const gl = f.dataset.goal;
   render();
@@ -1560,3 +1594,16 @@ function scrollPlan() {
   const e = document.querySelector('.pl-now') || document.querySelector('.pl-b');
   if (e) e.scrollIntoView({ block: 'center' });
 }
+/* A <details> with data-keep stays open across re-renders (opening something inside it redraws the page). */
+const keepOpen = (k) => `data-keep="${k}" ${S.keepOpen && S.keepOpen.has(k) ? 'open' : ''}`;
+document.addEventListener(
+  'toggle',
+  (e) => {
+    const d = e.target,
+      k = d && d.dataset && d.dataset.keep;
+    if (!k) return;
+    S.keepOpen = S.keepOpen || new Set();
+    d.open ? S.keepOpen.add(k) : S.keepOpen.delete(k);
+  },
+  true
+);

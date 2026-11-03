@@ -25,9 +25,10 @@ async def page(p,scheme='light',fresh=True,vw=390,vh=844,legacy=True):
   b=await p.chromium.launch();ctx=await b.new_context(viewport={'width':vw,'height':vh},color_scheme=scheme)
   pg=await ctx.new_page();errs=[];pg.on('pageerror',lambda e:errs.append(str(e)))
   pg.on('dialog',lambda d:asyncio.ensure_future(d.accept('test reason') if d.type=='prompt' else d.accept()))
+  await pg.add_init_script("try{if(!localStorage.length)localStorage.setItem('gt-theme','%s')}catch(e){}"%scheme)
   await pg.add_init_script("""document.addEventListener('DOMContentLoaded',()=>{const st=document.createElement('style');st.textContent='.rpg:not(.open) .rpg-x{display:block!important}.setacc:not(.open)>*:not(.title){display:block!important}';document.head.appendChild(st);
-   new MutationObserver(()=>{document.querySelectorAll('details.chipmenu:not([open]),details.adv:not([open]),details.fold:not([open])').forEach(d=>d.open=true);const a=document.getElementById('askDlg');if(a&&a.open&&!window.__noAuto&&!a.dataset.busy){a.dataset.busy=1;const i=a.querySelector('#askIn');if(!i.hidden)i.value='test reason';setTimeout(()=>{a.querySelector('#askYes').click();delete a.dataset.busy},0)}}).observe(document.documentElement,{subtree:true,childList:true,attributes:true,attributeFilter:['open']})})""")
-  await pg.goto(URL);await pg.wait_for_timeout(500)
+   new MutationObserver(()=>{if(!window.__manualDetails)document.querySelectorAll('details.chipmenu:not([open]),details.adv:not([open]),details.fold:not([open])').forEach(d=>d.open=true);const a=document.getElementById('askDlg');if(a&&a.open&&!window.__noAuto&&!a.dataset.busy){a.dataset.busy=1;const i=a.querySelector('#askIn');if(!i.hidden)i.value='test reason';setTimeout(()=>{a.querySelector('#askYes').click();delete a.dataset.busy},0)}}).observe(document.documentElement,{subtree:true,childList:true,attributes:true,attributeFilter:['open']})})""")
+  await pg.goto(URL);await pg.wait_for_function('window.__booted===true',timeout=15000);await pg.wait_for_timeout(300)
   if fresh and await pg.locator('#editDlg[open] [data-action=intro-done]').count():
     await pg.click('[data-action=intro-done] >> nth=0');await pg.wait_for_timeout(100)
   if legacy:await pg.evaluate("S.cfg.coachTone='on';S.cfg.mTime=true;S.cfg.dStats=true;S.dashHab=true;S.dashAll=true;saveCfg();render()")
@@ -40,3 +41,9 @@ async def latin(pg):
    for(const r of roots){const w=document.createTreeWalker(r,NodeFilter.SHOW_TEXT);let n;while(n=w.nextNode()){const p=n.parentElement;if(!p||p.closest('[translate=no],script,style,textarea,option[value=en]')||p.offsetParent===null&&p.tagName!=='OPTION')continue;const t=n.nodeValue.trim();if(/[A-Za-z]{2,}/.test(t))out.add(t.slice(0,90))}
    r.querySelectorAll('[placeholder],[title],[aria-label]').forEach(e=>{if(e.closest('[translate=no]'))return;for(const a of ['placeholder','title','aria-label']){const v=e.getAttribute(a);if(v&&/[A-Za-z]{2,}/.test(v))out.add('@'+a+': '+v.slice(0,80))}})}
    return [...out]})()""")
+
+async def tap(pg,sel):
+  # click a control; if it lives in a closed "more" (⋯) menu, open that menu first
+  await pg.evaluate("(s)=>{const e=document.querySelector(s);const d=e&&e.closest('details.moremenu');if(d&&!d.open){S._eat=0;d.querySelector('summary').click()}}",sel)
+  await pg.wait_for_timeout(50)
+  await pg.click(sel)

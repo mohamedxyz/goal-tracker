@@ -334,8 +334,7 @@ function goalCard(g) {
     <div class="row"><div class="grow" data-action="info-goal" data-id="${g.id}" role="button" tabindex="0"><div class="title">${iconPrefix(g)}${esc(g.title)}</div>
       <div class="meta">${tags.join('')}</div></div>
       ${k === 'number' && !g.done ? '' : `<button class="icon" data-action="done-goal" data-id="${g.id}" title="${g.done ? 'Reopen' : 'Mark complete'}" aria-label="${g.done ? 'Reopen' : 'Mark complete'}">${g.done ? '↺' : '✓'}</button>`}
-      <button class="icon" data-action="edit-goal" data-id="${g.id}" title="Edit" aria-label="Edit">✎</button>
-      <button class="icon" data-action="del-goal" data-id="${g.id}" title="Delete" aria-label="Delete">✕</button></div>
+      <button class="icon" data-action="goal-menu" data-id="${g.id}" title="More" aria-label="More actions">⋯</button></div>
     <div class="bar"><span style="width:${p}%"></span></div>
     <div class="meta"><span><b>${p}%</b></span>${det ? `<span>${det}</span>` : ''}</div>
     ${num}

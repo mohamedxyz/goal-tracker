@@ -369,7 +369,7 @@ function missingStrip() {
 }
 function timetableFold() {
   const n = classesOn(new Date().getDay()).length;
-  return `<details class="more fold" style="margin-top:12px"><summary>${L2('Timetable', 'الجدول')} · ${n ? L2(`${n} class(es) today`, `${n} حصص اليوم`) : L2('no classes today', 'لا حصص اليوم')}</summary>${timetableCard()}</details>`;
+  return `<details class="more fold" style="margin-top:12px" ${keepOpen('tt')}><summary>${L2('Timetable', 'الجدول')} · ${n ? L2(`${n} class(es) today`, `${n} حصص اليوم`) : L2('no classes today', 'لا حصص اليوم')}</summary>${timetableCard()}</details>`;
 }
 function viewStudy() {
   const picksAll = topicPicks(),

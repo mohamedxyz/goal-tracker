@@ -33,10 +33,10 @@ async def main():
       chk(tag+' first tick above the fold '+str(r),all(r))
       r=await pg.evaluate("(()=>{const a=document.querySelector('.backup-cta'),b=document.querySelector('[data-action=toggle-task]');return !a||!!(b.compareDocumentPosition(a)&Node.DOCUMENT_POSITION_FOLLOWING)})()")
       chk(tag+' backup card is below the tasks',r)
-      r=await pg.evaluate("[document.querySelector('[data-view=study]').hidden,!document.querySelector('.daymode'),!!document.querySelector('.taskadd')]")
-      chk(tag+' modules off, add field on Today '+str(r),r==[True,True,True])
+      r=await pg.evaluate("[document.querySelector('[data-view=study]').hidden,!document.querySelector('.daymode'),!!document.querySelector('#fab')&&!document.querySelector('.taskadd')]")
+      chk(tag+' modules off, add button on Today '+str(r),r==[True,True,True])
       # add a task from Today
-      await pg.fill('.taskadd input[name=title]','call mom tomorrow');await pg.click('.taskadd .btn');await pg.wait_for_timeout(400)
+      await pg.click('#fab');await pg.wait_for_timeout(300);await pg.fill('#editDlg form[data-form=task] input[name=title]','call mom tomorrow');await pg.click('#editDlg form[data-form=task] button.btn');await pg.wait_for_timeout(400)
       r=await pg.evaluate("S.tasks.find(t=>t.title.startsWith('call mom'))&&S.tasks.find(t=>t.title.startsWith('call mom')).due===ds(addDays(new Date(),1))")
       chk(tag+' add from Today with a date',r)
       # Tasks view has no Plan chip until the module is on

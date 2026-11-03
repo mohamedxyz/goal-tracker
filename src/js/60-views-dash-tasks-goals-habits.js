@@ -134,12 +134,6 @@ function consistencyCard() {
     av = S.habits.filter(isNeg);
   return `<div class="card vcard"><div class="vhead"><div class="title">Habit consistency</div><div class="sub">Last 30 days</div></div>${bl.length ? `<div class="hbars">${mk(bl, false)}</div>` : ''}${av.length ? `<div class="hsub">🛡 Staying clean</div><div class="hbars">${mk(av, true)}</div>` : ''}</div>`;
 }
-/* One always-visible field on Today: type a task, press Add. Dates like "tomorrow 5pm" work. */
-function todayAdd() {
-  const due = S.cfg.dueDef === 'none' ? '' : S.cfg.dueDef === 'tomorrow' ? ds(addDays(new Date(), 1)) : TODAY();
-  return `<form class="add taskadd card" data-form="task"><div class="qa"><input type="text" name="title" placeholder="${L2('Add a task… try: call mom tomorrow 5pm', 'أضف مهمة… جرّب: اتصل بأمي غدًا 5م')}" required autocomplete="off" aria-describedby="qaHint"><button class="btn">${L2('Add', 'أضف')}</button></div>
-    <div class="qa-hint" id="qaHint" aria-live="polite" hidden></div><input type="hidden" name="due" value="${due}"><input type="hidden" name="priority" value="${S.cfg.prio || 'low'}"></form>`;
-}
 function viewDash() {
   const today = TODAY();
   const open = S.tasks.filter((t) => !t.done && !t.archived);
@@ -168,18 +162,22 @@ function viewDash() {
     dow = new Date().getDay();
   const planCta = !wk.length || ((dow === 0 || dow === 1) && openSlots > 0);
   const housekeeping = `${autoCard()}${autoAskCard()}${!backupNudge() && lb !== null && lb > 0 ? `<div class="meta" style="margin:2px 2px 8px">${L2('Last backup', 'آخر نسخة')} ${agoText(lb)} · <button class="chip" data-action="backup-now">${L2('Back up now', 'انسخ الآن')}</button></div>` : ''}${backupNudge() ? `<div class="card backup-cta ${backupLevel() > 1 ? 'urgent' : ''}"><div class="grow"><div class="title">${lb === null ? 'No backup yet' : 'Last backup ' + agoText(lb)}</div><div class="meta">${backupLevel() > 1 ? 'If this browser clears its storage, everything since your last backup is gone. Back up now.' : 'Your data lives only in this browser. Save a backup and keep it somewhere safe.'}</div></div><button class="btn" data-action="backup-now">Back up now</button><button class="icon" data-action="backup-snooze" title="Remind me later" aria-label="Dismiss backup reminder">✕</button></div>` : ''}`;
-  return `${sampleBanner()}${dayBanner()}${perfCard()}${nRv ? `<div class="card review-cta"><div class="grow"><div class="title">${nRv} goal${nRv > 1 ? 's' : ''} from past periods need${nRv > 1 ? '' : 's'} a review</div><div class="meta">Hit it, missed, or carry over. About a minute.</div></div><button class="btn" data-action="open-review">Review</button></div>` : ''}  <div class="grid2" style="margin-top:6px"><div>
+  const habOpen = S.dashHab !== false;
+  const goalsBlock = S.cfg.dGoals
+    ? `<div class="h2row"><h2>${L2("This week's goals", 'أهداف هذا الأسبوع')}</h2>${moreMenu(`<button class="chip" data-action="open-plan">${L2('Plan this week', 'خطّط هذا الأسبوع')}</button><button class="chip" data-action="open-report">${L2('Weekly report', 'التقرير الأسبوعي')}</button><button class="chip" data-action="open-month">${L2('Monthly review', 'المراجعة الشهرية')}</button>`)}</div>${wk.length ? `<div class="goals">${wk.map(goalCard).join('')}</div>` : `<div class="empty">No weekly goals for ${currentPeriod('weekly')}.</div>`}`
+    : '';
+  return `${sampleBanner()}${dayBanner()}${perfCard()}${nRv ? `<div class="card review-cta"><div class="grow"><div class="title">${nRv} goal${nRv > 1 ? 's' : ''} from past periods need${nRv > 1 ? '' : 's'} a review</div><div class="meta">Hit it, missed, or carry over. About a minute.</div></div><button class="btn" data-action="open-review">Review</button></div>` : ''}  <div class="grid2"><div>
     ${
       S.cfg.dTasks
-        ? `<h2>Today's tasks</h2>${todayAdd()}${todays.length ? `<ul class="list">${(S.dashAll ? todays : todays.filter((t) => !t.done).slice(0, 4)).map(taskItem).join('')}</ul>${todays.filter((t) => !t.done).length > 4 || todaysDone ? `<button class="chip" style="margin-top:8px" data-action="dash-all">${S.dashAll ? L2('Show less', 'عرض أقل') : L2(`Show all ${todays.length}`, `عرض الكل ${todays.length}`)}</button>` : ''}` : `<div class="empty">Nothing due today.</div>`}
+        ? `<h2>Today's tasks</h2>${todays.length ? `<ul class="list">${(S.dashAll ? todays : todays.filter((t) => !t.done).slice(0, 4)).map(taskItem).join('')}</ul>${todays.filter((t) => !t.done).length > 4 || todaysDone ? `<button class="chip" style="margin-top:8px" data-action="dash-all">${S.dashAll ? L2('Show less', 'عرض أقل') : L2(`Show all ${todays.length}`, `عرض الكل ${todays.length}`)}</button>` : ''}` : `<div class="empty">Nothing due today.</div>`}
     ${overdue && !S.cfg.dOverdue ? `<button class="chip" style="margin-top:10px" data-action="see-overdue">${overdue} overdue from earlier days →</button>` : ''}`
         : ''
     }
-    ${S.cfg.dGoals ? `<div class="h2row"><h2>This week's goals</h2><span class="hbtns"><button class="chip" data-action="open-plan">Plan this week</button><details class="chipmenu"><summary class="chip" aria-label="More">⋯</summary><div><button class="chip" data-action="open-report">Weekly report</button><button class="chip" data-action="open-month">Monthly review</button></div></details></span></div>${wk.length ? `<div class="goals">${wk.map(goalCard).join('')}</div>` : `<div class="empty">No weekly goals for ${currentPeriod('weekly')}.</div>`}` : ''}
   </div><div>
-    ${S.cfg.dHabits ? `<button class="card insbtn" data-action="dash-hab" aria-expanded="${!!S.dashHab}"><span>${L2("Today's habits", 'عادات اليوم')} <small>${hd}/${dueHabits.length} ${L2('done', 'منجز')}</small></span><span>${S.dashHab ? '▾' : '▸'}</span></button>${S.dashHab ? habitList(false) : ''}` : ''}
+    ${S.cfg.dHabits ? `<button class="insbtn habhead" data-action="dash-hab" aria-expanded="${habOpen}"><span>${L2("Today's habits", 'عادات اليوم')} <small>${hd}/${dueHabits.length} ${L2('done', 'منجز')}</small></span><span>${habOpen ? '▾' : '▸'}</span></button>${habOpen ? habitList(false) : ''}` : ''}
+    ${goalsBlock}
   </div></div>
-  ${planCta ? `<div class="card plan-cta"><div class="grow"><div class="title">${wk.length ? L2(`${openSlots} weekly slot${openSlots > 1 ? 's' : ''} still to plan`, `${openSlots} خانات أسبوعية للتخطيط`) : `Plan ${currentPeriod('weekly')}`}</div><div class="meta">${wk.length ? L2("Fill in this week's steps toward your monthly goals.", 'املأ خطوات هذا الأسبوع نحو أهدافك الشهرية.') : L2("No weekly goals yet. Pick this week's steps.", 'لا أهداف أسبوعية بعد. اختر خطوات هذا الأسبوع.')}</div></div><button class="btn" data-action="open-plan">Plan week</button></div>` : ''}${rpgCard()}<div class="stats dstats" ${S.cfg.dStats ? '' : 'hidden'}>
+    ${planCta ? `<div class="card plan-cta"><div class="grow"><div class="title">${wk.length ? L2(`${openSlots} weekly slot${openSlots > 1 ? 's' : ''} still to plan`, `${openSlots} خانات أسبوعية للتخطيط`) : `Plan ${currentPeriod('weekly')}`}</div><div class="meta">${wk.length ? L2("Fill in this week's steps toward your monthly goals.", 'املأ خطوات هذا الأسبوع نحو أهدافك الشهرية.') : L2("No weekly goals yet. Pick this week's steps.", 'لا أهداف أسبوعية بعد. اختر خطوات هذا الأسبوع.')}</div></div><button class="btn" data-action="open-plan">Plan week</button></div>` : ''}${rpgCard()}<div class="stats dstats" ${S.cfg.dStats ? '' : 'hidden'}>
     <div class="card stat"><div class="n">${todaysDone}/${todays.length}</div><div class="l">Today's tasks done</div></div>
     <div class="card stat"><div class="n">${hd}/${dueHabits.length}</div><div class="l">Habits done today</div></div>
     <div class="card stat"><div class="n">${active}</div><div class="l">Active goals</div></div>
@@ -260,30 +258,12 @@ function viewTasks() {
   const nOver = live.filter((t) => !t.done && t.due && t.due < today).length;
   const chip = (k, l) =>
     `<button class="chip ${f === k ? 'on' : ''}" data-action="task-filter" data-v="${k}">${l}</button>`;
-  return `<form class="add taskadd card" data-form="task">
-    <div class="qa"><input type="text" name="title" placeholder="${L2('New task… try: tomorrow !high', 'مهمة جديدة… جرّب كتابة «غدًا»')}" required autocomplete="off" aria-describedby="qaHint"><button class="btn">Add</button></div>
-    <div class="qa-hint" id="qaHint" aria-live="polite" hidden></div>
-    <details class="more"><summary>More options</summary><div class="moreg">
-    <input type="date" name="due" aria-label="Due date" value="${S.cfg.dueDef === 'none' ? '' : S.cfg.dueDef === 'tomorrow' ? ds(addDays(new Date(), 1)) : today}">
-    <select name="priority" aria-label="Priority">${[
-      ['low', 'Low'],
-      ['med', 'Medium'],
-      ['high', 'High'],
-    ]
-      .map(([v, l]) => `<option value="${v}" ${S.cfg.prio === v ? 'selected' : ''}>${l}</option>`)
-      .join('')}</select>
-    <select name="repeat" aria-label="Repeat">${REPEATS.map(([v, l]) => `<option value="${v}">${v ? '🔁 ' : ''}${l}</option>`).join('')}</select>
-    <select name="goalId" aria-label="Weekly goal">${goalOptions('', (g) => g.horizon === 'weekly')}</select>
-    <input type="text" name="tag" list="tagListAdd" placeholder="Tag folder (optional)" autocomplete="off">${tagList('tagListAdd')}
-    <textarea name="notes" placeholder="Notes (optional)" style="min-height:40px"></textarea>
-    <textarea name="items" placeholder="Checklist (optional, one item per line)" style="min-height:40px"></textarea>
-    </div></details></form>
-  ${
+  return `  ${
     S.planOn
       ? `<div class="filters"><button class="chip" data-action="tasks-plan">☰ List</button><button class="chip" data-action="tasks-cal">📅 Calendar</button></div>${planView()}`
       : S.tcalOn
         ? `<div class="filters"><button class="chip" data-action="tasks-cal">☰ List</button>${S.cfg.mTime ? '<button class="chip" data-action="tasks-plan">🕐 Plan</button>' : ''}</div>${calView()}`
-        : `<div class="filters fbar"><div class="fscroll">${chip('all', 'All')}${chip('today', 'Due today')}${chip('overdue', 'Overdue' + (nOver ? ' · ' + nOver : ''))}${chip('done', 'Done')}</div><button class="chip ${selOn('tasks') ? 'on' : ''}" data-action="sel-mode" data-k="tasks" aria-pressed="${selOn('tasks')}">${selOn('tasks') ? '✓ Selecting' : '☑ Select'}</button><button class="chip" data-action="tasks-cal">📅 Calendar</button>${S.cfg.mTime ? '<button class="chip" data-action="tasks-plan">🕐 Plan</button>' : ''}</div>
+        : `<div class="filters fbar"><div class="fscroll">${chip('all', 'All')}${chip('today', 'Due today')}${chip('overdue', 'Overdue' + (nOver ? ' · ' + nOver : ''))}${chip('done', 'Done')}</div>${moreMenu(`<button class="chip ${selOn('tasks') ? 'on' : ''}" data-action="sel-mode" data-k="tasks" aria-pressed="${selOn('tasks')}">${selOn('tasks') ? '✓ Selecting' : '☑ Select'}</button><button class="chip" data-action="tasks-cal">📅 Calendar</button>${S.cfg.mTime ? '<button class="chip" data-action="tasks-plan">🕐 Plan</button>' : ''}`)}</div>
   ${open.length ? taskGroups(open) : done.length && showDone ? '' : `<div class="empty">No tasks here.</div>`}
   ${done.length && showDone ? `${f === 'done' ? '' : `<button class="chip" style="margin-top:12px" data-action="toggle-done-list" aria-expanded="${!!S.doneOpen}">${S.doneOpen ? '▾' : '▸'} ${L2(done.length + ' done', done.length + ' منجزة')}</button>`}${f === 'done' || S.doneOpen ? `<ul class="list">${(S.doneAll ? done : done.slice(0, 40)).map(taskItem).join('')}</ul>` : ''}${done.length > 40 && (f === 'done' || S.doneOpen) ? `<button class="chip" style="margin-top:8px" data-action="toggle-done-all">${S.doneAll ? 'Show fewer' : 'Show all ' + done.length + ' completed'}</button>` : ''}` : ''}`
   }`;
@@ -337,7 +317,6 @@ function viewGoals() {
   const ladder = S.horizon === 'ladder',
     h = ladder ? 'weekly' : S.horizon;
   const cur = currentPeriod(h);
-  const ph = PARENT[h];
   let list = S.goals.filter((g) => g.horizon === h);
   if (S.goalScope === 'current') list = list.filter((g) => g.period === cur || needsReview(g));
   list.sort(
@@ -347,9 +326,8 @@ function viewGoals() {
       (a.status === 'missed') - (b.status === 'missed') ||
       b.period.localeCompare(a.period)
   );
-  const defKind = h === 'weekly' ? 'check' : 'rollup';
   const seg =
-    `<button class="${ladder ? 'on' : ''}" data-action="horizon" data-v="ladder">🪜 Ladder</button>` +
+    `<button class="${ladder ? 'on' : ''}" data-action="horizon" data-v="ladder">Ladder</button>` +
     Object.keys(HORIZONS)
       .map(
         (k) =>
@@ -357,32 +335,14 @@ function viewGoals() {
       )
       .join('');
   return `<div class="seg">${seg}</div>
-  <form class="add taskadd card" data-form="goal" data-kind="${defKind}">
-    <div class="qa"><input type="text" name="title" placeholder="New ${HORIZONS[h].toLowerCase()} goal…" required><button class="btn">Add</button></div>
-    <details class="more"><summary>More options</summary><div class="moreg">
-    <input type="text" name="period" value="${cur}" style="flex:0 1 130px" title="Period">
-    <select name="kind" title="How will you measure it?"><option value="check" ${defKind === 'check' ? 'selected' : ''}>☐ Checkbox</option><option value="number">🔢 Number target</option>${h !== 'weekly' ? `<option value="rollup" selected>🧩 Built from ${HORIZONS[CHILD[h]].toLowerCase()} goals</option>` : ''}</select>
-    <span class="f-num"><input type="number" name="target" min="0" step="any" placeholder="Target, e.g. 40" style="flex:1 1 120px"><input type="text" name="unit" placeholder="Unit, e.g. hours" style="flex:1 1 120px"></span>
-    ${h !== 'weekly' ? `<span class="f-roll"><input type="number" name="expected" min="1" step="1" placeholder="How many ${HORIZONS[CHILD[h]].toLowerCase()} goals? (default ${defaultExpected({ horizon: h, period: cur })})" style="flex:1 1 100%"></span>` : ''}
-    ${ph ? `<select name="parentId" aria-label="Parent goal">${goalOptions('', (g) => g.horizon === ph).replace('— No goal —', '— Supports which ' + HORIZONS[ph].toLowerCase() + ' goal? —')}</select>` : ''}
-    <textarea name="notes" placeholder="Why it matters / how you'll measure it (optional)"></textarea>
-    </div></details></form>
   ${ladder ? towerCard() + weekSummary() : ''}
   <div class="filters">
     <button class="chip ${S.goalScope === 'current' ? 'on' : ''}" data-action="goal-scope" data-v="current" title="${cur}">Current</button>
-    <button class="chip ${S.goalScope === 'all' ? 'on' : ''}" data-action="goal-scope" data-v="all">All periods</button>${h === 'weekly' ? '<button class="chip" data-action="open-plan">Plan this week</button>' : ''}</div>
+    <button class="chip ${S.goalScope === 'all' ? 'on' : ''}" data-action="goal-scope" data-v="all">All periods</button>${h === 'weekly' ? moreMenu('<button class="chip" data-action="open-plan">Plan this week</button>') : ''}</div>
   ${ladder ? ladderView() || `<div class="empty">No goals yet. Add one above, then hang tasks under it.</div><div class="tpls" style="margin-top:12px">${templateButtons()}</div>` : list.length ? `<div class="goals">${list.map(goalCard).join('')}</div>` : `<div class="empty">No ${HORIZONS[h].toLowerCase()} goals yet.</div>`}`;
 }
 function viewHabits() {
-  return `<details class="more habadd" ${S.habits.length ? '' : 'open'}><summary>+ New habit</summary><form class="add" data-form="habit">
-    <input type="text" name="name" placeholder="New habit (e.g. Code 1 hour, or No smoking)…" required>
-    <select name="kind" aria-label="Habit type"><option value="">✅ Build: tick it when done</option><option value="avoid">${S.cfg.avoidMode === 'confirm' ? '🚫 Avoid: tick each clean day' : '🚫 Avoid: clean unless you slip'}</option></select>
-    <select name="target" title="Target days per week">${[7, 6, 5, 4, 3, 2, 1].map((n) => `<option value="${n}">${n}×/week</option>`).join('')}</select>
-    <input type="text" name="group" list="folderListAdd" placeholder="Folder (optional), e.g. Morning routine" style="flex:1 1 200px" autocomplete="off">${folderList('folderListAdd')}
-    ${dayPicker()}${stickFields()}
-    <button class="btn">Add habit</button></form></details>
-  <div class="row" style="margin:6px 0"><button class="chip" data-action="info-habits">ⓘ ${L2('How habits work', 'كيف تعمل العادات')}</button></div>
-  ${easierCard()}${habitList(true)}`;
+  return `${easierCard()}${habitList(true)}`;
 }
 // Shared by the dashboard and Habits tab; honours the "hide done today" switch.
 // Dashboard row: just today — one big check button, streak and weekly progress.
@@ -391,9 +351,9 @@ function habitToday(h) {
     on = good(h, k),
     s = streak(h);
   return `<li class="item ${on ? 'done' : ''}">
-    <button class="tcheck ${on ? 'on' : ''}" data-action="toggle-log" data-id="${h.id}" data-date="${k}" aria-pressed="${on}" aria-label="${slipMode(h) ? (on ? 'Clean today. Tap to log a slip' : 'Slipped today. Tap to undo') : (on ? L2('Undo', 'تراجع') : L2('Check off', 'إنجاز')) + ' ' + esc(h.name) + L2(' for today', ' لهذا اليوم')}">${slipMode(h) && !on ? '✗' : '✓'}</button>
+    <button class="tcheck ${on ? 'on' : ''}" translate="no" data-action="toggle-log" data-id="${h.id}" data-date="${k}" aria-pressed="${on}" aria-label="${slipMode(h) ? (on ? 'Clean today. Tap to log a slip' : 'Slipped today. Tap to undo') : (on ? L2('Undo', 'تراجع') : L2('Check off', 'إنجاز')) + ' ' + esc(h.name) + L2(' for today', ' لهذا اليوم')}">${slipMode(h) && !on ? '✗' : '✓'}</button>
     <div class="grow habit-open" data-action="open-habit" data-id="${h.id}" role="button" tabindex="0" title="Open history">
-      <div class="title">${hname(h)} <span class="chev">›</span></div>
+      <div class="title" translate="no">${hname(h)} <span class="chev">›</span></div>
       <div class="meta"><span>${isNeg(h) ? '🛡 ' + s + ' day' + (s === 1 ? '' : 's') + ' clean' : '🔥 ' + s + ' day' + (s === 1 ? '' : 's')}</span><span>This week ${weekCount(h)}/${weekTarget(h)}</span></div>${habitHint(h)}</div></li>`;
 }
 function habitList(full) {
@@ -409,13 +369,14 @@ function habitList(full) {
   if (!pool.length && avoids.length) return avoidSection(avoids);
   if (!pool.length)
     return `<div class="empty">Nothing due today. ${offToday} habit${offToday > 1 ? 's' : ''} off.</div>`;
-  const bar = `<div class="filters"><button class="chip ${S.hideDone ? 'on' : ''}" data-action="toggle-hide-done" aria-pressed="${S.hideDone}">${S.hideDone ? '✓ Hiding done today' : 'Hide done today'}</button>
-    ${full ? `<button class="chip ${selOn('habits') ? 'on' : ''}" data-action="sel-mode" data-k="habits" aria-pressed="${selOn('habits')}">${selOn('habits') ? '✓ Selecting' : '☑ Select'}</button><button class="chip ${S.compact ? 'on' : ''}" data-action="toggle-compact" aria-pressed="${S.compact}">${S.compact ? '✓ Compact' : 'Compact'}</button><button class="chip ${S.reorder ? 'on' : ''}" data-action="toggle-reorder" aria-pressed="${!!S.reorder}">${S.reorder ? '✓ Reordering' : '↕ Reorder'}</button>` : ''}
-    <span class="meta" style="align-self:center">${doneToday}/${dueAll.length} due done${offToday ? ` · ${offToday} off today` : ''}${S.hideDone && doneToday ? ` · ${doneToday} hidden` : ''}</span></div>`;
-  const wrap = (hs) =>
-    full
-      ? `<div class="goals">${hs.map((h) => habitCard(h, true)).join('')}</div>`
-      : `<ul class="list">${hs.map(habitToday).join('')}</ul>`;
+  const bar = `<div class="filters hbar"><span class="meta">${doneToday}/${dueAll.length} ${L2('due done', 'منجزة من المستحقة')}${offToday ? ` · ${offToday} ${L2('off today', 'مجازة اليوم')}` : ''}${S.hideDone && doneToday ? ` · ${doneToday} ${L2('hidden', 'مخفية')}` : ''}</span>${moreMenu(
+    `<button class="chip ${S.hideDone ? 'on' : ''}" data-action="toggle-hide-done" aria-pressed="${S.hideDone}">${S.hideDone ? '✓ Hiding done today' : 'Hide done today'}</button>${
+      full
+        ? `<button class="chip ${selOn('habits') ? 'on' : ''}" data-action="sel-mode" data-k="habits" aria-pressed="${selOn('habits')}">${selOn('habits') ? '✓ Selecting' : '☑ Select'}</button><button class="chip ${S.reorder ? 'on' : ''}" data-action="toggle-reorder" aria-pressed="${!!S.reorder}">${S.reorder ? '✓ Reordering' : '↕ Reorder'}</button><button class="chip" data-action="info-habits">ⓘ ${L2('How habits work', 'كيف تعمل العادات')}</button>`
+        : ''
+    }`
+  )}</div>`;
+  const wrap = (hs) => habitGrid(hs);
   const grp = (list) => {
     let out = '';
     const groups = new Map(),
@@ -463,11 +424,10 @@ function habitList(full) {
       adn = ad.filter((h) => good(h, today)).length;
     if (bl.length)
       out +=
-        `<div class="h2row hsec"><h2>✅ Build</h2><span class="meta">${bdn}/${bd.length} done today</span></div>` +
+        `<div class="h2row hsec"><h2>Build</h2><span class="meta">${bdn}/${bd.length} done today</span></div>` +
         grp(bl);
     out +=
-      `<div class="h2row hsec"><h2>🛡 Avoid</h2><span class="meta">${adn}/${ad.length} clean today</span></div>` +
-      grp(al);
+      `<div class="h2row hsec"><h2>Avoid</h2><span class="meta">${adn}/${ad.length} clean today</span></div>` + grp(al);
   } else out = grp(pool);
   if (S.hideDone && dueAll.length && doneToday === dueAll.length)
     out += `<div class="allclear">All habits done for today 🎉</div>`;

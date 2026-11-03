@@ -9,9 +9,9 @@ async def m():
       await pg.wait_for_timeout(300)
       r=await pg.evaluate("""(()=>{const w=weekData(0),A=rpgAll(),by=doneByDay();let n=0;for(const d of w.days)n+=(by[ds(d)]||[]).length;
         return {reportDone:w.done.length,dashDone:n,lv:w.lv,focus:w.focus,bossTotal:w.boss&&w.boss.total,cardTotal:A.cur.total,bossHp:w.boss&&w.boss.hp,cardHp:A.cur.hp}})()""");print(sc,r)
-      await pg.click('[data-action=open-report]');await pg.wait_for_timeout(200);txt=await pg.inner_text('#editDlg');print(sc,'report has levels',('Day levels' in txt),'focus','Focus time' in txt,'boss','Week boss' in txt)
+      await tap(pg,'[data-action=open-report]');await pg.wait_for_timeout(200);txt=await pg.inner_text('#editDlg');print(sc,'report has levels',('Day levels' in txt),'focus','Focus time' in txt,'boss','Week boss' in txt)
       await pg.screenshot(path=f'{SHOTS}/report-{sc}.png');await pg.keyboard.press('Escape')
-      await pg.click('[data-action=open-month]');await pg.wait_for_timeout(200);txt=await pg.inner_text('#editDlg');print(sc,'month', 'Monthly review' in txt,'guardian','Guardian' in txt)
+      await tap(pg,'[data-action=open-month]');await pg.wait_for_timeout(200);txt=await pg.inner_text('#editDlg');print(sc,'month', 'Monthly review' in txt,'guardian','Guardian' in txt)
       mo=await pg.evaluate("(()=>{const m=monthData(0);return {done:m.done.length,lv:m.lv,best:m.best}})()");print(sc,'month data',mo)
       await pg.click('[data-action=mrev-nav][data-d="-1"]');await pg.wait_for_timeout(150);print(sc,'prev month ok',await pg.locator('#editDlg h3').inner_text())
       await pg.screenshot(path=f'{SHOTS}/month-{sc}.png')

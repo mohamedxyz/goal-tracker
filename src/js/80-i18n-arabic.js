@@ -139,6 +139,8 @@ const AR = {
   "Stopped. Sessions under 5 minutes aren't logged.": 'توقف. الجلسات الأقل من 5 دقائق لا تُسجّل.',
   'Stop the current focus session and start a new one?': 'إيقاف جلسة التركيز الحالية وبدء جلسة جديدة؟',
   '✅ Build': '✅ بناء',
+  Build: 'بناء',
+  Avoid: 'تجنّب',
   '🛡 Avoid': '🛡 تجنّب',
   'activity, charts, habit consistency': 'النشاط، الرسوم، انتظام العادات',
   Decrease: 'إنقاص',
@@ -276,6 +278,7 @@ const AR = {
   Blaze: 'لهب',
   Titan: 'جبّار',
   '🪜 Ladder': '🪜 السلّم',
+  Ladder: 'السلّم',
   '+ Add a task for this goal': '+ أضف مهمة لهذا الهدف',
   'Weekly goal': 'هدف أسبوعي',
   'More options': 'خيارات إضافية',
@@ -997,6 +1000,7 @@ try {
 }
 try {
   S.compact = localStorage.getItem('gt-compact') === '1';
+  S.weekOpen = localStorage.getItem('gt-week') === '1';
 } catch (e) {
   S.compact = false;
 }
