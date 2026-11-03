@@ -88,3 +88,7 @@ No analytics, no accounts, no network requests. The whole app is the single HTML
 ## For developers
 
 The app is generated from `src/` into `goal-tracker.html` by `node build.mjs`. See [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md) for the Android build, [`src/README.md`](src/README.md) for the code map, and `tests/run.sh` for the Playwright suite. The version is shown in Settings and the changelog is at the top of `src/00-head.html`.
+
+## License
+
+[MIT](LICENSE).
