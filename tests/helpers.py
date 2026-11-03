@@ -25,6 +25,7 @@ async def page(p,scheme='light',fresh=True,vw=390,vh=844,legacy=True):
   b=await p.chromium.launch();ctx=await b.new_context(viewport={'width':vw,'height':vh},color_scheme=scheme)
   pg=await ctx.new_page();errs=[];pg.on('pageerror',lambda e:errs.append(str(e)))
   pg.on('dialog',lambda d:asyncio.ensure_future(d.accept('test reason') if d.type=='prompt' else d.accept()))
+  await pg.add_init_script("try{if(!localStorage.length)localStorage.setItem('gt-theme','%s')}catch(e){}"%scheme)
   await pg.add_init_script("""document.addEventListener('DOMContentLoaded',()=>{const st=document.createElement('style');st.textContent='.rpg:not(.open) .rpg-x{display:block!important}.setacc:not(.open)>*:not(.title){display:block!important}';document.head.appendChild(st);
    new MutationObserver(()=>{if(!window.__manualDetails)document.querySelectorAll('details.chipmenu:not([open]),details.adv:not([open]),details.fold:not([open])').forEach(d=>d.open=true);const a=document.getElementById('askDlg');if(a&&a.open&&!window.__noAuto&&!a.dataset.busy){a.dataset.busy=1;const i=a.querySelector('#askIn');if(!i.hidden)i.value='test reason';setTimeout(()=>{a.querySelector('#askYes').click();delete a.dataset.busy},0)}}).observe(document.documentElement,{subtree:true,childList:true,attributes:true,attributeFilter:['open']})})""")
   await pg.goto(URL);await pg.wait_for_timeout(500)

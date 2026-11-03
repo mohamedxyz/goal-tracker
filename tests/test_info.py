@@ -39,7 +39,7 @@ async def main():
       print(scheme,'escape leaves',await pg.evaluate("S.selMode"))
       await pg.evaluate("S.view='habits';render()");await pg.wait_for_timeout(200)
       await tap(pg,'[data-action=sel-mode][data-k=habits]');await pg.wait_for_timeout(150)
-      await pg.click('#app .goals>.card >> nth=0',position={'x':200,'y':20});await pg.wait_for_timeout(150)
+      await pg.click('#app .hg-row >> nth=0',position={'x':200,'y':20});await pg.wait_for_timeout(150)
       print(scheme,'habit card tap selects',await pg.evaluate("S.sel.size"),'logs unchanged',await pg.evaluate("S.logs.size"))
       await pg.click('[data-action=sel-exit]')
       # auto backup: browser shows card, native saves silently

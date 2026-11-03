@@ -372,14 +372,11 @@ function habitList(full) {
   const bar = `<div class="filters hbar"><span class="meta">${doneToday}/${dueAll.length} ${L2('due done', 'منجزة من المستحقة')}${offToday ? ` · ${offToday} ${L2('off today', 'مجازة اليوم')}` : ''}${S.hideDone && doneToday ? ` · ${doneToday} ${L2('hidden', 'مخفية')}` : ''}</span>${moreMenu(
     `<button class="chip ${S.hideDone ? 'on' : ''}" data-action="toggle-hide-done" aria-pressed="${S.hideDone}">${S.hideDone ? '✓ Hiding done today' : 'Hide done today'}</button>${
       full
-        ? `<button class="chip ${selOn('habits') ? 'on' : ''}" data-action="sel-mode" data-k="habits" aria-pressed="${selOn('habits')}">${selOn('habits') ? '✓ Selecting' : '☑ Select'}</button><button class="chip ${S.weekOpen ? 'on' : ''}" data-action="toggle-week" aria-pressed="${!!S.weekOpen}">${L2('Week strip', 'شريط الأسبوع')}</button><button class="chip ${S.compact ? 'on' : ''}" data-action="toggle-compact" aria-pressed="${S.compact}">${S.compact ? '✓ Compact' : 'Compact'}</button><button class="chip ${S.reorder ? 'on' : ''}" data-action="toggle-reorder" aria-pressed="${!!S.reorder}">${S.reorder ? '✓ Reordering' : '↕ Reorder'}</button><button class="chip" data-action="info-habits">ⓘ ${L2('How habits work', 'كيف تعمل العادات')}</button>`
+        ? `<button class="chip ${selOn('habits') ? 'on' : ''}" data-action="sel-mode" data-k="habits" aria-pressed="${selOn('habits')}">${selOn('habits') ? '✓ Selecting' : '☑ Select'}</button><button class="chip ${S.reorder ? 'on' : ''}" data-action="toggle-reorder" aria-pressed="${!!S.reorder}">${S.reorder ? '✓ Reordering' : '↕ Reorder'}</button><button class="chip" data-action="info-habits">ⓘ ${L2('How habits work', 'كيف تعمل العادات')}</button>`
         : ''
     }`
   )}</div>`;
-  const wrap = (hs) =>
-    full
-      ? `<div class="goals">${hs.map((h) => habitCard(h, true)).join('')}</div>`
-      : `<ul class="list">${hs.map(habitToday).join('')}</ul>`;
+  const wrap = (hs) => habitGrid(hs);
   const grp = (list) => {
     let out = '';
     const groups = new Map(),

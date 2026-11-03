@@ -15,6 +15,12 @@ async def m():
         await pg.evaluate(f"setPalette('{pal}');setTheme('{th}')")
         for name,r,f,bk in await pg.evaluate(JS,PAIRS):
           if r<4.5:fails.append((pal,th,name,r,f,bk))
+    # habit colours: readable as text on rows (card, bg, soft) and as a fill under the tick (on-hc)
+    for th in ['light','dark','black']:
+      await pg.evaluate(f"setPalette('clay');setTheme('{th}')")
+      pairs=[(f'pc-{c}',bk) for c in ['coral','amber','lime','teal','sky','violet','pink','sand'] for bk in ['bg','card','soft']]+[('on-hc',f'pc-{c}') for c in ['coral','amber','lime','teal','sky','violet','pink','sand']]
+      for name,r,f,bk in await pg.evaluate(JS,pairs):
+        if r<4.5:fails.append(('habit colour',th,name,r,f,bk))
     for x in fails:print('FAIL',x)
     print('fails',len(fails));await b.close()
 asyncio.run(m())

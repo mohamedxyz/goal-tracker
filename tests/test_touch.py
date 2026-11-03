@@ -52,6 +52,10 @@ async def m():
         cover=await pg.evaluate(r"""()=>{const f=document.querySelector('#fab');if(!f||!f.getBoundingClientRect().width)return 0;const fr=f.getBoundingClientRect();let c=0;
           document.querySelectorAll('#app button,#app input,#app [data-action],#app a').forEach(e=>{const r=e.getBoundingClientRect();if(r.width<1||e.closest('[hidden],details:not([open]) > :not(summary)'))return;
            if(r.left<fr.right&&r.right>fr.left&&r.top<fr.bottom&&r.bottom>fr.top)c++});return c}""")
+        # the last control must end above both the add button and the tab bar
+        gap=await pg.evaluate(r"""()=>{const f=document.querySelector('#fab'),t=document.querySelector('#tabbar');const lim=Math.min(f&&f.getBoundingClientRect().width?f.getBoundingClientRect().top:1e9,t.getBoundingClientRect().top);
+          let m=0;document.querySelectorAll('#app button,#app input,#app [data-action],#app a,#app summary').forEach(e=>{const r=e.getBoundingClientRect();if(r.width<1||e.closest('[hidden],details:not([open]) > :not(summary)'))return;m=Math.max(m,r.bottom)});return [Math.round(m),Math.round(lim)]}""")
+        if gap[0]>gap[1]:r['bad'].append('last control ends at %s, below the add button/tab bar top %s'%tuple(gap))
         fab=await pg.evaluate("(()=>{const f=document.querySelector('#fab');if(!f)return null;const r=f.getBoundingClientRect();return {w:r.width,h:r.height,right:r.right>innerWidth/2}})()")
         if v=='data':
           if fab and fab['w']>0:r['bad'].append('FAB shown on Settings')

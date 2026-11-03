@@ -44,7 +44,7 @@ async def main():
       chk(tag+' missed-yesterday nudge',await pg.locator('.hint.miss').count()==1)
       # stacking order
       await pg.evaluate("(async()=>{await __clr();const a=await __mkh({name:'Coffee'});const c=await __mkh({name:'Third'});const d=await __mkh({name:'Stacked',after:a.id});S.view='habits';render()})()")
-      names=await pg.evaluate("[...document.querySelectorAll('#app .goals .card .title')].map(e=>e.textContent.trim().replace(' ›',''))")
+      names=await pg.evaluate("[...document.querySelectorAll('#app .hg-row .hg-n')].map(e=>e.textContent.trim().replace(' ›',''))")
       chk(tag+' stacked under anchor '+str(names),names[:3]==['Coffee','Stacked','Third'])
       # milestone toast once
       await pg.evaluate("(async()=>{await __clr();S.cfg.mile='';const h=await __mkh({ident:'a reader'});window.__h=h;await __log(h,1);await __log(h,2);S.view='dash';render()})()")

@@ -51,7 +51,7 @@ function habitAddForm() {
     <details class="more"><summary>${L2('More options', 'خيارات إضافية')}</summary><div class="moreg">
     ${fld(L2('Target days per week', 'أيام الهدف في الأسبوع'), `<select name="target">${[7, 6, 5, 4, 3, 2, 1].map((n) => `<option value="${n}">${n}×/${L2('week', 'أسبوع')}</option>`).join('')}</select>`)}
     ${fld(L2('Folder', 'المجلد'), `<input type="text" name="group" list="folderListAdd" autocomplete="off">${folderList('folderListAdd')}`)}
-    ${dayPicker()}${stickFields()}
+    ${colorField(HC[S.habits.length % HC.length])}${dayPicker()}${stickFields()}
     </div></details>
     <button class="btn big" type="submit">${L2('Add habit', 'أضف العادة')}</button></form>`;
 }
@@ -97,7 +97,8 @@ function openAddSheet(kind) {
 function habitMenu(id) {
   const h = S.habits.find((x) => x.id === id);
   if (!h) return;
-  dlg.innerHTML = `<div class="tmenu"><h3>${esc(h.name)}</h3>
+  dlg.innerHTML = `<div class="tmenu"><h3 translate="no">${esc(h.name)}</h3>
+    ${h.mini && !good(h, TODAY()) ? `<button class="ghost" data-action="tm" data-do="log-mini" data-id="${id}" data-date="${TODAY()}">½ <span translate="no">${esc(h.mini)}</span></button>` : ''}
     <button class="ghost" data-action="tm" data-do="edit-habit" data-id="${id}">✎ ${L2('Edit', 'تعديل')}</button>
     <button class="ghost" data-action="tm" data-do="open-habit" data-id="${id}">📅 ${L2('History', 'السجل')}</button>
     <button class="ghost" data-action="tm" data-do="share-item" data-k="habit" data-id="${id}">${SHARE_ICON} ${L2('Share', 'مشاركة')}</button>
@@ -114,3 +115,67 @@ function goalMenu(id) {
     <button class="ghost" data-action="dlg-close">${L2('Cancel', 'إلغاء')}</button></div>`;
   dlg.showModal();
 }
+/* ---------- Habit colours and the habit grid (0.87.0) ---------- */
+const HC = ['coral', 'amber', 'lime', 'teal', 'sky', 'violet', 'pink', 'sand'];
+const HC_AR = ['مرجاني', 'عنبري', 'ليموني', 'فيروزي', 'سماوي', 'بنفسجي', 'وردي', 'رملي'];
+const habitColor = (h) => (HC.includes(h.color) ? h.color : HC[Math.max(0, S.habits.indexOf(h)) % HC.length]);
+/* Habits without a colour get the next free swatch (by position), saved once. */
+function ensureHabitColors() {
+  S.habits.forEach((h, i) => {
+    if (!HC.includes(h.color)) {
+      h.color = HC[i % HC.length];
+      DB.put('habits', h);
+    }
+  });
+}
+function colorField(sel) {
+  return `<fieldset class="swatches"><legend>${L2('Colour', 'اللون')}</legend>${HC.map(
+    (c, i) =>
+      `<label class="swatch" style="--hc:var(--pc-${c})"><input type="radio" name="color" value="${c}" ${c === sel ? 'checked' : ''} aria-label="${L2(c, HC_AR[i])}"><span></span></label>`
+  ).join('')}</fieldset>`;
+}
+function habitGridHead() {
+  const cols = [0, 1, 2, 3]
+    .map((i) => {
+      const d = addDays(new Date(), -i);
+      return `<span class="hg-h ${i === 0 ? 'today' : ''}">${fmt(d, { weekday: 'short' })}<b>${d.getDate()}</b></span>`;
+    })
+    .join('');
+  return `<div class="hg-head" aria-hidden="true"><span class="hg-who"></span><span class="hg-cols">${cols}</span></div>`;
+}
+function habitCell(h, i) {
+  const d = addDays(new Date(), -i),
+    k = ds(d),
+    today = TODAY(),
+    on = good(h, k);
+  let st, ch;
+  if (isMini(h.id, k)) (st = 'half'), (ch = '½');
+  else if (on) (st = 'on'), (ch = '✓');
+  else if (isNeg(h) && (slipMode(h) ? logged(h.id, k) : k >= bornK(h) && k < today)) (st = 'slip'), (ch = '✕');
+  else if (!isDue(h, d)) (st = 'off'), (ch = '–');
+  else if (k < bornK(h) || k === today) (st = 'unk'), (ch = '?');
+  else (st = 'miss'), (ch = '✕');
+  const state = {
+    on: L2('done', 'منجز'),
+    half: L2('half', 'نصف'),
+    slip: L2('slip', 'زلّة'),
+    off: L2('not due', 'غير مستحق'),
+    unk: L2('not logged', 'غير مسجل'),
+    miss: L2('missed', 'فائت'),
+  }[st];
+  return `<button type="button" class="hg-cell ${st}" translate="no" data-action="toggle-log" data-id="${h.id}" data-date="${k}" aria-pressed="${on}" aria-label="${esc(h.name)} ${k}: ${state}">${ch}</button>`;
+}
+function habitRow(h) {
+  const sm = selOn('habits'),
+    c = habitColor(h),
+    r = rate30(h),
+    C = 2 * Math.PI * 12,
+    s = streak(h);
+  const ring = `<svg class="hg-ring" viewBox="0 0 30 30" width="30" height="30" aria-hidden="true"><circle cx="15" cy="15" r="12" class="bg"/><circle cx="15" cy="15" r="12" class="fg" stroke-dasharray="${((r / 100) * C).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 15 15)"/></svg>`;
+  const cells = S.reorder
+    ? mvBtns('move-habit', h.id, `data-id="${h.id}"`)
+    : `<span class="hg-cols">${[0, 1, 2, 3].map((i) => habitCell(h, i)).join('')}</span>`;
+  return `<div class="hg-row ${sm && S.sel.has(h.id) ? 'selected' : ''}" style="--hc:var(--pc-${habitColor(h)})" ${sm ? `data-action="sel-toggle" data-id="${h.id}"` : ''}>${sm ? selBox(h.id) : ''}<button type="button" class="hg-who" data-action="habit-menu" data-id="${h.id}" title="${L2('Edit and more', 'تعديل والمزيد')}">${ring}<span class="hg-t"><span class="hg-n" translate="no">${isNeg(h) ? '🚫 ' : ''}${h.icon ? esc(h.icon) + ' ' : ''}${esc(h.name)}</span><small>${isNeg(h) ? '🛡' : '🔥'} ${s} · ${weekCount(h)}/${weekTarget(h)}</small></span></button>${cells}</div>`;
+}
+const habitGrid = (hs) =>
+  `${habitGridHead()}<div class="hg">${hs.map((h) => habitRow(h) + ((hint) => (hint ? `<div class="hg-hint">${hint}</div>` : ''))(habitHint(h))).join('')}</div>`;

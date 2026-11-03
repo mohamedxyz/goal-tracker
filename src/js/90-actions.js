@@ -1567,6 +1567,7 @@ document.addEventListener('submit', async (e) => {
       name: v.name.trim(),
       kind: av ? 'avoid' : '',
       mode: av && S.cfg.avoidMode === 'confirm' ? 'confirm' : '',
+      color: HC.includes(v.color) ? v.color : HC[S.habits.length % HC.length],
       target: av ? 7 : +v.target,
       group: (v.group || '').trim(),
       days: av ? [] : readDays(f),
