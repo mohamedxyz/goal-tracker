@@ -259,9 +259,12 @@ function weekSummary() {
   if (!n) return '';
   return `<div class="wsum ${d === n ? 'all' : ''}"><b>${d === n ? '🎉 All ' + n + ' tasks done this week' : n - d + ' task' + (n - d === 1 ? '' : 's') + ' left this week'}</b><span>${d}/${n} done</span><div class="bar"><span style="width:${Math.round((d / n) * 100)}%"></span></div></div>`;
 }
-function ladderView() {
+function ladderView(horizons) {
   const cur = S.goalScope === 'current';
-  const V = S.goals.filter((g) => !cur || g.period === currentPeriod(g.horizon) || needsReview(g)),
+  const V = S.goals.filter(
+      (g) =>
+        (!horizons || horizons.includes(g.horizon)) && (!cur || g.period === currentPeriod(g.horizon) || needsReview(g))
+    ),
     ids = new Set(V.map((g) => g.id));
   const ord = (a, b) => a.done - b.done || b.period.localeCompare(a.period) || a.title.localeCompare(b.title);
   const roots = V.filter((g) => !g.parentId || !ids.has(g.parentId)).sort(

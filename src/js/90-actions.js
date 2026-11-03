@@ -984,6 +984,9 @@ const actions = {
   horizon(el) {
     S.horizon = el.dataset.v;
   },
+  'big-pic'() {
+    S.bigPic = !S.bigPic;
+  },
   'goal-scope'(el) {
     S.goalScope = el.dataset.v;
   },

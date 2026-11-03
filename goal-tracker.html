@@ -5,6 +5,7 @@
     PATCH = bug fix · MINOR = new feature · MAJOR = breaks old backups or data
 
   Changelog
+  0.88.0 Goals, calmer: the Goals tab is now just the ladder (the Week, Month, Year and 5 Years tabs are gone). Week and month goals lead, with their tasks under them; year and 5-year goals sit in a closed "Bigger picture" fold you open when you want it.
   0.87.0 A flat, dark-first look made for thumbs: the Habits tab and Today show each habit as one compact row with a progress ring, its own colour and the last 4 days as tap columns, every tap target is at least 44 px, the tab bar is larger, one round + button opens a sheet to add a task, habit or goal, dialogs and menus slide up from the bottom, extra options sit behind one ⋯ button, tips are one line, and the Today score is one big number. New installs start dark; existing themes are kept.
   0.86.0 Three scores instead of one: a Habits score (rewards showing up, a half-tick counts, one isolated miss costs half), a Tasks score (hard work: priority and length earn more, tiny low-priority tasks are capped) and an Overall score (the geometric mean). All are slow 42-day averages, with a week-on-week arrow and a gentle warning when you run far above your pace. Tap the score for the formula.
   0.85.0 Today leads with your performance and a GoalTerra Score (0 to 1000, tap ⓘ for the formula): a ring for today, the last 7 days as bars, this week against last week, best streak and active goals. The task list shows the first 4 open tasks (Show all for the rest) and habits fold into one line.
@@ -5763,6 +5764,26 @@ h2 {
 .setacc.open {
   padding-bottom: var(--s2);
 }
+
+.bigpic {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 48px;
+  margin: 16px 0 8px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--card, transparent);
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+.bigpic .meta {
+  margin-inline-start: auto;
+}
 </style>
 </head>
 <body>
@@ -6145,7 +6166,7 @@ function rate30(h) {
 }
 
 /* ---------- Version ---------- */
-const APP_VERSION = '0.87.0';
+const APP_VERSION = '0.88.0';
 
 /* Pick the English or Arabic text for the current language. Call it at render time, never while the file is loading. */
 const L2 = (en, ar) => (S.cfg.lang === 'ar' ? ar : en);
@@ -8504,9 +8525,12 @@ function weekSummary() {
   if (!n) return '';
   return `<div class="wsum ${d === n ? 'all' : ''}"><b>${d === n ? '🎉 All ' + n + ' tasks done this week' : n - d + ' task' + (n - d === 1 ? '' : 's') + ' left this week'}</b><span>${d}/${n} done</span><div class="bar"><span style="width:${Math.round((d / n) * 100)}%"></span></div></div>`;
 }
-function ladderView() {
+function ladderView(horizons) {
   const cur = S.goalScope === 'current';
-  const V = S.goals.filter((g) => !cur || g.period === currentPeriod(g.horizon) || needsReview(g)),
+  const V = S.goals.filter(
+      (g) =>
+        (!horizons || horizons.includes(g.horizon)) && (!cur || g.period === currentPeriod(g.horizon) || needsReview(g))
+    ),
     ids = new Set(V.map((g) => g.id));
   const ord = (a, b) => a.done - b.done || b.period.localeCompare(a.period) || a.title.localeCompare(b.title);
   const roots = V.filter((g) => !g.parentId || !ids.has(g.parentId)).sort(
@@ -8913,32 +8937,22 @@ function calView() {
   ${!so.length && !sd.length ? `<div class="empty">Nothing on this day.</div>` : ''}`;
 }
 function viewGoals() {
-  const ladder = S.horizon === 'ladder',
-    h = ladder ? 'weekly' : S.horizon;
-  const cur = currentPeriod(h);
-  let list = S.goals.filter((g) => g.horizon === h);
-  if (S.goalScope === 'current') list = list.filter((g) => g.period === cur || needsReview(g));
-  list.sort(
-    (a, b) =>
-      needsReview(b) - needsReview(a) ||
-      a.done - b.done ||
-      (a.status === 'missed') - (b.status === 'missed') ||
-      b.period.localeCompare(a.period)
-  );
-  const seg =
-    `<button class="${ladder ? 'on' : ''}" data-action="horizon" data-v="ladder">Ladder</button>` +
-    Object.keys(HORIZONS)
-      .map(
-        (k) =>
-          `<button class="${!ladder && k === h ? 'on' : ''}" data-action="horizon" data-v="${k}">${{ weekly: 'Week', monthly: 'Month', annual: 'Year', five: '5 Years' }[k]}</button>`
-      )
-      .join('');
-  return `<div class="seg">${seg}</div>
-  ${ladder ? towerCard() + weekSummary() : ''}
+  // Ladder only. Week and month goals are what you act on, so they lead; year and
+  // 5-year goals sit in a fold that stays closed until you want the bigger picture.
+  const cur = currentPeriod('weekly');
+  const ground = ladderView(['weekly', 'monthly']),
+    far = S.goals.filter((g) => (g.horizon === 'annual' || g.horizon === 'five') && !g.done);
+  const open = !!S.bigPic;
+  const bigN = far.length;
+  const big = bigN
+    ? `<button type="button" class="bigpic ${open ? 'open' : ''}" data-action="big-pic" aria-expanded="${open}"><span>${open ? '▾' : '▸'}</span><b>${L2('Bigger picture', 'الصورة الكبرى')}</b><span class="meta">${bigN} ${L2(bigN === 1 ? 'year or 5-year goal' : 'year and 5-year goals', 'أهداف سنوية وبعيدة')}</span></button>${open ? ladderView(['annual', 'five']) : ''}`
+    : '';
+  const empty = !S.goals.length;
+  return `${towerCard()}${weekSummary()}
   <div class="filters">
-    <button class="chip ${S.goalScope === 'current' ? 'on' : ''}" data-action="goal-scope" data-v="current" title="${cur}">Current</button>
-    <button class="chip ${S.goalScope === 'all' ? 'on' : ''}" data-action="goal-scope" data-v="all">All periods</button>${h === 'weekly' ? moreMenu('<button class="chip" data-action="open-plan">Plan this week</button>') : ''}</div>
-  ${ladder ? ladderView() || `<div class="empty">No goals yet. Add one above, then hang tasks under it.</div><div class="tpls" style="margin-top:12px">${templateButtons()}</div>` : list.length ? `<div class="goals">${list.map(goalCard).join('')}</div>` : `<div class="empty">No ${HORIZONS[h].toLowerCase()} goals yet.</div>`}`;
+    <button class="chip ${S.goalScope === 'current' ? 'on' : ''}" data-action="goal-scope" data-v="current" title="${cur}">${L2('Current', 'الحالية')}</button>
+    <button class="chip ${S.goalScope === 'all' ? 'on' : ''}" data-action="goal-scope" data-v="all">${L2('All periods', 'كل الفترات')}</button>${moreMenu('<button class="chip" data-action="open-plan">Plan this week</button>')}</div>
+  ${empty ? `<div class="empty">No goals yet. Add one above, then hang tasks under it.</div><div class="tpls" style="margin-top:12px">${templateButtons()}</div>` : `${ground || `<div class="empty">${L2('No week or month goals right now. Tap + to add one.', 'لا أهداف أسبوعية أو شهرية الآن. اضغط + لإضافة هدف.')}</div>`}${big}`}`;
 }
 function viewHabits() {
   return `${easierCard()}${habitList(true)}`;
@@ -13873,6 +13887,9 @@ const actions = {
   },
   horizon(el) {
     S.horizon = el.dataset.v;
+  },
+  'big-pic'() {
+    S.bigPic = !S.bigPic;
   },
   'goal-scope'(el) {
     S.goalScope = el.dataset.v;

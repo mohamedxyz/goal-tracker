@@ -51,8 +51,8 @@ Unverified on a real device: keyboard behaviour of the sheets, safe-area insets,
 - Flaky test: `tests/test_plan.py` fails the Arabic untranslated-text check about 1 run in 5 on the 0.87 UI (the page shows English although Arabic was set). Passes alone most of the time. Cause not found; suspect a startup race. Not seen by users.
 
 ## Known to-do (not yet done)
-- README is out of date: "Import" is now "Restore", screenshots predate 0.72, no mention of info sheets, tip cards or auto backup. `tests/screenshots.py` needs tips dismissed and Settings sections opened before it will give good images.
+- README was rewritten for end users (0.86.0) and developer notes moved to `docs/DEVELOPMENT.md`. It has no screenshots: the old ones in `docs/images` predate 0.72 and are not linked. To bring them back, fix `tests/screenshots.py` first (dismiss tips, open Settings sections). License: MIT, copyright "GoalTerra contributors" (neutral name on purpose).
 - Game (done in 0.81.0): boss death is permanent, overkill bonus, 25% growth cap, how-it-works sheet, badges. Still open: anti-grind rules (tiny tasks ticked straight after creating them), more badges.
 - Icons: use an SVG favicon and a vector Android launcher foreground instead of small PNGs.
 - Unused files: 11 `drawable*/splash.png` and the two `Example*Test.java` placeholders.
-- Planned UX leftovers: jargon hints on the cards themselves (the How-it-works sheet explains them), Settings sub-pages, Goals nesting and filter-row declutter, Habit card collapsing, red "due" badge only when overdue.
+- Planned UX leftovers: jargon hints on the cards themselves (the How-it-works sheet explains them), Settings sub-pages, Goals: compact ring rows with a Next line, drill-in page (0.88.0 did only the ladder-only tab with a closed Bigger picture fold, `S.bigPic`; the tree rows are unchanged), Habit card collapsing, red "due" badge only when overdue.

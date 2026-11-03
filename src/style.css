@@ -5639,3 +5639,23 @@ h2 {
 .setacc.open {
   padding-bottom: var(--s2);
 }
+
+.bigpic {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 48px;
+  margin: 16px 0 8px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--card, transparent);
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+.bigpic .meta {
+  margin-inline-start: auto;
+}
