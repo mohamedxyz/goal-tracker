@@ -5460,7 +5460,7 @@ h2 {
   align-items: center;
   gap: var(--s2);
   min-height: 48px;
-  padding: 0 var(--s2);
+  padding: 6px var(--s2);
   background: none;
   border: 0;
   color: var(--hc);
@@ -5503,9 +5503,8 @@ h2 {
   font-weight: 600;
   font-size: 15px;
   line-height: 1.25;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  white-space: normal;
+  overflow-wrap: anywhere;
   color: var(--hc);
 }
 .hg-t small {

@@ -175,7 +175,7 @@ function habitRow(h) {
   const cells = S.reorder
     ? mvBtns('move-habit', h.id, `data-id="${h.id}"`)
     : `<span class="hg-cols">${[0, 1, 2, 3].map((i) => habitCell(h, i)).join('')}</span>`;
-  return `<div class="hg-row ${sm && S.sel.has(h.id) ? 'selected' : ''}" style="--hc:var(--pc-${habitColor(h)})" ${sm ? `data-action="sel-toggle" data-id="${h.id}"` : ''}>${sm ? selBox(h.id) : ''}<button type="button" class="hg-who" data-action="habit-menu" data-id="${h.id}" title="${L2('Edit and more', 'تعديل والمزيد')}">${ring}<span class="hg-t"><span class="hg-n" translate="no">${isNeg(h) ? '🚫 ' : ''}${h.icon ? esc(h.icon) + ' ' : ''}${esc(h.name)}</span><small>${isNeg(h) ? '🛡' : '🔥'} ${s} · ${weekCount(h)}/${weekTarget(h)}</small></span></button>${cells}</div>`;
+  return `<div class="hg-row ${sm && S.sel.has(h.id) ? 'selected' : ''}" style="--hc:var(--pc-${habitColor(h)})" ${sm ? `data-action="sel-toggle" data-id="${h.id}"` : ''}>${sm ? selBox(h.id) : ''}<button type="button" class="hg-who" data-action="habit-menu" data-id="${h.id}" title="${L2('Edit and more', 'تعديل والمزيد')}">${ring}<span class="hg-t"><span class="hg-n" translate="no" dir="auto">${isNeg(h) ? '🚫 ' : ''}${h.icon ? esc(h.icon) + ' ' : ''}${esc(h.name)}</span><small>${isNeg(h) ? '🛡' : '🔥'} ${s} · ${weekCount(h)}/${weekTarget(h)}</small></span></button>${cells}</div>`;
 }
 const habitGrid = (hs) =>
   `${habitGridHead()}<div class="hg">${hs.map((h) => habitRow(h) + ((hint) => (hint ? `<div class="hg-hint">${hint}</div>` : ''))(habitHint(h))).join('')}</div>`;

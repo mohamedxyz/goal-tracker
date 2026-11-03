@@ -48,6 +48,8 @@ Every control is at least 44px (target 48px, `--tap`), text at least 12px (body 
 - Habit rows show only today's tick; the 7-day strip is opt-in (Habits menu, "Week strip", `S.weekOpen`). Today shows habits open by default (`S.dashHab !== false`).
 Unverified on a real device: keyboard behaviour of the sheets, safe-area insets, one-hand reach.
 
+- Flaky test: `tests/test_plan.py` fails the Arabic untranslated-text check about 1 run in 5 on the 0.87 UI (the page shows English although Arabic was set). Passes alone most of the time. Cause not found; suspect a startup race. Not seen by users.
+
 ## Known to-do (not yet done)
 - README is out of date: "Import" is now "Restore", screenshots predate 0.72, no mention of info sheets, tip cards or auto backup. `tests/screenshots.py` needs tips dismissed and Settings sections opened before it will give good images.
 - Game (done in 0.81.0): boss death is permanent, overkill bonus, 25% growth cap, how-it-works sheet, badges. Still open: anti-grind rules (tiny tasks ticked straight after creating them), more badges.

@@ -121,6 +121,7 @@ async function autoArchive() {
   snapBoot();
   await checkStorage(true);
   if (S.view === 'data') render();
+  window.__booted = true; // lets tests wait for startup to finish
 })();
 
 setInterval(autoBackupTick, 60000);
