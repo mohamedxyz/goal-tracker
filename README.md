@@ -32,7 +32,7 @@ There is also an [Android app](#android-app). **Back up regularly** (see [Your d
 - Tap a task or goal for an info sheet; the last 5 titles and notes can be brought back from its edit screen
 
 ### Goals that connect
-Weekly, monthly, annual and 5-year goals **roll up into each other** on one ladder: finish the weekly steps and the monthly goal moves, and so on up to the 5-year goal.
+Weekly, monthly, annual and 5-year goals **roll up into each other** on one ladder: finish the weekly steps and the monthly goal moves, and so on up to the 5-year goal. The Goals tab leads with this week and month; year and 5-year goals wait in a closed *Bigger picture* fold until you want them.
 - Measure a goal by a checkbox (or its linked tasks), a number target, or its sub-goals
 - Templates to start fast: School year, Learn a skill, Get fit
 - Weekly planning, end-of-period review and a monthly review screen

@@ -314,32 +314,22 @@ function calView() {
   ${!so.length && !sd.length ? `<div class="empty">Nothing on this day.</div>` : ''}`;
 }
 function viewGoals() {
-  const ladder = S.horizon === 'ladder',
-    h = ladder ? 'weekly' : S.horizon;
-  const cur = currentPeriod(h);
-  let list = S.goals.filter((g) => g.horizon === h);
-  if (S.goalScope === 'current') list = list.filter((g) => g.period === cur || needsReview(g));
-  list.sort(
-    (a, b) =>
-      needsReview(b) - needsReview(a) ||
-      a.done - b.done ||
-      (a.status === 'missed') - (b.status === 'missed') ||
-      b.period.localeCompare(a.period)
-  );
-  const seg =
-    `<button class="${ladder ? 'on' : ''}" data-action="horizon" data-v="ladder">Ladder</button>` +
-    Object.keys(HORIZONS)
-      .map(
-        (k) =>
-          `<button class="${!ladder && k === h ? 'on' : ''}" data-action="horizon" data-v="${k}">${{ weekly: 'Week', monthly: 'Month', annual: 'Year', five: '5 Years' }[k]}</button>`
-      )
-      .join('');
-  return `<div class="seg">${seg}</div>
-  ${ladder ? towerCard() + weekSummary() : ''}
+  // Ladder only. Week and month goals are what you act on, so they lead; year and
+  // 5-year goals sit in a fold that stays closed until you want the bigger picture.
+  const cur = currentPeriod('weekly');
+  const ground = ladderView(['weekly', 'monthly']),
+    far = S.goals.filter((g) => (g.horizon === 'annual' || g.horizon === 'five') && !g.done);
+  const open = !!S.bigPic;
+  const bigN = far.length;
+  const big = bigN
+    ? `<button type="button" class="bigpic ${open ? 'open' : ''}" data-action="big-pic" aria-expanded="${open}"><span>${open ? '▾' : '▸'}</span><b>${L2('Bigger picture', 'الصورة الكبرى')}</b><span class="meta">${bigN} ${L2(bigN === 1 ? 'year or 5-year goal' : 'year and 5-year goals', 'أهداف سنوية وبعيدة')}</span></button>${open ? ladderView(['annual', 'five']) : ''}`
+    : '';
+  const empty = !S.goals.length;
+  return `${towerCard()}${weekSummary()}
   <div class="filters">
-    <button class="chip ${S.goalScope === 'current' ? 'on' : ''}" data-action="goal-scope" data-v="current" title="${cur}">Current</button>
-    <button class="chip ${S.goalScope === 'all' ? 'on' : ''}" data-action="goal-scope" data-v="all">All periods</button>${h === 'weekly' ? moreMenu('<button class="chip" data-action="open-plan">Plan this week</button>') : ''}</div>
-  ${ladder ? ladderView() || `<div class="empty">No goals yet. Add one above, then hang tasks under it.</div><div class="tpls" style="margin-top:12px">${templateButtons()}</div>` : list.length ? `<div class="goals">${list.map(goalCard).join('')}</div>` : `<div class="empty">No ${HORIZONS[h].toLowerCase()} goals yet.</div>`}`;
+    <button class="chip ${S.goalScope === 'current' ? 'on' : ''}" data-action="goal-scope" data-v="current" title="${cur}">${L2('Current', 'الحالية')}</button>
+    <button class="chip ${S.goalScope === 'all' ? 'on' : ''}" data-action="goal-scope" data-v="all">${L2('All periods', 'كل الفترات')}</button>${moreMenu('<button class="chip" data-action="open-plan">Plan this week</button>')}</div>
+  ${empty ? `<div class="empty">No goals yet. Add one above, then hang tasks under it.</div><div class="tpls" style="margin-top:12px">${templateButtons()}</div>` : `${ground || `<div class="empty">${L2('No week or month goals right now. Tap + to add one.', 'لا أهداف أسبوعية أو شهرية الآن. اضغط + لإضافة هدف.')}</div>`}${big}`}`;
 }
 function viewHabits() {
   return `${easierCard()}${habitList(true)}`;

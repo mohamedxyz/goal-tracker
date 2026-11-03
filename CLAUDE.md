@@ -55,4 +55,4 @@ Unverified on a real device: keyboard behaviour of the sheets, safe-area insets,
 - Game (done in 0.81.0): boss death is permanent, overkill bonus, 25% growth cap, how-it-works sheet, badges. Still open: anti-grind rules (tiny tasks ticked straight after creating them), more badges.
 - Icons: use an SVG favicon and a vector Android launcher foreground instead of small PNGs.
 - Unused files: 11 `drawable*/splash.png` and the two `Example*Test.java` placeholders.
-- Planned UX leftovers: jargon hints on the cards themselves (the How-it-works sheet explains them), Settings sub-pages, Goals nesting and filter-row declutter, Habit card collapsing, red "due" badge only when overdue.
+- Planned UX leftovers: jargon hints on the cards themselves (the How-it-works sheet explains them), Settings sub-pages, Goals: compact ring rows with a Next line, drill-in page (0.88.0 did only the ladder-only tab with a closed Bigger picture fold, `S.bigPic`; the tree rows are unchanged), Habit card collapsing, red "due" badge only when overdue.
