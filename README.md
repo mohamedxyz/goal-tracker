@@ -4,7 +4,7 @@
 
 A free, private goal, habit, task and study tracker in **one HTML file**. No account, no server, no tracking: everything is stored on your own device. It works offline, is built for phones first (a desktop browser works too), and speaks **English and Arabic** (with a mirrored right-to-left layout).
 
-It starts simple (tasks, goals and habits). Switch on the extras you want in Settings → Add-ons.
+It starts simple (tasks, goals and habits), in a flat, dark-first look made for thumbs: big tap targets and one round **+** button that opens a sheet to add a task, habit or goal. Switch on the extras you want in Settings → Add-ons.
 
 ## Quick start
 
@@ -38,6 +38,7 @@ Weekly, monthly, annual and 5-year goals **roll up into each other** on one ladd
 - Weekly planning, end-of-period review and a monthly review screen
 
 ### Habits
+- Each habit is one compact row with a progress ring, its own colour and the last 4 days as tap columns
 - Build habits and **avoid habits** (things to quit), weekday schedules, folders and a history calendar with backfilling
 - Built on *Atomic Habits*: **never miss twice** (one missed day is forgiven, two in a row reset the streak), milestones at 3, 7, 14, 30, 60 and 100 days, and a daily ring with a Perfect day celebration
 - Optional **Make it stick** fields per habit: identity votes, a two-minute version (a ½ tick counts), stacking after another habit, time and place with a reminder, a treat and an environment note
