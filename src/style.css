@@ -4617,6 +4617,9 @@ ul.list {
   z-index: 39;
 }
 .moremenu[open] > div {
+  display: flex;
+  flex-direction: column;
+  background: var(--card);
   position: fixed;
   inset-inline: 0;
   bottom: 0;
@@ -5168,4 +5171,23 @@ dialog#askDlg[open] {
 }
 .fscroll .chip {
   padding: 0 12px;
+}
+.addtopics summary,
+.tt-add summary {
+  min-height: var(--tap);
+  display: flex;
+  align-items: center;
+}
+.tcal {
+  padding-inline: var(--s2);
+}
+.cal {
+  gap: 2px;
+}
+.cd {
+  aspect-ratio: auto;
+  min-height: 48px;
+}
+.pl-slot {
+  min-height: 48px;
 }

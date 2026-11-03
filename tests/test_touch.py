@@ -63,6 +63,14 @@ async def m():
         print(line)
         if r['bad'] or r['small'] or r['ov'] or cover:
           fails+=1;print('  FAIL touch',r['bad'][:25],r['small'][:6])
+      # other screens: Study, task calendar, day plan, Insights, bulk-select
+      for name,js in [('study',"S.view='study';render()"),('calendar',"S.view='tasks';S.tcalOn=true;render()"),('plan',"S.tcalOn=false;S.planOn=true;render()"),('insights',"S.planOn=false;S.view='dash';S.insOpen=true;render()"),('select',"S.view='tasks';S.selMode='tasks';render()")]:
+        await pg.evaluate(js);await pg.wait_for_timeout(300)
+        await pg.evaluate("document.querySelectorAll('details.moremenu').forEach(d=>d.open=true)")
+        r=await pg.evaluate(AUDIT,[FLOOR,APP])
+        print(f"[{tag} {name}] offenders {len(r['bad'])} small {len(r['small'])} ov {r['ov']}")
+        if r['bad'] or r['small'] or r['ov']:fails+=1;print('  FAIL touch',r['bad'][:25],r['small'][:6])
+      await pg.evaluate("S.selMode=null;S.tcalOn=false;S.planOn=false;S.view='tasks';render()")
       # sheets and menus: add sheet (3 kinds), task menu, habit menu, in-app confirm
       await pg.evaluate("S.view='tasks';render();scrollTo(0,0)")
       for name,js in [('add task',"openAddSheet('task')"),('add habit',"openAddSheet('habit')"),('add goal',"openAddSheet('goal')"),

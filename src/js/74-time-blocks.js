@@ -5,7 +5,7 @@
  */
 
 const PLAN = { day: null, pick: null };
-const PLAN_PX = 56; // pixels per hour on the timeline
+const PLAN_PX = 96; // pixels per hour on the timeline (a half-hour slot is a 48px tap target)
 const PLAN_LENS = [15, 30, 45, 60, 90, 120, 180, 240]; // choices in the edit dialog, minutes
 
 const toMin = (hm) => {
