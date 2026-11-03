@@ -48,6 +48,7 @@ function taskItem(t) {
       ${t.notes && S.cfg.showNotes ? `<div class="tnotes">${esc(t.notes)}</div>` : ''}
       ${(t.items || []).length && S.cfg.showSubs ? `<ul class="subs">${t.items.map((it, i) => `<li><label class="${it.done ? 'sdone' : ''}"><input type="checkbox" data-action="toggle-sub" data-id="${t.id}" data-i="${i}" ${it.done ? 'checked' : ''}><span>${esc(it.text)}</span></label></li>`).join('')}</ul>` : ''}
       <div class="meta">
+        ${dp ? `<span class="dueinfo">${dp}</span>` : ''}
         ${(t.items || []).length ? `<span title="Checklist">☑ ${t.items.filter((i) => i.done).length}/${t.items.length}</span>` : ''}
         ${t.done && t.doneAt ? `<span>Done ${fmtWhen(t.doneAt)}</span>` : ''}
         ${t.done && t.due && !(t.doneAt && ds(new Date(t.doneAt)) === t.due) ? `<span>${fmtDate(t.due)}</span>` : ''}
@@ -58,7 +59,7 @@ function taskItem(t) {
         ${t.repeat ? `<span title="Repeats">🔁 ${REPEAT_LABEL[t.repeat] || ''}</span>` : ''}
         ${g ? `<span class="tag">${esc(g.title)}</span>` : ''}
       </div></div>
-    ${dp}<button class="icon" data-action="task-menu" data-id="${t.id}" title="More" aria-label="More actions">⋯</button></li>`;
+    <button class="icon" data-action="task-menu" data-id="${t.id}" title="More" aria-label="More actions">⋯</button></li>`;
 }
 function dayButtons(h, n = 7) {
   const today = TODAY();
@@ -88,11 +89,13 @@ function habitCard(h, full) {
       heat += `<i class="${good(h, k) ? 'on' : ''}" title="${k}"></i>`;
     }
   }
-  return `<div class="card ${sm && S.sel.has(h.id) ? 'selected' : ''}" ${sm ? `data-action="sel-toggle" data-id="${h.id}"` : ''}><div class="habit">${sm ? selBox(h.id) : ''}
-    <div class="grow habit-open" ${sm ? '' : `data-action="open-habit" data-id="${h.id}" role="button" tabindex="0" title="Open history"`}><div class="title">${hname(h)} <span class="chev">›</span></div>
+  const today = TODAY(),
+    on = good(h, today);
+  return `<div class="card hrow ${sm && S.sel.has(h.id) ? 'selected' : ''}" ${sm ? `data-action="sel-toggle" data-id="${h.id}"` : ''}><div class="habit">${sm ? selBox(h.id) : ''}
+    <div class="grow habit-open" ${sm ? '' : `data-action="open-habit" data-id="${h.id}" role="button" tabindex="0" title="Open history"`}><div class="title" translate="no">${hname(h)}</div>
       <div class="meta"><span class="streak">${isNeg(h) ? '🛡 ' + s + ' day' + (s === 1 ? '' : 's') + ' clean' : '🔥 ' + s + ' day' + (s === 1 ? '' : 's')}</span>${full && !isNeg(h) && bestStreak(h) > s ? `<span>${L2('Best', 'الأفضل')} ${bestStreak(h)}</span>` : ''}
-        <span>This week ${weekCount(h)}/${weekTarget(h)}</span>${full ? `<span>30-day ${rate30(h)}%</span>` : ''}${hasSched(h) ? `<span>${schedText(h)}</span>` : ''}</div></div>
-    ${dayButtons(h)}
-    ${full ? `${mvBtns('move-habit', h.id, `data-id="${h.id}"`)}${shareBtn('habit', h.id)}<button class="icon" data-action="edit-habit" data-id="${h.id}" title="Edit" aria-label="Edit ${esc(h.name)}">✎</button><button class="icon" data-action="del-habit" data-id="${h.id}" title="Delete" aria-label="Delete ${esc(h.name)}">✕</button>` : ''}
-  </div>${habitHint(h)}${full ? `<div class="heat">${heat}</div>` : ''}</div>`;
+        <span>This week ${weekCount(h)}/${weekTarget(h)}</span>${full && S.weekOpen ? `<span>30-day ${rate30(h)}%</span>` : ''}${hasSched(h) ? `<span>${schedText(h)}</span>` : ''}</div></div>
+    ${full ? `${mvBtns('move-habit', h.id, `data-id="${h.id}"`)}<button class="icon" data-action="habit-menu" data-id="${h.id}" title="More" aria-label="${L2('More actions for', 'المزيد من الخيارات لـ')} ${esc(h.name)}" translate="no">⋯</button>` : ''}
+    ${sm ? '' : `<button class="tcheck ${on ? 'on' : ''}" translate="no" data-action="toggle-log" data-id="${h.id}" data-date="${today}" aria-pressed="${on}" aria-label="${slipMode(h) ? (on ? 'Clean today. Tap to log a slip' : 'Slipped today. Tap to undo') : (on ? L2('Undo', 'تراجع') : L2('Check off', 'إنجاز')) + ' ' + esc(h.name) + L2(' for today', ' لهذا اليوم')}">${slipMode(h) && !on ? '✗' : '✓'}</button>`}
+  </div>${full && S.weekOpen ? dayButtons(h) : ''}${habitHint(h)}${full && S.weekOpen ? `<div class="heat">${heat}</div>` : ''}</div>`;
 }

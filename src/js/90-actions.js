@@ -680,7 +680,34 @@ const actions = {
     S.dashAll = !S.dashAll;
   },
   'dash-hab'() {
-    S.dashHab = !S.dashHab;
+    S.dashHab = S.dashHab === false;
+  },
+  fab() {
+    openAddSheet();
+    return false;
+  },
+  'add-kind'(el) {
+    openAddSheet(el.dataset.v);
+    return false;
+  },
+  'add-hz'(el) {
+    S.horizon = el.dataset.v;
+    openAddSheet('goal');
+    return false;
+  },
+  'goal-menu'(el) {
+    goalMenu(el.dataset.id);
+    return false;
+  },
+  'habit-menu'(el) {
+    habitMenu(el.dataset.id);
+    return false;
+  },
+  'toggle-week'() {
+    S.weekOpen = !S.weekOpen;
+    try {
+      localStorage.setItem('gt-week', S.weekOpen ? '1' : '0');
+    } catch (e) {}
   },
   'picks-all'() {
     S.picksAll = !S.picksAll;
@@ -1548,6 +1575,12 @@ document.addEventListener('submit', async (e) => {
     };
     S.habits.push(h);
     await DB.put('habits', h);
+  }
+  if (f.dataset.sheet) {
+    dlg.close();
+    render();
+    toast(L2('Added', 'تمت الإضافة'));
+    return;
   }
   const gl = f.dataset.goal;
   render();

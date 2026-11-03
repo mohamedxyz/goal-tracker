@@ -56,8 +56,7 @@ function habitScore(shift) {
   const e = emaSeries([...Array(SC_DAYS)].map((_, i) => ((d) => habitDayValue(ds(d), d))(scDay(shift, i))));
   return e === null ? null : Math.round(1000 * Math.min(1, e));
 }
-const taskPts = (t) =>
-  ({ high: 3, med: 2, low: 1 })[t.priority] ?? 1;
+const taskPts = (t) => ({ high: 3, med: 2, low: 1 })[t.priority] ?? 1;
 function taskDayLoads(shift) {
   const by = new Map();
   for (const t of S.tasks)
@@ -130,7 +129,10 @@ function perfCard() {
     hs0 = habitScore(7),
     ts = taskScore(0),
     ts0 = taskScore(7);
-  const arrow = (a, b) => (a === null || b === null || a === b ? '' : `<em class="${a > b ? 'up' : 'dn'}">${a > b ? '▲' : '▼'}${Math.abs(a - b)}</em>`);
+  const arrow = (a, b) =>
+    a === null || b === null || a === b
+      ? ''
+      : `<em class="${a > b ? 'up' : 'dn'}">${a > b ? '▲' : '▼'}${Math.abs(a - b)}</em>`;
   const trend =
     delta === null
       ? L2('Your first week. Keep going.', 'أسبوعك الأول. استمر.')
@@ -139,10 +141,19 @@ function perfCard() {
         : delta > 0
           ? L2(`Up ${delta} points on last week`, `أفضل بـ ${delta} نقطة من الأسبوع الماضي`)
           : L2(`Down ${-delta} points on last week`, `أقل بـ ${-delta} نقطة من الأسبوع الماضي`);
-  return `<div class="card perf ${full ? 'full' : ''}">
-    ${sc !== null ? `<button class="perf-score" data-action="score-info" aria-label="${L2('How the scores work', 'كيف تُحسب النتائج')}"><span><small><span translate="no">GoalTerra</span> ${L2('Score', 'النتيجة')}</small><b>${sc}</b></span>${arrow(sc, sc0)}<u>ⓘ</u></button><div class="sub-scores">${hs !== null ? `<span>${L2('Habits', 'العادات')} <b>${hs}</b>${arrow(hs, hs0)}</span>` : ''}${ts !== null ? `<span>${L2('Tasks', 'المهام')} <b>${ts}</b>${arrow(ts, ts0)}</span>` : ''}</div>${overpace() ? `<div class="meta warn">${L2('You are running well above your usual pace. Protect your rest.', 'تعمل فوق وتيرتك المعتادة بكثير. احمِ راحتك.')}</div>` : ''}` : ''}<div class="perf-top"><div class="perf-ring"><svg viewBox="0 0 80 80" width="84" height="84" aria-hidden="true"><circle cx="40" cy="40" r="34" class="bg"/><circle cx="40" cy="40" r="34" class="fg" stroke-dasharray="${((pct / 100) * C).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 40 40)"/></svg><b>${t.due ? pct + '%' : '–'}</b></div>
-      <div class="grow"><div class="title">${full ? L2('Perfect day 🎉', 'يوم مثالي 🎉') : t.due ? L2(`${t.done} of ${t.due} done today`, `${t.done} من ${t.due} اليوم`) : L2('Nothing due today', 'لا شيء مستحق اليوم')}</div>
-      <div class="meta">${trend}${p.now !== null ? ` · ${L2('week', 'الأسبوع')} ${p.now}%` : ''}</div></div></div>
-    <div class="pbars" aria-label="${L2('Last 7 days', 'آخر 7 أيام')}">${bars}</div>
-    <div class="perf-foot"><span>🔥 <b>${best}</b> ${L2('best streak', 'أفضل سلسلة')}</span><span>🎯 <b>${active}</b> ${L2('active goals', 'أهداف نشطة')}</span>${S.cfg.dCharts ? `<button class="chip" data-action="toggle-ins">${L2('More charts', 'المزيد')}</button>` : ''}</div></div>`;
+  const scoreBtn =
+    sc !== null
+      ? `<button class="perf-score" data-action="score-info" aria-label="${L2('How the scores work', 'كيف تُحسب النتائج')}"><span><small><span translate="no">GoalTerra</span> ${L2('Score', 'النتيجة')}</small><b>${sc}</b></span>${arrow(sc, sc0)}</button>`
+      : '';
+  const subs =
+    sc !== null
+      ? `<div class="sub-scores">${hs !== null ? `<span>${L2('Habits', 'العادات')} <b>${hs}</b>${arrow(hs, hs0)}</span>` : ''}${ts !== null ? `<span>${L2('Tasks', 'المهام')} <b>${ts}</b>${arrow(ts, ts0)}</span>` : ''}</div>${overpace() ? `<div class="meta warn">${L2('You are running well above your usual pace. Protect your rest.', 'تعمل فوق وتيرتك المعتادة بكثير. احمِ راحتك.')}</div>` : ''}`
+      : '';
+  return `<div class="perf ${full ? 'full' : ''}">
+    <div class="perf-top">${scoreBtn}<div class="perf-ring"><svg viewBox="0 0 80 80" width="64" height="64" aria-hidden="true"><circle cx="40" cy="40" r="34" class="bg"/><circle cx="40" cy="40" r="34" class="fg" stroke-dasharray="${((pct / 100) * C).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 40 40)"/></svg><b>${t.due ? pct + '%' : '–'}</b></div></div>
+    <div class="title">${full ? L2('Perfect day 🎉', 'يوم مثالي 🎉') : t.due ? L2(`${t.done} of ${t.due} done today`, `${t.done} من ${t.due} اليوم`) : L2('Nothing due today', 'لا شيء مستحق اليوم')}</div>
+    <div class="meta">${trend}${p.now !== null ? ` · ${L2('week', 'الأسبوع')} ${p.now}%` : ''}</div>
+    ${subs}
+    <details class="fold perf-week"><summary>${L2('Last 7 days', 'آخر 7 أيام')}</summary><div class="pbars" aria-label="${L2('Last 7 days', 'آخر 7 أيام')}">${bars}</div>
+    <div class="perf-foot"><span>🔥 <b>${best}</b> ${L2('best streak', 'أفضل سلسلة')}</span><span>🎯 <b>${active}</b> ${L2('active goals', 'أهداف نشطة')}</span>${S.cfg.dCharts ? `<button class="chip" data-action="toggle-ins">${L2('More charts', 'المزيد')}</button>` : ''}</div></details></div>`;
 }

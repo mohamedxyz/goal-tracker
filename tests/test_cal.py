@@ -7,7 +7,7 @@ async def m():
       await pg.evaluate(SEED_AR)
       # 120 extra tasks across the month
       await pg.evaluate("(async()=>{for(let i=0;i<120;i++){const o=(i%40)-15,dn=i%3===0;const t={id:uid(),title:'T'+i,notes:'',repeat:'',tag:'',items:[],due:ds(addDays(new Date(),o)),priority:['low','med','high'][i%3],goalId:null,done:dn&&o<=0,doneAt:dn&&o<=0?Date.now()+o*864e5:null,created:Date.now()-40*864e5};S.tasks.push(t);await DB.put('tasks',t)}S.view='tasks';render()})()")
-      await pg.wait_for_timeout(300);await pg.click('[data-action=tasks-cal]');await pg.wait_for_timeout(300)
+      await pg.wait_for_timeout(300);await tap(pg,'[data-action=tasks-cal]');await pg.wait_for_timeout(300)
       print(sc,'cells',await pg.locator('.tcd').count(),'late',await pg.locator('.tcd.late').count(),'ov',await overflow(pg))
       await pg.screenshot(path=f'{SHOTS}/cal-{sc}.png',full_page=True)
       tgt=await pg.evaluate("ds(addDays(new Date(),3))")

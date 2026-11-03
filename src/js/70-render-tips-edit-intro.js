@@ -103,6 +103,7 @@ function render() {
     S.sel.clear();
   }
   document.body.classList.toggle('selmode', !!S.selMode);
+  fabSync();
   document.body.classList.toggle('cmp', !!(S.cfg.student && S.cfg.stuCompact));
   if (S.view === 'bestiary' && !rpgOn()) S.view = 'dash';
   const v =

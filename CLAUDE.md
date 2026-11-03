@@ -41,6 +41,13 @@ Modules are opt-in add-ons (Settings > Add-ons): `student`, `mTime` (start time/
 ## Scores (0.86.0)
 `src/js/78-performance.js`: `perfCard()` leads Today. `habitScore/taskScore/overallScore(shift)` are 42-day EMAs (seeded with the first 7 live days, 84-day window), 0 to 1000; overall is the geometric mean. Habit day value: done 1, half-tick 0.7, isolated miss 0.5. Task points: 3/2/1 by priority + min(1, dur/120), low-priority capped at 3 a day, target `cfg.taskTarget` (6). Weights are judgment, not validated. Today caps open tasks at 4 (`S.dashAll`) and folds habits (`S.dashHab`); `helpers.page(legacy=True)` opens both.
 
+## Minimal touch UI (0.87.0)
+Every control is at least 44px (target 48px, `--tap`), text at least 12px (body 16px, `.meta` 13px), spacing on a 4/8/16/24 scale (`--s1..--s4`); the rules are the last block of `style.css`. `tests/test_touch.py` enforces this at 390x844 (light, dark, Arabic) on Today, Tasks, Habits, Goals, Settings and on the open sheets. Check boxes are a 28px circle in a 48px hit area, on the thumb (end) side of each row via `order`.
+- `src/js/79-touch-ui.js`: the round `#fab` (in `10-body.html`, mirrored by `inset-inline-end`) opens ONE add sheet (`openAddSheet`: Task / Habit / Goal forms `taskAddForm`, `habitAddForm`, `goalAddForm`; the screens have no inline add forms any more). `moreMenu(html)` is the single "more" button (a `<details class="moremenu">` that becomes a bottom sheet when open; tests open it with `tap()` in `helpers.py`). `habitMenu` and `goalMenu` are the row menus.
+- All dialogs (`#editDlg`, `#askDlg`) are bottom sheets (CSS only). Do not put a `transform` animation on `#app` children: it would trap the fixed menu sheet.
+- Habit rows show only today's tick; the 7-day strip is opt-in (Habits menu, "Week strip", `S.weekOpen`). Today shows habits open by default (`S.dashHab !== false`).
+Unverified on a real device: keyboard behaviour of the sheets, safe-area insets, one-hand reach.
+
 ## Known to-do (not yet done)
 - README is out of date: "Import" is now "Restore", screenshots predate 0.72, no mention of info sheets, tip cards or auto backup. `tests/screenshots.py` needs tips dismissed and Settings sections opened before it will give good images.
 - Game (done in 0.81.0): boss death is permanent, overkill bonus, 25% growth cap, how-it-works sheet, badges. Still open: anti-grind rules (tiny tasks ticked straight after creating them), more badges.

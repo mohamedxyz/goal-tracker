@@ -40,3 +40,9 @@ async def latin(pg):
    for(const r of roots){const w=document.createTreeWalker(r,NodeFilter.SHOW_TEXT);let n;while(n=w.nextNode()){const p=n.parentElement;if(!p||p.closest('[translate=no],script,style,textarea,option[value=en]')||p.offsetParent===null&&p.tagName!=='OPTION')continue;const t=n.nodeValue.trim();if(/[A-Za-z]{2,}/.test(t))out.add(t.slice(0,90))}
    r.querySelectorAll('[placeholder],[title],[aria-label]').forEach(e=>{if(e.closest('[translate=no]'))return;for(const a of ['placeholder','title','aria-label']){const v=e.getAttribute(a);if(v&&/[A-Za-z]{2,}/.test(v))out.add('@'+a+': '+v.slice(0,80))}})}
    return [...out]})()""")
+
+async def tap(pg,sel):
+  # click a control; if it lives in a closed "more" (⋯) menu, open that menu first
+  await pg.evaluate("(s)=>{const e=document.querySelector(s);const d=e&&e.closest('details.moremenu');if(d&&!d.open){S._eat=0;d.querySelector('summary').click()}}",sel)
+  await pg.wait_for_timeout(50)
+  await pg.click(sel)

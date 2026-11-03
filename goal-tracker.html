@@ -5,6 +5,7 @@
     PATCH = bug fix · MINOR = new feature · MAJOR = breaks old backups or data
 
   Changelog
+  0.87.0 A calmer, bigger-button look made for thumbs: every tap target is at least 48 px, the tab bar is larger, a single round + button at the bottom opens one sheet to add a task, habit or goal, dialogs and menus slide up from the bottom, lists are plain rows with the tick on the thumb side, extra options sit behind one ⋯ button, and the Today score is one big number.
   0.86.0 Three scores instead of one: a Habits score (rewards showing up, a half-tick counts, one isolated miss costs half), a Tasks score (hard work: priority and length earn more, tiny low-priority tasks are capped) and an Overall score (the geometric mean). All are slow 42-day averages, with a week-on-week arrow and a gentle warning when you run far above your pace. Tap the score for the formula.
   0.85.0 Today leads with your performance and a GoalTerra Score (0 to 1000, tap ⓘ for the formula): a ring for today, the last 7 days as bars, this week against last week, best streak and active goals. The task list shows the first 4 open tasks (Show all for the rest) and habits fold into one line.
   0.84.0 Simpler and calmer: Today shows your tasks, goals and habits with a one-line add field, and backup reminders moved to the bottom (with a dot on Settings); Study, Time blocking, Game and Coach are now Add-ons you switch on in Settings (existing users keep what they use); Settings shows six cards plus Advanced; a one-screen first run (pick starter habits); the stat tiles are hidden by default; a short vibration with the tick sounds where the phone allows it; Study puts Today's picks first, with Undo for ratings, Show all, results-to-log on top and the timetable collapsed.
@@ -708,7 +709,7 @@ ul.list {
   border: 1px solid var(--line);
   background: var(--card);
   color: var(--muted);
-  font: 600 11px/1.1 inherit;
+  font: 600 12px/1.1 inherit;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -870,7 +871,7 @@ ul.list {
   background: var(--accent);
 }
 .sbar span {
-  font-size: 10px;
+  font-size: 12px;
   color: var(--muted);
   line-height: 1;
 }
@@ -897,7 +898,7 @@ ul.list {
   font-variant-numeric: tabular-nums;
 }
 .stile span {
-  font-size: 11.5px;
+  font-size: 12px;
   color: var(--muted);
   line-height: 1.25;
 }
@@ -971,7 +972,7 @@ ul.list {
   line-height: 1.1;
 }
 .datebox small {
-  font-size: 10.5px;
+  font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--muted);
@@ -1147,11 +1148,9 @@ ul.list {
 @keyframes rise {
   from {
     opacity: 0;
-    transform: translateY(10px);
   }
   to {
     opacity: 1;
-    transform: none;
   }
 }
 @keyframes popk {
@@ -1391,7 +1390,7 @@ button.danger {
   border-radius: 999px;
   background: var(--soft);
   color: var(--accent);
-  font-size: 11.5px;
+  font-size: 12px;
 }
 .p-high {
   color: var(--bad);
@@ -1503,7 +1502,7 @@ button.danger {
   border-radius: 9px;
   background: var(--card);
   color: var(--muted);
-  font: 600 11px/1.1 inherit;
+  font: 600 12px/1.1 inherit;
   cursor: pointer;
   display: flex;
   flex-direction: column;
@@ -1623,7 +1622,7 @@ button.danger {
   display: grid;
   grid-template-columns: repeat(26, 1fr);
   gap: 3px;
-  font-size: 10.5px;
+  font-size: 12px;
   color: var(--muted);
   margin-bottom: 3px;
   height: 13px;
@@ -1669,7 +1668,7 @@ button.danger {
   gap: 4px;
   justify-content: flex-end;
   color: var(--muted);
-  font-size: 11.5px;
+  font-size: 12px;
   margin-top: 8px;
 }
 .hm-legend i {
@@ -1728,7 +1727,7 @@ button.danger {
   margin-top: 4px;
 }
 .ring .cnt {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--muted);
 }
 .barchart svg {
@@ -1753,7 +1752,7 @@ button.danger {
 .barchart .ax {
   fill: var(--muted);
   font:
-    10px system-ui,
+    12px system-ui,
     sans-serif;
 }
 .barchart .base {
@@ -2002,7 +2001,7 @@ dialog#askDlg::backdrop {
   font-size: 16px;
 }
 .hist-stats span {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--muted);
 }
 .cal-nav {
@@ -2028,7 +2027,7 @@ dialog#askDlg::backdrop {
 .cal-wk {
   margin-bottom: 4px;
   text-align: center;
-  font-size: 11px;
+  font-size: 12px;
   color: var(--muted);
   font-weight: 600;
 }
@@ -2063,7 +2062,7 @@ dialog#askDlg::backdrop {
   position: absolute;
   top: 2px;
   right: 3px;
-  font-size: 9px;
+  font-size: 12px;
   font-style: normal;
   line-height: 1;
   color: var(--warn);
@@ -2169,15 +2168,15 @@ form[data-kind='rollup'] .f-roll {
   margin-top: 10px;
 }
 .numrow .ghost {
-  width: 40px;
-  height: 36px;
+  width: 48px;
+  height: 48px;
   padding: 0;
   font-size: 18px;
   font-weight: 700;
 }
 .numval {
   flex: 1;
-  height: 36px;
+  height: 48px;
   border: 1px solid var(--line);
   border-radius: 10px;
   background: var(--bg);
@@ -2283,7 +2282,7 @@ form[data-kind='rollup'] .f-roll {
   line-height: 1.25;
 }
 #focusBar .ft-ph {
-  font-size: 11.5px;
+  font-size: 12px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -2345,7 +2344,7 @@ body.ftOn main.wrap {
 }
 .hcompact .meta {
   margin-top: 0;
-  font-size: 11.5px;
+  font-size: 12px;
 }
 .hcompact .days {
   gap: 3px;
@@ -2358,7 +2357,7 @@ body.ftOn main.wrap {
   font-size: 0;
 }
 .hcompact .day b {
-  font-size: 11px;
+  font-size: 12px;
 }
 .hcompact .icon {
   padding: 2px 4px;
@@ -2622,7 +2621,7 @@ html.kb {
     background: transparent;
     color: var(--muted);
     font:
-      600 11px/1.2 system-ui,
+      600 12px/1.2 system-ui,
       sans-serif;
     padding: 4px 2px;
     cursor: pointer;
@@ -2746,7 +2745,7 @@ html.kb {
   margin-right: 2px;
 }
 .daypick .dp-hint {
-  font-size: 11.5px;
+  font-size: 12px;
   color: var(--muted);
   margin-left: 2px;
 }
@@ -2907,7 +2906,7 @@ body.cmp .stat .n {
   font-size: 20px;
 }
 body.cmp .stat .l {
-  font-size: 11.5px;
+  font-size: 12px;
 }
 body.cmp h2 {
   margin: 14px 0 8px;
@@ -2931,7 +2930,7 @@ body.cmp .vcard {
   margin-top: 10px;
 }
 body.cmp .meta {
-  font-size: 11.5px;
+  font-size: 12px;
   gap: 2px 8px;
 }
 body.cmp .stile {
@@ -3019,7 +3018,7 @@ body.cmp .list {
   font-size: 19px;
 }
 .dstats .stat .l {
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.25;
 }
 .insbtn {
@@ -3077,7 +3076,7 @@ body.cmp .list {
 .lv {
   display: inline-block;
   vertical-align: 1px;
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.05em;
   text-transform: uppercase;
@@ -3106,7 +3105,8 @@ body.cmp .list {
   padding: 0;
 }
 .lchev {
-  width: 20px;
+  width: 48px;
+  min-height: 48px;
   flex: none;
   border: 0;
   background: none;
@@ -3134,12 +3134,12 @@ body.cmp .list {
   align-items: center;
   gap: 9px;
   padding: 5px 0;
-  min-height: 38px;
+  min-height: 48px;
   font-size: 14px;
 }
 .ltask input {
-  width: 19px;
-  height: 19px;
+  width: 24px;
+  height: 24px;
   accent-color: var(--accent);
   flex: none;
 }
@@ -3153,7 +3153,7 @@ body.cmp .list {
   opacity: 0.55;
 }
 .pill.sm {
-  font-size: 11px;
+  font-size: 12px;
   padding: 2px 7px;
 }
 .tcal {
@@ -3177,7 +3177,7 @@ body.cmp .list {
 }
 .cc {
   font:
-    700 10px/1.4 system-ui,
+    700 12px/1.4 system-ui,
     sans-serif;
   font-style: normal;
   border-radius: 5px;
@@ -3290,7 +3290,7 @@ body.cmp .list {
   font-size: 17px;
 }
 .cstats span {
-  font-size: 10.5px;
+  font-size: 12px;
   color: var(--muted);
 }
 .coach .btn small {
@@ -3436,7 +3436,7 @@ body.cmp .list {
   display: flex;
   justify-content: space-between;
   gap: 8px;
-  font-size: 11.5px;
+  font-size: 12px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -3496,7 +3496,7 @@ body.cmp .list {
   font-size: 18px;
 }
 .stats4 span {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--muted);
 }
 .bst {
@@ -3805,7 +3805,7 @@ table.rp tr.less td {
 .dm-hint {
   display: block;
   margin-top: 6px;
-  font-size: 11.5px;
+  font-size: 12px;
   color: var(--muted);
 }
 .cd.lc {
@@ -3814,7 +3814,7 @@ table.rp tr.less td {
   align-items: center;
   justify-content: center;
   gap: 1px;
-  font-size: 11px;
+  font-size: 12px;
 }
 .cd.lc .lvi {
   font-size: 14px;
@@ -4066,7 +4066,7 @@ form.kbdock {
 }
 .pl-lab {
   grid-row: 1 / 3;
-  font-size: 11px;
+  font-size: 12px;
   color: var(--muted);
   padding-top: 3px;
 }
@@ -4124,7 +4124,7 @@ form.kbdock {
 }
 .pl-b span {
   color: var(--muted);
-  font-size: 11px;
+  font-size: 12px;
 }
 .pl-b.done {
   opacity: 0.55;
@@ -4231,7 +4231,7 @@ form.kbdock {
 }
 .badge small {
   color: var(--muted);
-  font-size: 10px;
+  font-size: 12px;
   line-height: 1.2;
 }
 
@@ -4339,42 +4339,965 @@ form.kbdock {
   width: 100%;
 }
 
-.perf { display: block; padding: 14px; margin: 6px 0 12px; }
-.perf-top { display: flex; align-items: center; gap: 14px; }
-.perf-ring { position: relative; width: 84px; height: 84px; flex: none; }
-.perf-ring .bg { fill: none; stroke: var(--line); stroke-width: 7; }
-.perf-ring .fg { fill: none; stroke: var(--ok); stroke-width: 7; stroke-linecap: round; transition: stroke-dasharray 0.4s; }
-.perf.full .perf-ring .fg { stroke: var(--accent); }
-.perf-ring b { position: absolute; inset: 0; display: grid; place-items: center; font-size: 18px; }
-.pbars { display: flex; gap: 8px; align-items: flex-end; height: 66px; margin: 12px 0 8px; }
-.pbar { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 3px; }
-.pbar span { width: 100%; border-radius: 5px; background: var(--ok); opacity: 0.55; }
-.pbar.now span { opacity: 1; background: var(--accent); }
-.pbar.none span { background: var(--line); opacity: 1; }
-.pbar i { font-style: normal; font-size: 10px; color: var(--muted); }
-.perf-foot { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; font-size: 13px; color: var(--muted); }
-.perf-foot .chip { margin-inline-start: auto; }
+/* =====================================================================
+   Minimal touch UI (0.87.0)
+   Scale 4/8/16/24. Every control is at least 44px (target 48px). Body text 16px, secondary 13px, nothing under 12px.
+   Whitespace and thin dividers instead of boxes. One accent. Primary actions sit in the thumb zone (tab bar, add button, bottom sheets).
+   ===================================================================== */
+:root {
+  --s1: 4px;
+  --s2: 8px;
+  --s3: 16px;
+  --s4: 24px;
+  --tap: 48px;
+  --radius: 16px;
+  --tabbar-h: 64px;
+}
+body {
+  font-size: 16px;
+  line-height: 1.5;
+}
+h2 {
+  font-size: 16px;
+  font-weight: 600;
+  margin: var(--s4) 0 var(--s2);
+}
+.title {
+  font-weight: 600;
+}
+.meta {
+  font-size: 13px;
+  gap: 0 var(--s3);
+}
+.card {
+  border: 0;
+  border-radius: var(--radius);
+  padding: var(--s3);
+}
+.empty {
+  padding: var(--s4) var(--s2);
+  text-align: center;
+  color: var(--muted);
+}
+/* ----- inputs and buttons ----- */
+input:not([type='checkbox']):not([type='radio']):not([type='range']),
+select,
+textarea {
+  min-height: var(--tap);
+  font-size: 16px;
+  padding: 10px 14px;
+  border-radius: 12px;
+}
+textarea {
+  min-height: 96px;
+}
+button.btn,
+button.ghost,
+button.chip,
+.chip {
+  min-height: var(--tap);
+  font-size: 15px;
+}
+button.btn,
+button.ghost {
+  padding: 0 20px;
+  border-radius: 14px;
+}
+button.btn.big {
+  width: 100%;
+  min-height: 56px;
+  font-size: 17px;
+  margin-top: var(--s2);
+}
+.chip,
+summary.chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 var(--s3);
+  gap: 6px;
+  list-style: none;
+}
+.chip.on {
+  background: var(--soft);
+}
+button.icon {
+  min-width: var(--tap);
+  min-height: var(--tap);
+  font-size: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  padding: 0;
+}
+.mv .icon,
+.mini .icon {
+  min-width: var(--tap);
+  min-height: var(--tap);
+  padding: 0;
+}
+summary {
+  cursor: pointer;
+}
+.more summary {
+  min-height: var(--tap);
+  display: flex;
+  align-items: center;
+  font-size: 15px;
+  padding: 0;
+}
+.pal {
+  width: var(--tap);
+  height: var(--tap);
+  box-shadow:
+    inset 0 0 0 4px var(--card),
+    0 0 0 1px var(--line);
+}
+.pal.on {
+  box-shadow:
+    inset 0 0 0 4px var(--card),
+    0 0 0 2px var(--text);
+}
+.pals {
+  gap: var(--s2);
+}
+/* ----- check boxes: a 28px circle inside a 48px hit area ----- */
+.item > input[type='checkbox'],
+input.selbox,
+.subs input[type='checkbox'] {
+  appearance: none;
+  -webkit-appearance: none;
+  position: relative;
+  flex: none;
+  width: var(--tap);
+  height: var(--tap);
+  margin: 0;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+.item > input[type='checkbox']::before,
+input.selbox::before,
+.subs input[type='checkbox']::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid var(--muted);
+  background: var(--card);
+  transition:
+    background 0.15s,
+    border-color 0.15s;
+}
+.item > input[type='checkbox']:checked::before,
+input.selbox:checked::before,
+.subs input[type='checkbox']:checked::before {
+  background: var(--ok);
+  border-color: var(--ok);
+}
+.item > input[type='checkbox']:checked::after,
+input.selbox:checked::after,
+.subs input[type='checkbox']:checked::after {
+  content: '';
+  position: absolute;
+  inset-inline-start: calc(50% - 3.5px);
+  top: calc(50% - 8px);
+  width: 7px;
+  height: 13px;
+  border: solid var(--on-ok);
+  border-width: 0 2.5px 2.5px 0;
+  transform: rotate(45deg);
+}
+.item > input[type='checkbox']:focus-visible::before,
+input.selbox:focus-visible::before {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.subs label {
+  min-height: var(--tap);
+  gap: var(--s2);
+  font-size: 15px;
+}
+.subs {
+  gap: 0;
+}
+.tcheck {
+  width: var(--tap);
+  height: var(--tap);
+  border: 0;
+  background: radial-gradient(circle, var(--card) 0 12px, var(--muted) 12px 14px, transparent 14.5px);
+  font-size: 15px;
+}
+.tcheck:hover {
+  background: radial-gradient(circle, var(--card) 0 12px, var(--ok) 12px 14px, transparent 14.5px);
+}
+.tcheck.on {
+  background: radial-gradient(circle, var(--ok) 0 14.5px, transparent 15px);
+}
+/* ----- rows: one per item, 64px+, check box on the thumb side (end), divider instead of a box ----- */
+ul.list {
+  gap: 0;
+}
+.item {
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  padding: var(--s2) 0;
+  min-height: 64px;
+  gap: var(--s2);
+}
+.item > .grow {
+  order: 1;
+}
+.item > .icon {
+  order: 2;
+  color: var(--muted);
+}
+.item > input[type='checkbox'],
+.item > .tcheck,
+.item > .selbox {
+  order: 3;
+}
+.item > .selbox {
+  order: 0;
+}
+.item.selected,
+.card.selected {
+  background: var(--soft);
+}
+.trow2 {
+  border-inline-start: 3px solid transparent;
+  padding-inline-start: var(--s2);
+}
+.trow2.pr-med {
+  border-inline-start-color: transparent;
+}
+.trow2 > .grow,
+.habit-open {
+  min-height: var(--tap);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.item .meta {
+  margin-top: 0;
+}
+.dueinfo .pill {
+  background: none;
+  padding: 0;
+  font: inherit;
+  color: var(--muted);
+  min-height: 0;
+}
+.dueinfo .pill.hot {
+  color: var(--bad);
+  font-weight: 600;
+  background: none;
+}
+.dueinfo .pill.warm {
+  color: var(--text);
+  background: none;
+}
+.tnotes {
+  font-size: 13px;
+  color: var(--muted);
+}
+.divider {
+  margin: var(--s3) 0 var(--s2);
+}
+/* habits: a flat row with today's tick on the thumb side; the week strip is opt-in */
+.card.hrow,
+.card.hcompact {
+  background: transparent;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  padding: var(--s2) 0;
+}
+.card.hrow .habit,
+.card.hcompact .habit {
+  flex-wrap: nowrap;
+  gap: var(--s2);
+  min-height: 64px;
+}
+.card.hcompact .habit {
+  flex-wrap: wrap;
+}
+.card.hrow .habit > .tcheck {
+  order: 3;
+}
+.card.hrow .habit > .icon {
+  order: 2;
+  color: var(--muted);
+}
+.goals {
+  gap: 0;
+}
+.goals > .card.hrow:last-child {
+  border-bottom: 0;
+}
+.days {
+  gap: var(--s2);
+  width: 100%;
+  margin-top: var(--s1);
+}
+.day,
+.habit .day {
+  flex: 1;
+  width: auto;
+  min-width: 44px;
+  max-width: none;
+  height: var(--tap);
+  border-radius: 12px;
+}
+.heat {
+  margin-top: var(--s3);
+}
+.hbar,
+.filters.hbar {
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s2);
+}
+.hbar .meta {
+  align-self: center;
+}
+.hfolder {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding-inline: 0;
+}
+.hf-toggle,
+.hf-head .icon {
+  min-height: var(--tap);
+}
+.insbtn {
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  padding: 0;
+  min-height: 56px;
+  margin-top: var(--s3);
+  font-size: 16px;
+  font-weight: 600;
+}
+.insbtn.habhead {
+  margin-top: var(--s4);
+}
+.insbtn small {
+  font-weight: 400;
+}
+/* ----- filters: four tabs that scroll, one "more" button ----- */
+.filters {
+  gap: var(--s2);
+  margin-bottom: var(--s3);
+}
+.fbar {
+  align-items: center;
+}
+.fscroll {
+  gap: var(--s2);
+}
+.seg {
+  background: var(--soft);
+  border: 0;
+  border-radius: 16px;
+  padding: var(--s1);
+  gap: var(--s1);
+  margin-bottom: var(--s3);
+}
+.seg button {
+  min-height: 44px;
+  padding: 0 var(--s2);
+  border-radius: 12px;
+  font-size: 15px;
+}
+.seg button.on {
+  font-weight: 600;
+}
+.moremenu {
+  display: inline-block;
+  flex: none;
+}
+.moremenu summary {
+  min-width: var(--tap);
+  list-style: none;
+  cursor: pointer;
+}
+.moremenu summary::-webkit-details-marker {
+  display: none;
+}
+.moremenu[open]::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: rgba(20, 12, 6, 0.4);
+  z-index: 39;
+}
+.moremenu[open] > div {
+  position: fixed;
+  inset-inline: 0;
+  bottom: 0;
+  top: auto;
+  z-index: 40;
+  max-width: 560px;
+  margin-inline: auto;
+  padding: var(--s3) var(--s3) calc(var(--s3) + var(--sab));
+  border: 0;
+  border-radius: 24px 24px 0 0;
+  gap: var(--s2);
+  box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.25);
+}
+.moremenu[open] > div .chip {
+  width: 100%;
+  min-height: 56px;
+  justify-content: flex-start;
+  border-radius: 14px;
+  font-size: 16px;
+  color: var(--text);
+}
+.h2row {
+  margin: var(--s4) 0 var(--s2);
+}
+.h2row h2 {
+  margin: 0;
+}
+.hsec {
+  margin: var(--s4) 0 var(--s2);
+}
+.tipcard,
+.plan-cta,
+.review-cta,
+.backup-cta {
+  gap: var(--s3);
+}
+.perf {
+  margin: 0 0 var(--s2);
+}
+.perf-top {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+}
+.perf-score {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  flex: 1;
+  min-height: var(--tap);
+  background: none;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
 
-.perf-score { display: flex; align-items: center; gap: 10px; width: 100%; background: none; border: 0; padding: 0 0 10px; margin: 0 0 10px; border-bottom: 1px solid var(--line); color: inherit; font: inherit; text-align: start; }
-.perf-score span { display: flex; flex-direction: column; flex: 1; }
-.perf-score small { font-size: 11px; color: var(--muted); letter-spacing: 0.04em; }
-.perf-score b { font-size: 34px; line-height: 1.1; color: var(--accent); }
-.perf-score em { font-style: normal; font-weight: 700; font-size: 14px; }
-.perf-score em.up { color: var(--ok); }
-.perf-score em.dn { color: #b0402a; }
-.perf-score u { text-decoration: none; color: var(--muted); }
+.perf-score small {
+  font-size: 13px;
+  color: var(--muted);
+  letter-spacing: 0;
+}
+.perf-score b {
+  font-size: 56px;
+  font-weight: 600;
+  line-height: 1.05;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+.perf-score em {
+  font-style: normal;
+  font-weight: 600;
+  font-size: 15px;
+}
+.perf-score em.up {
+  color: var(--ok);
+}
+.perf-score em.dn {
+  color: var(--bad);
+}
+.perf-ring {
+  position: relative;
+  width: 64px;
+  height: 64px;
+  flex: none;
+}
+.perf-ring b {
+  font-size: 15px;
+  font-weight: 600;
+}
+.perf-ring .bg {
+  fill: none;
+  stroke: var(--line);
+  stroke-width: 8;
+}
+.perf-ring .fg {
+  fill: none;
+  stroke: var(--ok);
+  stroke-width: 8;
+  stroke-linecap: round;
+  transition: stroke-dasharray 0.4s;
+}
+.perf.full .perf-ring .fg {
+  stroke: var(--accent);
+}
+.perf > .title {
+  margin-top: var(--s2);
+}
+.sub-scores {
+  display: flex;
+  gap: var(--s4);
+  margin: var(--s1) 0 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+.sub-scores b {
+  color: var(--text);
+  font-size: 15px;
+  font-weight: 600;
+}
+.sub-scores em {
+  font-style: normal;
+  font-size: 12px;
+  margin-inline-start: var(--s1);
+}
+.sub-scores em.up {
+  color: var(--ok);
+}
+.sub-scores em.dn {
+  color: var(--bad);
+}
+.perf .warn {
+  color: var(--bad);
+  margin-top: var(--s1);
+}
+.perf-week > summary {
+  min-height: var(--tap);
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+  color: var(--muted);
+}
+.pbars {
+  display: flex;
+  gap: var(--s2);
+  align-items: flex-end;
+  height: 66px;
+  margin: var(--s2) 0;
+}
+.pbar {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 3px;
+}
+.pbar span {
+  width: 100%;
+  border-radius: 5px;
+  background: var(--ok);
+  opacity: 0.55;
+}
+.pbar.now span {
+  opacity: 1;
+  background: var(--accent);
+}
+.pbar.none span {
+  background: var(--line);
+  opacity: 1;
+}
+.pbar i {
+  font-style: normal;
+  font-size: 12px;
+  color: var(--muted);
+}
+.perf-foot {
+  display: flex;
+  gap: var(--s3);
+  align-items: center;
+  flex-wrap: wrap;
+  font-size: 13px;
+  color: var(--muted);
+}
+.perf-foot .chip {
+  margin-inline-start: auto;
+}
+/* ----- header and tab bar ----- */
+#searchBtn {
+  min-width: var(--tap);
+  min-height: var(--tap);
+  color: var(--text);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+#themeBtn {
+  min-height: var(--tap);
+  min-width: var(--tap);
+  padding: 0 var(--s3);
+  font-size: 14px;
+}
+nav button {
+  min-height: var(--tap);
+  padding: 0 var(--s3);
+}
+.top .right {
+  gap: var(--s2);
+}
+@media (max-width: 720px) {
+  .top {
+    padding-block: calc(var(--s1) + env(safe-area-inset-top)) var(--s1);
+  }
+  .top .date {
+    display: none;
+  }
+  #themeBtn {
+    padding: 0 var(--s3);
+    min-height: var(--tap);
+  }
+  header {
+    border-bottom: 0;
+  }
+  main.wrap {
+    padding-top: var(--s2);
+    padding-bottom: calc(var(--tabbar-h) + 96px + var(--sab));
+  }
+  html {
+    scroll-padding: 64px 0 calc(var(--tabbar-h) + 96px + var(--sab));
+  }
+  #tabbar {
+    padding: var(--s1) max(var(--s2), env(safe-area-inset-left)) calc(var(--s1) + var(--sab))
+      max(var(--s2), env(safe-area-inset-right));
+    background: var(--bg);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    gap: var(--s1);
+  }
+  #tabbar button {
+    min-height: 56px;
+    font:
+      600 12px/1.2 system-ui,
+      sans-serif;
+    gap: 2px;
+    border-radius: 16px;
+    padding: var(--s1) 0;
+  }
+  #tabbar .ti {
+    width: 64px;
+    height: 32px;
+  }
+  #tabbar .ti svg {
+    width: 24px;
+    height: 24px;
+  }
+  #tabbar button.on {
+    font-weight: 700;
+  }
+  #toast {
+    bottom: calc(var(--tabbar-h) + 24px + var(--sab));
+  }
+  button.icon,
+  .chip {
+    min-height: var(--tap);
+  }
+  button.icon {
+    min-width: var(--tap);
+  }
+  .item input[type='checkbox'] {
+    width: var(--tap);
+    height: var(--tap);
+  }
+}
+/* ----- floating add button (bottom end; mirrored in Arabic by the logical inset) ----- */
+#fab {
+  position: fixed;
+  inset-inline-end: var(--s3);
+  bottom: calc(var(--tabbar-h) + var(--s3) + var(--sab));
+  z-index: 21;
+  width: 56px;
+  height: 56px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--on-accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.22);
+  padding: 0;
+}
+#fab[hidden] {
+  display: none;
+}
+#fab svg {
+  pointer-events: none;
+}
+@media (min-width: 721px) {
+  #fab {
+    bottom: var(--s4);
+    inset-inline-end: var(--s4);
+  }
+  main.wrap {
+    padding-bottom: 120px;
+  }
+}
+html.kb #fab {
+  display: none;
+}
+/* ----- dialogs are bottom sheets ----- */
+dialog#editDlg,
+dialog#askDlg {
+  inset: auto 0 0 0;
+  margin: 0 auto;
+  width: 100%;
+  max-width: 560px;
+  max-height: 92dvh;
+  border: 0;
+  border-radius: 24px 24px 0 0;
+  padding: var(--s3) var(--s3) calc(var(--s4) + var(--sab));
+  box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.25);
+  overflow-y: auto;
+}
+dialog#editDlg[open]::before,
+dialog#askDlg[open]::before {
+  content: '';
+  display: block;
+  width: 40px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--line);
+  margin: 0 auto var(--s3);
+}
+dialog#editDlg[open],
+dialog#askDlg[open] {
+  animation: sheetup 0.26s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+@keyframes sheetup {
+  from {
+    transform: translateY(40px);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+.dlg h3 {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0 0 var(--s3);
+}
+.dlg label {
+  font-size: 14px;
+  margin: var(--s3) 0 6px;
+}
+.dlg .check {
+  min-height: var(--tap);
+  font-size: 16px;
+  margin-top: var(--s2);
+}
+.dlg-actions {
+  gap: var(--s2);
+  margin-top: var(--s4);
+}
+.dlg-actions button,
+#askDlg .row button {
+  flex: 1;
+  min-height: 56px;
+  font-size: 16px;
+}
+#askDlg .row {
+  gap: var(--s2);
+  margin-top: var(--s3);
+}
+#askDlg input {
+  margin-bottom: 0;
+}
+.tmenu {
+  gap: var(--s2);
+}
+.tmenu .ghost {
+  min-height: 56px;
+  justify-content: flex-start;
+  display: flex;
+  align-items: center;
+  font-size: 16px;
+}
+.tmenu .ghost.danger {
+  color: var(--bad);
+}
+/* ----- add sheet ----- */
+.sheet-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.sheet-head h3 {
+  margin: 0;
+}
+.sheetform {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+  margin: 0;
+}
+.sheetform input,
+.sheetform select,
+.sheetform textarea {
+  flex: none;
+  width: 100%;
+}
+.sheetform .moreg {
+  flex-direction: column;
+  gap: var(--s3);
+  margin-top: var(--s2);
+}
+.sheetform .filters {
+  margin: 0;
+}
+.fl {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  font-size: 14px;
+  color: var(--muted);
+}
+.sheetform .f-num {
+  display: none;
+  flex-direction: column;
+  gap: var(--s3);
+}
+.sheetform[data-kind='number'] .f-num,
+.sheetform[data-kind='rollup'] .f-roll {
+  display: flex;
+}
+.sheetform .f-roll {
+  display: none;
+}
+.sheetform .daypick {
+  gap: var(--s2);
+}
+.daypick label {
+  min-width: 44px;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+}
+.daypick label span {
+  width: 44px;
+  height: 44px;
+}
+/* misc controls */
+.numrow .ghost,
+.goal-card .ghost {
+  min-width: var(--tap);
+  min-height: var(--tap);
+  padding: 0;
+}
+.numval {
+  min-height: var(--tap);
+}
+.tc,
+.cd {
+  min-height: 44px;
+}
+.pill.warn {
+  min-height: 0;
+}
+.ladd-btn,
+.hf-toggle,
+.lchev,
+.setacc > .title,
+.tw-mini,
+.pick .rb,
+.rb {
+  min-height: var(--tap);
+}
 
-.sub-scores { display: flex; gap: 18px; margin: -4px 0 10px; font-size: 13px; color: var(--muted); }
-.sub-scores b { color: var(--text, inherit); font-size: 16px; }
-.sub-scores em { font-style: normal; font-size: 11px; margin-inline-start: 4px; }
-.sub-scores em.up { color: var(--ok); }
-.sub-scores em.dn { color: #b0402a; }
-.perf .warn { margin: 0 0 10px; color: #b0402a; }
+.chip {
+  min-width: var(--tap);
+}
+.ladd-btn {
+  min-width: var(--tap);
+}
+.cmsg {
+  min-height: var(--tap);
+}
+.goal .row > .grow {
+  min-height: var(--tap);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.lnum .ghost {
+  min-width: var(--tap);
+}
+.lrow {
+  align-items: center;
+  gap: var(--s1);
+}
+.lrow .grow {
+  min-height: var(--tap);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.lnum .numval {
+  min-height: var(--tap);
+}
+.perf-score > span {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+.perf-score small {
+  display: block;
+}
+.perf-ring b {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+}
+.tipcard p {
+  font-size: 14px;
+  margin-top: var(--s1);
+}
+.tipcard {
+  padding: var(--s3);
+}
+#app > .card.settings,
+#app > details.adv {
+  margin-top: var(--s2);
+}
+#app > .card.settings.addons {
+  margin-top: 0;
+}
+.setacc > .title {
+  min-height: 56px;
+}
+.more summary {
+  gap: var(--s2);
+}
+.fscroll .chip {
+  padding: 0 12px;
+}
 </style>
 </head>
 <body>
 <header><div class="wrap">
-  <div class="top"><h1><svg viewBox="0 0 100 100" width="26" height="26" aria-hidden="true"><g transform="rotate(-22 50 50)"><ellipse cx="50" cy="50" rx="45" ry="15" fill="none" style="stroke:var(--logo-orbit)" stroke-width="7"/></g><circle cx="50" cy="50" r="27" fill="#0E4F5C" style="stroke:var(--logo-ring)" stroke-width="3"/><path d="M23.5 56 C30 46 39 47 46 52 C52 57 60 51 68 55 C72 57 75 60 77 64 A27 27 0 0 1 23.5 56 Z" fill="#2E9E6B"/><g transform="rotate(-22 50 50)"><path d="M5 50 A45 15 0 0 0 95 50" fill="none" style="stroke:var(--logo-orbit)" stroke-width="7" stroke-linecap="round"/><circle cx="78.9" cy="61.5" r="10.5" fill="#E8803A" style="stroke:var(--bg)" stroke-width="4"/></g></svg><span translate="no" dir="ltr">Goal<span class="lt">Terra</span></span></h1><div class="right"><span class="date" id="today"></span><button id="searchBtn" type="button" aria-label="Search" title="Search">🔍</button><button id="themeBtn" type="button"></button></div></div>
+  <div class="top"><h1><svg viewBox="0 0 100 100" width="26" height="26" aria-hidden="true"><g transform="rotate(-22 50 50)"><ellipse cx="50" cy="50" rx="45" ry="15" fill="none" style="stroke:var(--logo-orbit)" stroke-width="7"/></g><circle cx="50" cy="50" r="27" fill="#0E4F5C" style="stroke:var(--logo-ring)" stroke-width="3"/><path d="M23.5 56 C30 46 39 47 46 52 C52 57 60 51 68 55 C72 57 75 60 77 64 A27 27 0 0 1 23.5 56 Z" fill="#2E9E6B"/><g transform="rotate(-22 50 50)"><path d="M5 50 A45 15 0 0 0 95 50" fill="none" style="stroke:var(--logo-orbit)" stroke-width="7" stroke-linecap="round"/><circle cx="78.9" cy="61.5" r="10.5" fill="#E8803A" style="stroke:var(--bg)" stroke-width="4"/></g></svg><span translate="no" dir="ltr">Goal<span class="lt">Terra</span></span></h1><div class="right"><span class="date" id="today"></span><button id="searchBtn" type="button" aria-label="Search" title="Search"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg></button><button id="themeBtn" type="button"></button></div></div>
   <nav id="nav">
     <button data-view="dash" class="on">Today</button>
     <button data-view="tasks">Tasks</button>
@@ -4393,6 +5316,7 @@ form.kbdock {
   <button type="button" data-view="study" hidden><span class="ti"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 19V5M9 7h6"/></svg></span>Study</button>
   <button type="button" data-view="data"><span class="ti"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></span>Settings</button>
 </nav>
+<button type="button" id="fab" data-action="fab" aria-label="Add" hidden><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
 <input type="file" id="importFile" accept=".json,application/json,text/plain,application/octet-stream" hidden>
 <div id="tip" role="tooltip"></div>
 <div id="focusBar" role="timer" aria-live="off" hidden></div>
@@ -4751,7 +5675,7 @@ function rate30(h) {
 }
 
 /* ---------- Version ---------- */
-const APP_VERSION = '0.86.0';
+const APP_VERSION = '0.87.0';
 
 /* Pick the English or Arabic text for the current language. Call it at render time, never while the file is loading. */
 const L2 = (en, ar) => (S.cfg.lang === 'ar' ? ar : en);
@@ -4854,6 +5778,7 @@ function taskItem(t) {
       ${t.notes && S.cfg.showNotes ? `<div class="tnotes">${esc(t.notes)}</div>` : ''}
       ${(t.items || []).length && S.cfg.showSubs ? `<ul class="subs">${t.items.map((it, i) => `<li><label class="${it.done ? 'sdone' : ''}"><input type="checkbox" data-action="toggle-sub" data-id="${t.id}" data-i="${i}" ${it.done ? 'checked' : ''}><span>${esc(it.text)}</span></label></li>`).join('')}</ul>` : ''}
       <div class="meta">
+        ${dp ? `<span class="dueinfo">${dp}</span>` : ''}
         ${(t.items || []).length ? `<span title="Checklist">☑ ${t.items.filter((i) => i.done).length}/${t.items.length}</span>` : ''}
         ${t.done && t.doneAt ? `<span>Done ${fmtWhen(t.doneAt)}</span>` : ''}
         ${t.done && t.due && !(t.doneAt && ds(new Date(t.doneAt)) === t.due) ? `<span>${fmtDate(t.due)}</span>` : ''}
@@ -4864,7 +5789,7 @@ function taskItem(t) {
         ${t.repeat ? `<span title="Repeats">🔁 ${REPEAT_LABEL[t.repeat] || ''}</span>` : ''}
         ${g ? `<span class="tag">${esc(g.title)}</span>` : ''}
       </div></div>
-    ${dp}<button class="icon" data-action="task-menu" data-id="${t.id}" title="More" aria-label="More actions">⋯</button></li>`;
+    <button class="icon" data-action="task-menu" data-id="${t.id}" title="More" aria-label="More actions">⋯</button></li>`;
 }
 function dayButtons(h, n = 7) {
   const today = TODAY();
@@ -4894,13 +5819,15 @@ function habitCard(h, full) {
       heat += `<i class="${good(h, k) ? 'on' : ''}" title="${k}"></i>`;
     }
   }
-  return `<div class="card ${sm && S.sel.has(h.id) ? 'selected' : ''}" ${sm ? `data-action="sel-toggle" data-id="${h.id}"` : ''}><div class="habit">${sm ? selBox(h.id) : ''}
-    <div class="grow habit-open" ${sm ? '' : `data-action="open-habit" data-id="${h.id}" role="button" tabindex="0" title="Open history"`}><div class="title">${hname(h)} <span class="chev">›</span></div>
+  const today = TODAY(),
+    on = good(h, today);
+  return `<div class="card hrow ${sm && S.sel.has(h.id) ? 'selected' : ''}" ${sm ? `data-action="sel-toggle" data-id="${h.id}"` : ''}><div class="habit">${sm ? selBox(h.id) : ''}
+    <div class="grow habit-open" ${sm ? '' : `data-action="open-habit" data-id="${h.id}" role="button" tabindex="0" title="Open history"`}><div class="title" translate="no">${hname(h)}</div>
       <div class="meta"><span class="streak">${isNeg(h) ? '🛡 ' + s + ' day' + (s === 1 ? '' : 's') + ' clean' : '🔥 ' + s + ' day' + (s === 1 ? '' : 's')}</span>${full && !isNeg(h) && bestStreak(h) > s ? `<span>${L2('Best', 'الأفضل')} ${bestStreak(h)}</span>` : ''}
-        <span>This week ${weekCount(h)}/${weekTarget(h)}</span>${full ? `<span>30-day ${rate30(h)}%</span>` : ''}${hasSched(h) ? `<span>${schedText(h)}</span>` : ''}</div></div>
-    ${dayButtons(h)}
-    ${full ? `${mvBtns('move-habit', h.id, `data-id="${h.id}"`)}${shareBtn('habit', h.id)}<button class="icon" data-action="edit-habit" data-id="${h.id}" title="Edit" aria-label="Edit ${esc(h.name)}">✎</button><button class="icon" data-action="del-habit" data-id="${h.id}" title="Delete" aria-label="Delete ${esc(h.name)}">✕</button>` : ''}
-  </div>${habitHint(h)}${full ? `<div class="heat">${heat}</div>` : ''}</div>`;
+        <span>This week ${weekCount(h)}/${weekTarget(h)}</span>${full && S.weekOpen ? `<span>30-day ${rate30(h)}%</span>` : ''}${hasSched(h) ? `<span>${schedText(h)}</span>` : ''}</div></div>
+    ${full ? `${mvBtns('move-habit', h.id, `data-id="${h.id}"`)}<button class="icon" data-action="habit-menu" data-id="${h.id}" title="More" aria-label="${L2('More actions for', 'المزيد من الخيارات لـ')} ${esc(h.name)}" translate="no">⋯</button>` : ''}
+    ${sm ? '' : `<button class="tcheck ${on ? 'on' : ''}" translate="no" data-action="toggle-log" data-id="${h.id}" data-date="${today}" aria-pressed="${on}" aria-label="${slipMode(h) ? (on ? 'Clean today. Tap to log a slip' : 'Slipped today. Tap to undo') : (on ? L2('Undo', 'تراجع') : L2('Check off', 'إنجاز')) + ' ' + esc(h.name) + L2(' for today', ' لهذا اليوم')}">${slipMode(h) && !on ? '✗' : '✓'}</button>`}
+  </div>${full && S.weekOpen ? dayButtons(h) : ''}${habitHint(h)}${full && S.weekOpen ? `<div class="heat">${heat}</div>` : ''}</div>`;
 }
 /**
  * Game mode.
@@ -7182,8 +8109,7 @@ function goalCard(g) {
     <div class="row"><div class="grow" data-action="info-goal" data-id="${g.id}" role="button" tabindex="0"><div class="title">${iconPrefix(g)}${esc(g.title)}</div>
       <div class="meta">${tags.join('')}</div></div>
       ${k === 'number' && !g.done ? '' : `<button class="icon" data-action="done-goal" data-id="${g.id}" title="${g.done ? 'Reopen' : 'Mark complete'}" aria-label="${g.done ? 'Reopen' : 'Mark complete'}">${g.done ? '↺' : '✓'}</button>`}
-      <button class="icon" data-action="edit-goal" data-id="${g.id}" title="Edit" aria-label="Edit">✎</button>
-      <button class="icon" data-action="del-goal" data-id="${g.id}" title="Delete" aria-label="Delete">✕</button></div>
+      <button class="icon" data-action="goal-menu" data-id="${g.id}" title="More" aria-label="More actions">⋯</button></div>
     <div class="bar"><span style="width:${p}%"></span></div>
     <div class="meta"><span><b>${p}%</b></span>${det ? `<span>${det}</span>` : ''}</div>
     ${num}
@@ -7337,12 +8263,6 @@ function consistencyCard() {
     av = S.habits.filter(isNeg);
   return `<div class="card vcard"><div class="vhead"><div class="title">Habit consistency</div><div class="sub">Last 30 days</div></div>${bl.length ? `<div class="hbars">${mk(bl, false)}</div>` : ''}${av.length ? `<div class="hsub">🛡 Staying clean</div><div class="hbars">${mk(av, true)}</div>` : ''}</div>`;
 }
-/* One always-visible field on Today: type a task, press Add. Dates like "tomorrow 5pm" work. */
-function todayAdd() {
-  const due = S.cfg.dueDef === 'none' ? '' : S.cfg.dueDef === 'tomorrow' ? ds(addDays(new Date(), 1)) : TODAY();
-  return `<form class="add taskadd card" data-form="task"><div class="qa"><input type="text" name="title" placeholder="${L2('Add a task… try: call mom tomorrow 5pm', 'أضف مهمة… جرّب: اتصل بأمي غدًا 5م')}" required autocomplete="off" aria-describedby="qaHint"><button class="btn">${L2('Add', 'أضف')}</button></div>
-    <div class="qa-hint" id="qaHint" aria-live="polite" hidden></div><input type="hidden" name="due" value="${due}"><input type="hidden" name="priority" value="${S.cfg.prio || 'low'}"></form>`;
-}
 function viewDash() {
   const today = TODAY();
   const open = S.tasks.filter((t) => !t.done && !t.archived);
@@ -7371,18 +8291,22 @@ function viewDash() {
     dow = new Date().getDay();
   const planCta = !wk.length || ((dow === 0 || dow === 1) && openSlots > 0);
   const housekeeping = `${autoCard()}${autoAskCard()}${!backupNudge() && lb !== null && lb > 0 ? `<div class="meta" style="margin:2px 2px 8px">${L2('Last backup', 'آخر نسخة')} ${agoText(lb)} · <button class="chip" data-action="backup-now">${L2('Back up now', 'انسخ الآن')}</button></div>` : ''}${backupNudge() ? `<div class="card backup-cta ${backupLevel() > 1 ? 'urgent' : ''}"><div class="grow"><div class="title">${lb === null ? 'No backup yet' : 'Last backup ' + agoText(lb)}</div><div class="meta">${backupLevel() > 1 ? 'If this browser clears its storage, everything since your last backup is gone. Back up now.' : 'Your data lives only in this browser. Save a backup and keep it somewhere safe.'}</div></div><button class="btn" data-action="backup-now">Back up now</button><button class="icon" data-action="backup-snooze" title="Remind me later" aria-label="Dismiss backup reminder">✕</button></div>` : ''}`;
-  return `${sampleBanner()}${dayBanner()}${perfCard()}${nRv ? `<div class="card review-cta"><div class="grow"><div class="title">${nRv} goal${nRv > 1 ? 's' : ''} from past periods need${nRv > 1 ? '' : 's'} a review</div><div class="meta">Hit it, missed, or carry over. About a minute.</div></div><button class="btn" data-action="open-review">Review</button></div>` : ''}  <div class="grid2" style="margin-top:6px"><div>
+  const habOpen = S.dashHab !== false;
+  const goalsBlock = S.cfg.dGoals
+    ? `<div class="h2row"><h2>${L2("This week's goals", 'أهداف هذا الأسبوع')}</h2>${moreMenu(`<button class="chip" data-action="open-plan">${L2('Plan this week', 'خطّط هذا الأسبوع')}</button><button class="chip" data-action="open-report">${L2('Weekly report', 'التقرير الأسبوعي')}</button><button class="chip" data-action="open-month">${L2('Monthly review', 'المراجعة الشهرية')}</button>`)}</div>${wk.length ? `<div class="goals">${wk.map(goalCard).join('')}</div>` : `<div class="empty">No weekly goals for ${currentPeriod('weekly')}.</div>`}`
+    : '';
+  return `${sampleBanner()}${dayBanner()}${perfCard()}${nRv ? `<div class="card review-cta"><div class="grow"><div class="title">${nRv} goal${nRv > 1 ? 's' : ''} from past periods need${nRv > 1 ? '' : 's'} a review</div><div class="meta">Hit it, missed, or carry over. About a minute.</div></div><button class="btn" data-action="open-review">Review</button></div>` : ''}  <div class="grid2"><div>
     ${
       S.cfg.dTasks
-        ? `<h2>Today's tasks</h2>${todayAdd()}${todays.length ? `<ul class="list">${(S.dashAll ? todays : todays.filter((t) => !t.done).slice(0, 4)).map(taskItem).join('')}</ul>${todays.filter((t) => !t.done).length > 4 || todaysDone ? `<button class="chip" style="margin-top:8px" data-action="dash-all">${S.dashAll ? L2('Show less', 'عرض أقل') : L2(`Show all ${todays.length}`, `عرض الكل ${todays.length}`)}</button>` : ''}` : `<div class="empty">Nothing due today.</div>`}
+        ? `<h2>Today's tasks</h2>${todays.length ? `<ul class="list">${(S.dashAll ? todays : todays.filter((t) => !t.done).slice(0, 4)).map(taskItem).join('')}</ul>${todays.filter((t) => !t.done).length > 4 || todaysDone ? `<button class="chip" style="margin-top:8px" data-action="dash-all">${S.dashAll ? L2('Show less', 'عرض أقل') : L2(`Show all ${todays.length}`, `عرض الكل ${todays.length}`)}</button>` : ''}` : `<div class="empty">Nothing due today.</div>`}
     ${overdue && !S.cfg.dOverdue ? `<button class="chip" style="margin-top:10px" data-action="see-overdue">${overdue} overdue from earlier days →</button>` : ''}`
         : ''
     }
-    ${S.cfg.dGoals ? `<div class="h2row"><h2>This week's goals</h2><span class="hbtns"><button class="chip" data-action="open-plan">Plan this week</button><details class="chipmenu"><summary class="chip" aria-label="More">⋯</summary><div><button class="chip" data-action="open-report">Weekly report</button><button class="chip" data-action="open-month">Monthly review</button></div></details></span></div>${wk.length ? `<div class="goals">${wk.map(goalCard).join('')}</div>` : `<div class="empty">No weekly goals for ${currentPeriod('weekly')}.</div>`}` : ''}
   </div><div>
-    ${S.cfg.dHabits ? `<button class="card insbtn" data-action="dash-hab" aria-expanded="${!!S.dashHab}"><span>${L2("Today's habits", 'عادات اليوم')} <small>${hd}/${dueHabits.length} ${L2('done', 'منجز')}</small></span><span>${S.dashHab ? '▾' : '▸'}</span></button>${S.dashHab ? habitList(false) : ''}` : ''}
+    ${S.cfg.dHabits ? `<button class="insbtn habhead" data-action="dash-hab" aria-expanded="${habOpen}"><span>${L2("Today's habits", 'عادات اليوم')} <small>${hd}/${dueHabits.length} ${L2('done', 'منجز')}</small></span><span>${habOpen ? '▾' : '▸'}</span></button>${habOpen ? habitList(false) : ''}` : ''}
+    ${goalsBlock}
   </div></div>
-  ${planCta ? `<div class="card plan-cta"><div class="grow"><div class="title">${wk.length ? L2(`${openSlots} weekly slot${openSlots > 1 ? 's' : ''} still to plan`, `${openSlots} خانات أسبوعية للتخطيط`) : `Plan ${currentPeriod('weekly')}`}</div><div class="meta">${wk.length ? L2("Fill in this week's steps toward your monthly goals.", 'املأ خطوات هذا الأسبوع نحو أهدافك الشهرية.') : L2("No weekly goals yet. Pick this week's steps.", 'لا أهداف أسبوعية بعد. اختر خطوات هذا الأسبوع.')}</div></div><button class="btn" data-action="open-plan">Plan week</button></div>` : ''}${rpgCard()}<div class="stats dstats" ${S.cfg.dStats ? '' : 'hidden'}>
+    ${planCta ? `<div class="card plan-cta"><div class="grow"><div class="title">${wk.length ? L2(`${openSlots} weekly slot${openSlots > 1 ? 's' : ''} still to plan`, `${openSlots} خانات أسبوعية للتخطيط`) : `Plan ${currentPeriod('weekly')}`}</div><div class="meta">${wk.length ? L2("Fill in this week's steps toward your monthly goals.", 'املأ خطوات هذا الأسبوع نحو أهدافك الشهرية.') : L2("No weekly goals yet. Pick this week's steps.", 'لا أهداف أسبوعية بعد. اختر خطوات هذا الأسبوع.')}</div></div><button class="btn" data-action="open-plan">Plan week</button></div>` : ''}${rpgCard()}<div class="stats dstats" ${S.cfg.dStats ? '' : 'hidden'}>
     <div class="card stat"><div class="n">${todaysDone}/${todays.length}</div><div class="l">Today's tasks done</div></div>
     <div class="card stat"><div class="n">${hd}/${dueHabits.length}</div><div class="l">Habits done today</div></div>
     <div class="card stat"><div class="n">${active}</div><div class="l">Active goals</div></div>
@@ -7463,30 +8387,12 @@ function viewTasks() {
   const nOver = live.filter((t) => !t.done && t.due && t.due < today).length;
   const chip = (k, l) =>
     `<button class="chip ${f === k ? 'on' : ''}" data-action="task-filter" data-v="${k}">${l}</button>`;
-  return `<form class="add taskadd card" data-form="task">
-    <div class="qa"><input type="text" name="title" placeholder="${L2('New task… try: tomorrow !high', 'مهمة جديدة… جرّب كتابة «غدًا»')}" required autocomplete="off" aria-describedby="qaHint"><button class="btn">Add</button></div>
-    <div class="qa-hint" id="qaHint" aria-live="polite" hidden></div>
-    <details class="more"><summary>More options</summary><div class="moreg">
-    <input type="date" name="due" aria-label="Due date" value="${S.cfg.dueDef === 'none' ? '' : S.cfg.dueDef === 'tomorrow' ? ds(addDays(new Date(), 1)) : today}">
-    <select name="priority" aria-label="Priority">${[
-      ['low', 'Low'],
-      ['med', 'Medium'],
-      ['high', 'High'],
-    ]
-      .map(([v, l]) => `<option value="${v}" ${S.cfg.prio === v ? 'selected' : ''}>${l}</option>`)
-      .join('')}</select>
-    <select name="repeat" aria-label="Repeat">${REPEATS.map(([v, l]) => `<option value="${v}">${v ? '🔁 ' : ''}${l}</option>`).join('')}</select>
-    <select name="goalId" aria-label="Weekly goal">${goalOptions('', (g) => g.horizon === 'weekly')}</select>
-    <input type="text" name="tag" list="tagListAdd" placeholder="Tag folder (optional)" autocomplete="off">${tagList('tagListAdd')}
-    <textarea name="notes" placeholder="Notes (optional)" style="min-height:40px"></textarea>
-    <textarea name="items" placeholder="Checklist (optional, one item per line)" style="min-height:40px"></textarea>
-    </div></details></form>
-  ${
+  return `  ${
     S.planOn
       ? `<div class="filters"><button class="chip" data-action="tasks-plan">☰ List</button><button class="chip" data-action="tasks-cal">📅 Calendar</button></div>${planView()}`
       : S.tcalOn
         ? `<div class="filters"><button class="chip" data-action="tasks-cal">☰ List</button>${S.cfg.mTime ? '<button class="chip" data-action="tasks-plan">🕐 Plan</button>' : ''}</div>${calView()}`
-        : `<div class="filters fbar"><div class="fscroll">${chip('all', 'All')}${chip('today', 'Due today')}${chip('overdue', 'Overdue' + (nOver ? ' · ' + nOver : ''))}${chip('done', 'Done')}</div><button class="chip ${selOn('tasks') ? 'on' : ''}" data-action="sel-mode" data-k="tasks" aria-pressed="${selOn('tasks')}">${selOn('tasks') ? '✓ Selecting' : '☑ Select'}</button><button class="chip" data-action="tasks-cal">📅 Calendar</button>${S.cfg.mTime ? '<button class="chip" data-action="tasks-plan">🕐 Plan</button>' : ''}</div>
+        : `<div class="filters fbar"><div class="fscroll">${chip('all', 'All')}${chip('today', 'Due today')}${chip('overdue', 'Overdue' + (nOver ? ' · ' + nOver : ''))}${chip('done', 'Done')}</div>${moreMenu(`<button class="chip ${selOn('tasks') ? 'on' : ''}" data-action="sel-mode" data-k="tasks" aria-pressed="${selOn('tasks')}">${selOn('tasks') ? '✓ Selecting' : '☑ Select'}</button><button class="chip" data-action="tasks-cal">📅 Calendar</button>${S.cfg.mTime ? '<button class="chip" data-action="tasks-plan">🕐 Plan</button>' : ''}`)}</div>
   ${open.length ? taskGroups(open) : done.length && showDone ? '' : `<div class="empty">No tasks here.</div>`}
   ${done.length && showDone ? `${f === 'done' ? '' : `<button class="chip" style="margin-top:12px" data-action="toggle-done-list" aria-expanded="${!!S.doneOpen}">${S.doneOpen ? '▾' : '▸'} ${L2(done.length + ' done', done.length + ' منجزة')}</button>`}${f === 'done' || S.doneOpen ? `<ul class="list">${(S.doneAll ? done : done.slice(0, 40)).map(taskItem).join('')}</ul>` : ''}${done.length > 40 && (f === 'done' || S.doneOpen) ? `<button class="chip" style="margin-top:8px" data-action="toggle-done-all">${S.doneAll ? 'Show fewer' : 'Show all ' + done.length + ' completed'}</button>` : ''}` : ''}`
   }`;
@@ -7540,7 +8446,6 @@ function viewGoals() {
   const ladder = S.horizon === 'ladder',
     h = ladder ? 'weekly' : S.horizon;
   const cur = currentPeriod(h);
-  const ph = PARENT[h];
   let list = S.goals.filter((g) => g.horizon === h);
   if (S.goalScope === 'current') list = list.filter((g) => g.period === cur || needsReview(g));
   list.sort(
@@ -7550,9 +8455,8 @@ function viewGoals() {
       (a.status === 'missed') - (b.status === 'missed') ||
       b.period.localeCompare(a.period)
   );
-  const defKind = h === 'weekly' ? 'check' : 'rollup';
   const seg =
-    `<button class="${ladder ? 'on' : ''}" data-action="horizon" data-v="ladder">🪜 Ladder</button>` +
+    `<button class="${ladder ? 'on' : ''}" data-action="horizon" data-v="ladder">Ladder</button>` +
     Object.keys(HORIZONS)
       .map(
         (k) =>
@@ -7560,32 +8464,14 @@ function viewGoals() {
       )
       .join('');
   return `<div class="seg">${seg}</div>
-  <form class="add taskadd card" data-form="goal" data-kind="${defKind}">
-    <div class="qa"><input type="text" name="title" placeholder="New ${HORIZONS[h].toLowerCase()} goal…" required><button class="btn">Add</button></div>
-    <details class="more"><summary>More options</summary><div class="moreg">
-    <input type="text" name="period" value="${cur}" style="flex:0 1 130px" title="Period">
-    <select name="kind" title="How will you measure it?"><option value="check" ${defKind === 'check' ? 'selected' : ''}>☐ Checkbox</option><option value="number">🔢 Number target</option>${h !== 'weekly' ? `<option value="rollup" selected>🧩 Built from ${HORIZONS[CHILD[h]].toLowerCase()} goals</option>` : ''}</select>
-    <span class="f-num"><input type="number" name="target" min="0" step="any" placeholder="Target, e.g. 40" style="flex:1 1 120px"><input type="text" name="unit" placeholder="Unit, e.g. hours" style="flex:1 1 120px"></span>
-    ${h !== 'weekly' ? `<span class="f-roll"><input type="number" name="expected" min="1" step="1" placeholder="How many ${HORIZONS[CHILD[h]].toLowerCase()} goals? (default ${defaultExpected({ horizon: h, period: cur })})" style="flex:1 1 100%"></span>` : ''}
-    ${ph ? `<select name="parentId" aria-label="Parent goal">${goalOptions('', (g) => g.horizon === ph).replace('— No goal —', '— Supports which ' + HORIZONS[ph].toLowerCase() + ' goal? —')}</select>` : ''}
-    <textarea name="notes" placeholder="Why it matters / how you'll measure it (optional)"></textarea>
-    </div></details></form>
   ${ladder ? towerCard() + weekSummary() : ''}
   <div class="filters">
     <button class="chip ${S.goalScope === 'current' ? 'on' : ''}" data-action="goal-scope" data-v="current" title="${cur}">Current</button>
-    <button class="chip ${S.goalScope === 'all' ? 'on' : ''}" data-action="goal-scope" data-v="all">All periods</button>${h === 'weekly' ? '<button class="chip" data-action="open-plan">Plan this week</button>' : ''}</div>
+    <button class="chip ${S.goalScope === 'all' ? 'on' : ''}" data-action="goal-scope" data-v="all">All periods</button>${h === 'weekly' ? moreMenu('<button class="chip" data-action="open-plan">Plan this week</button>') : ''}</div>
   ${ladder ? ladderView() || `<div class="empty">No goals yet. Add one above, then hang tasks under it.</div><div class="tpls" style="margin-top:12px">${templateButtons()}</div>` : list.length ? `<div class="goals">${list.map(goalCard).join('')}</div>` : `<div class="empty">No ${HORIZONS[h].toLowerCase()} goals yet.</div>`}`;
 }
 function viewHabits() {
-  return `<details class="more habadd" ${S.habits.length ? '' : 'open'}><summary>+ New habit</summary><form class="add" data-form="habit">
-    <input type="text" name="name" placeholder="New habit (e.g. Code 1 hour, or No smoking)…" required>
-    <select name="kind" aria-label="Habit type"><option value="">✅ Build: tick it when done</option><option value="avoid">${S.cfg.avoidMode === 'confirm' ? '🚫 Avoid: tick each clean day' : '🚫 Avoid: clean unless you slip'}</option></select>
-    <select name="target" title="Target days per week">${[7, 6, 5, 4, 3, 2, 1].map((n) => `<option value="${n}">${n}×/week</option>`).join('')}</select>
-    <input type="text" name="group" list="folderListAdd" placeholder="Folder (optional), e.g. Morning routine" style="flex:1 1 200px" autocomplete="off">${folderList('folderListAdd')}
-    ${dayPicker()}${stickFields()}
-    <button class="btn">Add habit</button></form></details>
-  <div class="row" style="margin:6px 0"><button class="chip" data-action="info-habits">ⓘ ${L2('How habits work', 'كيف تعمل العادات')}</button></div>
-  ${easierCard()}${habitList(true)}`;
+  return `${easierCard()}${habitList(true)}`;
 }
 // Shared by the dashboard and Habits tab; honours the "hide done today" switch.
 // Dashboard row: just today — one big check button, streak and weekly progress.
@@ -7594,9 +8480,9 @@ function habitToday(h) {
     on = good(h, k),
     s = streak(h);
   return `<li class="item ${on ? 'done' : ''}">
-    <button class="tcheck ${on ? 'on' : ''}" data-action="toggle-log" data-id="${h.id}" data-date="${k}" aria-pressed="${on}" aria-label="${slipMode(h) ? (on ? 'Clean today. Tap to log a slip' : 'Slipped today. Tap to undo') : (on ? L2('Undo', 'تراجع') : L2('Check off', 'إنجاز')) + ' ' + esc(h.name) + L2(' for today', ' لهذا اليوم')}">${slipMode(h) && !on ? '✗' : '✓'}</button>
+    <button class="tcheck ${on ? 'on' : ''}" translate="no" data-action="toggle-log" data-id="${h.id}" data-date="${k}" aria-pressed="${on}" aria-label="${slipMode(h) ? (on ? 'Clean today. Tap to log a slip' : 'Slipped today. Tap to undo') : (on ? L2('Undo', 'تراجع') : L2('Check off', 'إنجاز')) + ' ' + esc(h.name) + L2(' for today', ' لهذا اليوم')}">${slipMode(h) && !on ? '✗' : '✓'}</button>
     <div class="grow habit-open" data-action="open-habit" data-id="${h.id}" role="button" tabindex="0" title="Open history">
-      <div class="title">${hname(h)} <span class="chev">›</span></div>
+      <div class="title" translate="no">${hname(h)} <span class="chev">›</span></div>
       <div class="meta"><span>${isNeg(h) ? '🛡 ' + s + ' day' + (s === 1 ? '' : 's') + ' clean' : '🔥 ' + s + ' day' + (s === 1 ? '' : 's')}</span><span>This week ${weekCount(h)}/${weekTarget(h)}</span></div>${habitHint(h)}</div></li>`;
 }
 function habitList(full) {
@@ -7612,9 +8498,13 @@ function habitList(full) {
   if (!pool.length && avoids.length) return avoidSection(avoids);
   if (!pool.length)
     return `<div class="empty">Nothing due today. ${offToday} habit${offToday > 1 ? 's' : ''} off.</div>`;
-  const bar = `<div class="filters"><button class="chip ${S.hideDone ? 'on' : ''}" data-action="toggle-hide-done" aria-pressed="${S.hideDone}">${S.hideDone ? '✓ Hiding done today' : 'Hide done today'}</button>
-    ${full ? `<button class="chip ${selOn('habits') ? 'on' : ''}" data-action="sel-mode" data-k="habits" aria-pressed="${selOn('habits')}">${selOn('habits') ? '✓ Selecting' : '☑ Select'}</button><button class="chip ${S.compact ? 'on' : ''}" data-action="toggle-compact" aria-pressed="${S.compact}">${S.compact ? '✓ Compact' : 'Compact'}</button><button class="chip ${S.reorder ? 'on' : ''}" data-action="toggle-reorder" aria-pressed="${!!S.reorder}">${S.reorder ? '✓ Reordering' : '↕ Reorder'}</button>` : ''}
-    <span class="meta" style="align-self:center">${doneToday}/${dueAll.length} due done${offToday ? ` · ${offToday} off today` : ''}${S.hideDone && doneToday ? ` · ${doneToday} hidden` : ''}</span></div>`;
+  const bar = `<div class="filters hbar"><span class="meta">${doneToday}/${dueAll.length} ${L2('due done', 'منجزة من المستحقة')}${offToday ? ` · ${offToday} ${L2('off today', 'مجازة اليوم')}` : ''}${S.hideDone && doneToday ? ` · ${doneToday} ${L2('hidden', 'مخفية')}` : ''}</span>${moreMenu(
+    `<button class="chip ${S.hideDone ? 'on' : ''}" data-action="toggle-hide-done" aria-pressed="${S.hideDone}">${S.hideDone ? '✓ Hiding done today' : 'Hide done today'}</button>${
+      full
+        ? `<button class="chip ${selOn('habits') ? 'on' : ''}" data-action="sel-mode" data-k="habits" aria-pressed="${selOn('habits')}">${selOn('habits') ? '✓ Selecting' : '☑ Select'}</button><button class="chip ${S.weekOpen ? 'on' : ''}" data-action="toggle-week" aria-pressed="${!!S.weekOpen}">${L2('Week strip', 'شريط الأسبوع')}</button><button class="chip ${S.compact ? 'on' : ''}" data-action="toggle-compact" aria-pressed="${S.compact}">${S.compact ? '✓ Compact' : 'Compact'}</button><button class="chip ${S.reorder ? 'on' : ''}" data-action="toggle-reorder" aria-pressed="${!!S.reorder}">${S.reorder ? '✓ Reordering' : '↕ Reorder'}</button><button class="chip" data-action="info-habits">ⓘ ${L2('How habits work', 'كيف تعمل العادات')}</button>`
+        : ''
+    }`
+  )}</div>`;
   const wrap = (hs) =>
     full
       ? `<div class="goals">${hs.map((h) => habitCard(h, true)).join('')}</div>`
@@ -7666,11 +8556,10 @@ function habitList(full) {
       adn = ad.filter((h) => good(h, today)).length;
     if (bl.length)
       out +=
-        `<div class="h2row hsec"><h2>✅ Build</h2><span class="meta">${bdn}/${bd.length} done today</span></div>` +
+        `<div class="h2row hsec"><h2>Build</h2><span class="meta">${bdn}/${bd.length} done today</span></div>` +
         grp(bl);
     out +=
-      `<div class="h2row hsec"><h2>🛡 Avoid</h2><span class="meta">${adn}/${ad.length} clean today</span></div>` +
-      grp(al);
+      `<div class="h2row hsec"><h2>Avoid</h2><span class="meta">${adn}/${ad.length} clean today</span></div>` + grp(al);
   } else out = grp(pool);
   if (S.hideDone && dueAll.length && doneToday === dueAll.length)
     out += `<div class="allclear">All habits done for today 🎉</div>`;
@@ -8351,6 +9240,7 @@ function render() {
     S.sel.clear();
   }
   document.body.classList.toggle('selmode', !!S.selMode);
+  fabSync();
   document.body.classList.toggle('cmp', !!(S.cfg.student && S.cfg.stuCompact));
   if (S.view === 'bestiary' && !rpgOn()) S.view = 'dash';
   const v =
@@ -9866,8 +10756,7 @@ function habitScore(shift) {
   const e = emaSeries([...Array(SC_DAYS)].map((_, i) => ((d) => habitDayValue(ds(d), d))(scDay(shift, i))));
   return e === null ? null : Math.round(1000 * Math.min(1, e));
 }
-const taskPts = (t) =>
-  ({ high: 3, med: 2, low: 1 })[t.priority] ?? 1;
+const taskPts = (t) => ({ high: 3, med: 2, low: 1 })[t.priority] ?? 1;
 function taskDayLoads(shift) {
   const by = new Map();
   for (const t of S.tasks)
@@ -9940,7 +10829,10 @@ function perfCard() {
     hs0 = habitScore(7),
     ts = taskScore(0),
     ts0 = taskScore(7);
-  const arrow = (a, b) => (a === null || b === null || a === b ? '' : `<em class="${a > b ? 'up' : 'dn'}">${a > b ? '▲' : '▼'}${Math.abs(a - b)}</em>`);
+  const arrow = (a, b) =>
+    a === null || b === null || a === b
+      ? ''
+      : `<em class="${a > b ? 'up' : 'dn'}">${a > b ? '▲' : '▼'}${Math.abs(a - b)}</em>`;
   const trend =
     delta === null
       ? L2('Your first week. Keep going.', 'أسبوعك الأول. استمر.')
@@ -9949,12 +10841,137 @@ function perfCard() {
         : delta > 0
           ? L2(`Up ${delta} points on last week`, `أفضل بـ ${delta} نقطة من الأسبوع الماضي`)
           : L2(`Down ${-delta} points on last week`, `أقل بـ ${-delta} نقطة من الأسبوع الماضي`);
-  return `<div class="card perf ${full ? 'full' : ''}">
-    ${sc !== null ? `<button class="perf-score" data-action="score-info" aria-label="${L2('How the scores work', 'كيف تُحسب النتائج')}"><span><small><span translate="no">GoalTerra</span> ${L2('Score', 'النتيجة')}</small><b>${sc}</b></span>${arrow(sc, sc0)}<u>ⓘ</u></button><div class="sub-scores">${hs !== null ? `<span>${L2('Habits', 'العادات')} <b>${hs}</b>${arrow(hs, hs0)}</span>` : ''}${ts !== null ? `<span>${L2('Tasks', 'المهام')} <b>${ts}</b>${arrow(ts, ts0)}</span>` : ''}</div>${overpace() ? `<div class="meta warn">${L2('You are running well above your usual pace. Protect your rest.', 'تعمل فوق وتيرتك المعتادة بكثير. احمِ راحتك.')}</div>` : ''}` : ''}<div class="perf-top"><div class="perf-ring"><svg viewBox="0 0 80 80" width="84" height="84" aria-hidden="true"><circle cx="40" cy="40" r="34" class="bg"/><circle cx="40" cy="40" r="34" class="fg" stroke-dasharray="${((pct / 100) * C).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 40 40)"/></svg><b>${t.due ? pct + '%' : '–'}</b></div>
-      <div class="grow"><div class="title">${full ? L2('Perfect day 🎉', 'يوم مثالي 🎉') : t.due ? L2(`${t.done} of ${t.due} done today`, `${t.done} من ${t.due} اليوم`) : L2('Nothing due today', 'لا شيء مستحق اليوم')}</div>
-      <div class="meta">${trend}${p.now !== null ? ` · ${L2('week', 'الأسبوع')} ${p.now}%` : ''}</div></div></div>
-    <div class="pbars" aria-label="${L2('Last 7 days', 'آخر 7 أيام')}">${bars}</div>
-    <div class="perf-foot"><span>🔥 <b>${best}</b> ${L2('best streak', 'أفضل سلسلة')}</span><span>🎯 <b>${active}</b> ${L2('active goals', 'أهداف نشطة')}</span>${S.cfg.dCharts ? `<button class="chip" data-action="toggle-ins">${L2('More charts', 'المزيد')}</button>` : ''}</div></div>`;
+  const scoreBtn =
+    sc !== null
+      ? `<button class="perf-score" data-action="score-info" aria-label="${L2('How the scores work', 'كيف تُحسب النتائج')}"><span><small><span translate="no">GoalTerra</span> ${L2('Score', 'النتيجة')}</small><b>${sc}</b></span>${arrow(sc, sc0)}</button>`
+      : '';
+  const subs =
+    sc !== null
+      ? `<div class="sub-scores">${hs !== null ? `<span>${L2('Habits', 'العادات')} <b>${hs}</b>${arrow(hs, hs0)}</span>` : ''}${ts !== null ? `<span>${L2('Tasks', 'المهام')} <b>${ts}</b>${arrow(ts, ts0)}</span>` : ''}</div>${overpace() ? `<div class="meta warn">${L2('You are running well above your usual pace. Protect your rest.', 'تعمل فوق وتيرتك المعتادة بكثير. احمِ راحتك.')}</div>` : ''}`
+      : '';
+  return `<div class="perf ${full ? 'full' : ''}">
+    <div class="perf-top">${scoreBtn}<div class="perf-ring"><svg viewBox="0 0 80 80" width="64" height="64" aria-hidden="true"><circle cx="40" cy="40" r="34" class="bg"/><circle cx="40" cy="40" r="34" class="fg" stroke-dasharray="${((pct / 100) * C).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 40 40)"/></svg><b>${t.due ? pct + '%' : '–'}</b></div></div>
+    <div class="title">${full ? L2('Perfect day 🎉', 'يوم مثالي 🎉') : t.due ? L2(`${t.done} of ${t.due} done today`, `${t.done} من ${t.due} اليوم`) : L2('Nothing due today', 'لا شيء مستحق اليوم')}</div>
+    <div class="meta">${trend}${p.now !== null ? ` · ${L2('week', 'الأسبوع')} ${p.now}%` : ''}</div>
+    ${subs}
+    <details class="fold perf-week"><summary>${L2('Last 7 days', 'آخر 7 أيام')}</summary><div class="pbars" aria-label="${L2('Last 7 days', 'آخر 7 أيام')}">${bars}</div>
+    <div class="perf-foot"><span>🔥 <b>${best}</b> ${L2('best streak', 'أفضل سلسلة')}</span><span>🎯 <b>${active}</b> ${L2('active goals', 'أهداف نشطة')}</span>${S.cfg.dCharts ? `<button class="chip" data-action="toggle-ins">${L2('More charts', 'المزيد')}</button>` : ''}</div></details></div>`;
+}
+/**
+ * Minimal touch UI (0.87.0): the floating add button (#fab) and the bottom add sheet (task, habit or goal),
+ * the bottom "more" menu (moreMenu) and the habit row menu. The add forms live here, not on the screens.
+ * (All src/js files are joined, in filename order, into one shared scope. See src/README.md.)
+ */
+const FAB_VIEWS = ['dash', 'tasks', 'goals', 'habits'];
+/* A single "⋯" button that opens a bottom sheet of chips. Plain <details>, so it also works without JS. */
+function moreMenu(inner) {
+  return `<details class="moremenu"><summary class="chip" aria-label="${L2('More', 'المزيد')}" title="${L2('More', 'المزيد')}">⋯</summary><div>${inner}</div></details>`;
+}
+document.addEventListener('click', (e) => {
+  const d = e.target;
+  if (d && d.matches && d.matches('details.moremenu[open]')) d.open = false; /* tap on the dimmed backdrop */
+  else if (!(d.closest && d.closest('details.moremenu')))
+    document.querySelectorAll('details.moremenu[open]').forEach((x) => (x.open = false));
+});
+function fabSync() {
+  const f = document.getElementById('fab');
+  if (!f) return;
+  f.hidden = !FAB_VIEWS.includes(S.view) || !!S.selMode;
+  f.setAttribute('aria-label', L2('Add', 'إضافة'));
+}
+const addKindFor = (v) => (v === 'habits' ? 'habit' : v === 'goals' ? 'goal' : 'task');
+const fld = (label, inner) => `<label class="fl"><span>${label}</span>${inner}</label>`;
+function taskAddForm() {
+  const today = TODAY();
+  const due = S.cfg.dueDef === 'none' ? '' : S.cfg.dueDef === 'tomorrow' ? ds(addDays(new Date(), 1)) : today;
+  const pri = [
+    ['low', L2('Low', 'منخفضة')],
+    ['med', L2('Medium', 'متوسطة')],
+    ['high', L2('High', 'عالية')],
+  ];
+  return `<form class="add sheetform" data-form="task" data-sheet="1">
+    ${fld(L2('Task', 'المهمة'), `<input type="text" name="title" placeholder="${L2('try: call mom tomorrow 5pm !high', 'جرّب: اتصل بأمي غدًا 5م')}" required autocomplete="off" aria-describedby="qaHint">`)}
+    <div class="qa-hint" id="qaHint" aria-live="polite" hidden></div>
+    <details class="more"><summary>${L2('More options', 'خيارات إضافية')}</summary><div class="moreg">
+    ${fld(L2('Due date', 'تاريخ الاستحقاق'), `<input type="date" name="due" value="${due}">`)}
+    ${fld(L2('Priority', 'الأولوية'), `<select name="priority">${pri.map(([v, l]) => `<option value="${v}" ${S.cfg.prio === v ? 'selected' : ''}>${l}</option>`).join('')}</select>`)}
+    ${fld(L2('Repeat', 'التكرار'), `<select name="repeat">${REPEATS.map(([v, l]) => `<option value="${v}">${v ? '🔁 ' : ''}${l}</option>`).join('')}</select>`)}
+    ${fld(L2('Weekly goal', 'هدف أسبوعي'), `<select name="goalId">${goalOptions('', (g) => g.horizon === 'weekly')}</select>`)}
+    ${fld(L2('Tag folder', 'مجلد الوسم'), `<input type="text" name="tag" list="tagListAdd" autocomplete="off">${tagList('tagListAdd')}`)}
+    ${fld(L2('Notes', 'ملاحظات'), '<textarea name="notes"></textarea>')}
+    ${fld(L2('Checklist (one item per line)', 'قائمة (بند في كل سطر)'), '<textarea name="items"></textarea>')}
+    </div></details>
+    <button class="btn big" type="submit">${L2('Add task', 'أضف المهمة')}</button></form>`;
+}
+function habitAddForm() {
+  return `<form class="add sheetform" data-form="habit" data-sheet="1">
+    ${fld(L2('Habit', 'العادة'), `<input type="text" name="name" placeholder="${L2('e.g. Code 1 hour, or No smoking', 'مثال: برمجة ساعة، أو بلا تدخين')}" required autocomplete="off">`)}
+    ${fld(L2('Type', 'النوع'), `<select name="kind"><option value="">${L2('Build: tick it when done', 'بناء: أشّر عند الإنجاز')}</option><option value="avoid">${S.cfg.avoidMode === 'confirm' ? L2('Avoid: tick each clean day', 'تجنّب: أشّر كل يوم نظيف') : L2('Avoid: clean unless you slip', 'تجنّب: نظيف ما لم تزلّ')}</option></select>`)}
+    <details class="more"><summary>${L2('More options', 'خيارات إضافية')}</summary><div class="moreg">
+    ${fld(L2('Target days per week', 'أيام الهدف في الأسبوع'), `<select name="target">${[7, 6, 5, 4, 3, 2, 1].map((n) => `<option value="${n}">${n}×/${L2('week', 'أسبوع')}</option>`).join('')}</select>`)}
+    ${fld(L2('Folder', 'المجلد'), `<input type="text" name="group" list="folderListAdd" autocomplete="off">${folderList('folderListAdd')}`)}
+    ${dayPicker()}${stickFields()}
+    </div></details>
+    <button class="btn big" type="submit">${L2('Add habit', 'أضف العادة')}</button></form>`;
+}
+function goalAddForm() {
+  const ladder = S.horizon === 'ladder',
+    h = ladder ? 'weekly' : S.horizon,
+    cur = currentPeriod(h),
+    ph = PARENT[h],
+    defKind = h === 'weekly' ? 'check' : 'rollup';
+  const hz = Object.keys(HORIZONS)
+    .map(
+      (k) =>
+        `<button type="button" class="chip ${k === h ? 'on' : ''}" data-action="add-hz" data-v="${k}" aria-pressed="${k === h}">${{ weekly: L2('Week', 'أسبوع'), monthly: L2('Month', 'شهر'), annual: L2('Year', 'سنة'), five: L2('5 Years', '5 سنوات') }[k]}</button>`
+    )
+    .join('');
+  return `<form class="add sheetform" data-form="goal" data-sheet="1" data-kind="${defKind}">
+    <div class="filters">${hz}</div>
+    ${fld(L2('Goal', 'الهدف'), `<input type="text" name="title" placeholder="${L2('New ' + HORIZONS[h].toLowerCase() + ' goal', 'هدف جديد')}" required autocomplete="off">`)}
+    <details class="more"><summary>${L2('More options', 'خيارات إضافية')}</summary><div class="moreg">
+    ${fld(L2('Period', 'الفترة'), `<input type="text" name="period" value="${cur}">`)}
+    ${fld(L2('How will you measure it?', 'كيف ستقيسه؟'), `<select name="kind"><option value="check" ${defKind === 'check' ? 'selected' : ''}>☐ ${L2('Checkbox', 'مربع اختيار')}</option><option value="number">🔢 ${L2('Number target', 'هدف رقمي')}</option>${h !== 'weekly' ? `<option value="rollup" selected>🧩 ${L2('Built from ' + HORIZONS[CHILD[h]].toLowerCase() + ' goals', 'مبني من أهداف أدنى')}</option>` : ''}</select>`)}
+    <span class="f-num">${fld(L2('Target', 'الهدف الرقمي'), '<input type="number" name="target" min="0" step="any" placeholder="40">')}${fld(L2('Unit', 'الوحدة'), `<input type="text" name="unit" placeholder="${L2('hours', 'ساعات')}">`)}</span>
+    ${h !== 'weekly' ? `<span class="f-roll">${fld(L2('How many sub-goals?', 'كم هدفًا فرعيًا؟'), `<input type="number" name="expected" min="1" step="1" placeholder="${defaultExpected({ horizon: h, period: cur })}">`)}</span>` : ''}
+    ${ph ? fld(L2('Supports which goal?', 'يدعم أي هدف؟'), `<select name="parentId">${goalOptions('', (g) => g.horizon === ph).replace('— No goal —', '— ' + L2('None', 'لا شيء') + ' —')}</select>`) : ''}
+    ${fld(L2('Why it matters (optional)', 'لماذا يهم (اختياري)'), '<textarea name="notes"></textarea>')}
+    </div></details>
+    <button class="btn big" type="submit">${L2('Add goal', 'أضف الهدف')}</button></form>`;
+}
+function openAddSheet(kind) {
+  kind = kind || addKindFor(S.view);
+  S.addKind = kind;
+  const tab = (k, l) =>
+    `<button type="button" class="${kind === k ? 'on' : ''}" data-action="add-kind" data-v="${k}" role="tab" aria-selected="${kind === k}">${l}</button>`;
+  const form = kind === 'habit' ? habitAddForm() : kind === 'goal' ? goalAddForm() : taskAddForm();
+  dlg.innerHTML = `<div class="addsheet"><div class="sheet-head"><h3>${L2('New', 'جديد')}</h3><button type="button" class="icon" data-action="dlg-close" aria-label="${L2('Close', 'إغلاق')}">✕</button></div>
+    <div class="seg" role="tablist">${tab('task', L2('Task', 'مهمة'))}${tab('habit', L2('Habit', 'عادة'))}${tab('goal', L2('Goal', 'هدف'))}</div>${form}</div>`;
+  if (!dlg.open) dlg.showModal();
+  setTimeout(() => {
+    const i = dlg.querySelector('form input[type=text]');
+    if (i && dlg.open) i.focus({ preventScroll: true });
+  }, 60);
+}
+function habitMenu(id) {
+  const h = S.habits.find((x) => x.id === id);
+  if (!h) return;
+  dlg.innerHTML = `<div class="tmenu"><h3>${esc(h.name)}</h3>
+    <button class="ghost" data-action="tm" data-do="edit-habit" data-id="${id}">✎ ${L2('Edit', 'تعديل')}</button>
+    <button class="ghost" data-action="tm" data-do="open-habit" data-id="${id}">📅 ${L2('History', 'السجل')}</button>
+    <button class="ghost" data-action="tm" data-do="share-item" data-k="habit" data-id="${id}">${SHARE_ICON} ${L2('Share', 'مشاركة')}</button>
+    <button class="ghost danger" data-action="tm" data-do="del-habit" data-id="${id}">✕ ${L2('Delete', 'حذف')}</button>
+    <button class="ghost" data-action="dlg-close">${L2('Cancel', 'إلغاء')}</button></div>`;
+  dlg.showModal();
+}
+function goalMenu(id) {
+  const g = S.goals.find((x) => x.id === id);
+  if (!g) return;
+  dlg.innerHTML = `<div class="tmenu"><h3>${esc(g.title)}</h3>
+    <button class="ghost" data-action="tm" data-do="edit-goal" data-id="${id}">✎ ${L2('Edit', 'تعديل')}</button>
+    <button class="ghost danger" data-action="tm" data-do="del-goal" data-id="${id}">✕ ${L2('Delete', 'حذف')}</button>
+    <button class="ghost" data-action="dlg-close">${L2('Cancel', 'إلغاء')}</button></div>`;
+  dlg.showModal();
 }
 /**
  * English and Arabic.
@@ -10097,6 +11114,8 @@ const AR = {
   "Stopped. Sessions under 5 minutes aren't logged.": 'توقف. الجلسات الأقل من 5 دقائق لا تُسجّل.',
   'Stop the current focus session and start a new one?': 'إيقاف جلسة التركيز الحالية وبدء جلسة جديدة؟',
   '✅ Build': '✅ بناء',
+  Build: 'بناء',
+  Avoid: 'تجنّب',
   '🛡 Avoid': '🛡 تجنّب',
   'activity, charts, habit consistency': 'النشاط، الرسوم، انتظام العادات',
   Decrease: 'إنقاص',
@@ -10234,6 +11253,7 @@ const AR = {
   Blaze: 'لهب',
   Titan: 'جبّار',
   '🪜 Ladder': '🪜 السلّم',
+  Ladder: 'السلّم',
   '+ Add a task for this goal': '+ أضف مهمة لهذا الهدف',
   'Weekly goal': 'هدف أسبوعي',
   'More options': 'خيارات إضافية',
@@ -10955,6 +11975,7 @@ try {
 }
 try {
   S.compact = localStorage.getItem('gt-compact') === '1';
+  S.weekOpen = localStorage.getItem('gt-week') === '1';
 } catch (e) {
   S.compact = false;
 }
@@ -12014,7 +13035,34 @@ const actions = {
     S.dashAll = !S.dashAll;
   },
   'dash-hab'() {
-    S.dashHab = !S.dashHab;
+    S.dashHab = S.dashHab === false;
+  },
+  fab() {
+    openAddSheet();
+    return false;
+  },
+  'add-kind'(el) {
+    openAddSheet(el.dataset.v);
+    return false;
+  },
+  'add-hz'(el) {
+    S.horizon = el.dataset.v;
+    openAddSheet('goal');
+    return false;
+  },
+  'goal-menu'(el) {
+    goalMenu(el.dataset.id);
+    return false;
+  },
+  'habit-menu'(el) {
+    habitMenu(el.dataset.id);
+    return false;
+  },
+  'toggle-week'() {
+    S.weekOpen = !S.weekOpen;
+    try {
+      localStorage.setItem('gt-week', S.weekOpen ? '1' : '0');
+    } catch (e) {}
   },
   'picks-all'() {
     S.picksAll = !S.picksAll;
@@ -12882,6 +13930,12 @@ document.addEventListener('submit', async (e) => {
     };
     S.habits.push(h);
     await DB.put('habits', h);
+  }
+  if (f.dataset.sheet) {
+    dlg.close();
+    render();
+    toast(L2('Added', 'تمت الإضافة'));
+    return;
   }
   const gl = f.dataset.goal;
   render();
