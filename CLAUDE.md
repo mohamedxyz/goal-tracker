@@ -42,7 +42,7 @@ Modules are opt-in add-ons (Settings > Add-ons): `student`, `mTime` (start time/
 `src/js/78-performance.js`: `perfCard()` leads Today. `habitScore/taskScore/overallScore(shift)` are 42-day EMAs (seeded with the first 7 live days, 84-day window), 0 to 1000; overall is the geometric mean. Habit day value: done 1, half-tick 0.7, isolated miss 0.5. Task points: 3/2/1 by priority + min(1, dur/120), low-priority capped at 3 a day, target `cfg.taskTarget` (6). Weights are judgment, not validated. Today caps open tasks at 4 (`S.dashAll`) and folds habits (`S.dashHab`); `helpers.page(legacy=True)` opens both.
 
 ## Known to-do (not yet done)
-- README is out of date: "Import" is now "Restore", screenshots predate 0.72, no mention of info sheets, tip cards or auto backup. `tests/screenshots.py` needs tips dismissed and Settings sections opened before it will give good images.
+- README text was refreshed for 0.86.0, but the screenshots in `docs/images` still predate 0.72. `tests/screenshots.py` needs tips dismissed and Settings sections opened before it will give good images.
 - Game (done in 0.81.0): boss death is permanent, overkill bonus, 25% growth cap, how-it-works sheet, badges. Still open: anti-grind rules (tiny tasks ticked straight after creating them), more badges.
 - Icons: use an SVG favicon and a vector Android launcher foreground instead of small PNGs.
 - Unused files: 11 `drawable*/splash.png` and the two `Example*Test.java` placeholders.
