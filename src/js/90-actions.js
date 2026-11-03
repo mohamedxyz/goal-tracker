@@ -1593,3 +1593,16 @@ function scrollPlan() {
   const e = document.querySelector('.pl-now') || document.querySelector('.pl-b');
   if (e) e.scrollIntoView({ block: 'center' });
 }
+/* A <details> with data-keep stays open across re-renders (opening something inside it redraws the page). */
+const keepOpen = (k) => `data-keep="${k}" ${S.keepOpen && S.keepOpen.has(k) ? 'open' : ''}`;
+document.addEventListener(
+  'toggle',
+  (e) => {
+    const d = e.target,
+      k = d && d.dataset && d.dataset.keep;
+    if (!k) return;
+    S.keepOpen = S.keepOpen || new Set();
+    d.open ? S.keepOpen.add(k) : S.keepOpen.delete(k);
+  },
+  true
+);

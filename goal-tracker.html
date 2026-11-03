@@ -9152,7 +9152,7 @@ function viewData() {
     <div class="meta">${L2('Automatic copies kept on this device, for undoing a bad restore, an erase or a mistake.', 'نسخ تلقائية على هذا الجهاز للتراجع عن استعادة خاطئة أو مسح أو خطأ.')}</div>
     <div class="row"><button class="ghost" data-action="open-safety">${L2('Open safety copies →', 'فتح نسخ الأمان ←')}</button><button class="ghost" data-action="data-check">${L2('Check my data', 'افحص بياناتي')}</button></div>
   </div>
-  <details class="more adv" style="margin-top:12px"><summary>${L2('Advanced', 'متقدم')}</summary>${parts[1] || ''}  <div class="card settings setacc ${S.setOpen && S.setOpen.has('Share with friends') ? 'open' : ''}" style="margin-top:12px"><div class="title" data-action="set-acc" data-k="Share with friends" role="button" tabindex="0">Share with friends</div><p class="meta">Send habits, tasks or homework, exams and quizzes, and study topics to a friend as a small JSON file or text. Your history, check-ins and scores are never included.</p>
+  <details class="more adv" style="margin-top:12px" ${keepOpen('adv')}><summary>${L2('Advanced', 'متقدم')}</summary>${parts[1] || ''}  <div class="card settings setacc ${S.setOpen && S.setOpen.has('Share with friends') ? 'open' : ''}" style="margin-top:12px"><div class="title" data-action="set-acc" data-k="Share with friends" role="button" tabindex="0">Share with friends</div><p class="meta">Send habits, tasks or homework, exams and quizzes, and study topics to a friend as a small JSON file or text. Your history, check-ins and scores are never included.</p>
     <div class="row"><button class="ghost" data-action="open-share">Share items…</button><button class="ghost" data-action="open-share-import">Import shared items…</button></div></div>
     <div class="card settings setacc ${S.setOpen && S.setOpen.has('Templates and sample data') ? 'open' : ''}"><div class="title" data-action="set-acc" data-k="Templates and sample data" role="button" tabindex="0">Templates and sample data</div><p class="meta">Start a goal ladder from a template, or explore the app with sample data you can clear later.</p><div class="row"><button class="ghost" data-action="tpl-open">Templates</button>${hasSample() ? '<button class="ghost" data-action="sample-clear">Clear sample data</button>' : '<button class="ghost" data-action="sample-add">Load sample data</button>'}</div></div>
 </details>`;
@@ -13970,6 +13970,19 @@ function scrollPlan() {
   const e = document.querySelector('.pl-now') || document.querySelector('.pl-b');
   if (e) e.scrollIntoView({ block: 'center' });
 }
+/* A <details> with data-keep stays open across re-renders (opening something inside it redraws the page). */
+const keepOpen = (k) => `data-keep="${k}" ${S.keepOpen && S.keepOpen.has(k) ? 'open' : ''}`;
+document.addEventListener(
+  'toggle',
+  (e) => {
+    const d = e.target,
+      k = d && d.dataset && d.dataset.keep;
+    if (!k) return;
+    S.keepOpen = S.keepOpen || new Set();
+    d.open ? S.keepOpen.add(k) : S.keepOpen.delete(k);
+  },
+  true
+);
 /**
  * Student mode: spaced repetition, today's picks, exams and quizzes, and the class timetable.
  * (All src/js files are joined, in filename order, into one shared scope. See src/README.md.)
@@ -14341,7 +14354,7 @@ function missingStrip() {
 }
 function timetableFold() {
   const n = classesOn(new Date().getDay()).length;
-  return `<details class="more fold" style="margin-top:12px"><summary>${L2('Timetable', 'الجدول')} · ${n ? L2(`${n} class(es) today`, `${n} حصص اليوم`) : L2('no classes today', 'لا حصص اليوم')}</summary>${timetableCard()}</details>`;
+  return `<details class="more fold" style="margin-top:12px" ${keepOpen('tt')}><summary>${L2('Timetable', 'الجدول')} · ${n ? L2(`${n} class(es) today`, `${n} حصص اليوم`) : L2('no classes today', 'لا حصص اليوم')}</summary>${timetableCard()}</details>`;
 }
 function viewStudy() {
   const picksAll = topicPicks(),
