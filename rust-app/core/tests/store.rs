@@ -62,7 +62,7 @@ fn load_state_and_trash_expiry() {
     assert_eq!(st.tasks.len(), 1);
     assert!(st.logs.contains("h|2026-11-01"));
     assert!(st.rest_days.contains("2026-11-02"));
-    assert!(st.cfg.student);
+    assert!(st.cfg.student());
     assert_eq!(st.trash.len(), 1, "old trash dropped");
     assert_eq!(st.trash[0].id, "x");
     // dropped row is gone from the DB too

@@ -83,6 +83,15 @@ pub struct Task {
     #[serde(default)]
     #[serde(skip_serializing_if = "is_false")]
     pub crit: bool,
+    /// Start time `HH:MM` (time blocking).
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub start: String,
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub icon: String,
+    /// Planned length in minutes (time blocking).
+    #[serde(default)]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub dur: Option<f64>,
     /// Fields this version does not know about, kept so nothing is lost on save.
     #[serde(flatten)]
     pub extra: HashMap<String, serde_json::Value>,
@@ -100,6 +109,8 @@ pub struct Goal {
     #[serde(default, rename = "parentId")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub parent_id: Option<String>,
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub icon: String,
     #[serde(default)]
     pub notes: String,
     /// "check" | "number" | "rollup" | absent
@@ -160,6 +171,21 @@ pub struct Habit {
     pub days: Vec<u32>,
     #[serde(default)]
     pub created: i64,
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub icon: String,
+    /// Habit craft: identity, stack anchor (habit id), time, place, treat, two-minute version.
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub ident: String,
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub after: String,
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub at: String,
+    #[serde(default, rename = "where", skip_serializing_if = "String::is_empty")]
+    pub where_: String,
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub treat: String,
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub mini: String,
     /// Fields this version does not know about, kept so nothing is lost on save.
     #[serde(flatten)]
     pub extra: HashMap<String, serde_json::Value>,
@@ -172,6 +198,9 @@ pub struct LogEntry {
     pub habit_id: String,
     #[serde(default)]
     pub date: String,
+    /// Logged as the two-minute version (counts 0.7 in the habit score).
+    #[serde(default, skip_serializing_if = "is_false")]
+    pub mini: bool,
     /// Fields this version does not know about, kept so nothing is lost on save.
     #[serde(flatten)]
     pub extra: HashMap<String, serde_json::Value>,
@@ -245,20 +274,6 @@ pub struct TrashRec {
     pub extra: HashMap<String, serde_json::Value>,
 }
 
-/// The settings the logic reads (subset of the web app's `cfg`).
-#[derive(Debug, Clone, Default, PartialEq)]
-pub struct Cfg {
-    pub student: bool,
-    pub rpg: bool,
-    /// `YYYY-MM-DD` the game was switched on, or empty
-    pub rpg_since: String,
-    /// Tasks per day for Blaze / Titan (0 = default 3 / 5)
-    pub lvl2: f64,
-    pub lvl3: f64,
-    /// Pass mark (%) for exam elites (0 = default 60)
-    pub elite_target: f64,
-}
-
 /// All app data held in memory (the Rust twin of the JS `S` object).
 #[derive(Debug, Clone, Default)]
 pub struct State {
@@ -272,5 +287,7 @@ pub struct State {
     pub logs: std::collections::HashSet<String>,
     /// comma-separated `YYYY-MM-DD` rest days (cfg.restDays)
     pub rest_days: std::collections::HashSet<String>,
-    pub cfg: Cfg,
+    /// log ids logged as the two-minute version
+    pub mini: std::collections::HashSet<String>,
+    pub cfg: crate::cfg::Cfg,
 }

@@ -1,4 +1,5 @@
 //! Backup JSON (`{app:'goal-tracker', version:1, ...}`), see `92-reports-search-share-backup.js:247`.
+use crate::cfg::Cfg;
 use crate::model::*;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -56,34 +57,9 @@ pub fn parse(text: &str) -> Result<Backup, BackupError> {
     Ok(b)
 }
 
-/// JS-style number: numbers and numeric strings; anything else is 0.
-fn num(v: Option<&Value>) -> f64 {
-    match v {
-        Some(Value::Number(n)) => n.as_f64().unwrap_or(0.0),
-        Some(Value::String(s)) => s.trim().parse().unwrap_or(0.0),
-        _ => 0.0,
-    }
-}
-
+/// Settings object from a backup (`settings.cfg`), with defaults for missing keys.
 pub fn cfg_of(cfg: Option<&Value>) -> Cfg {
-    let g = |k: &str| cfg.and_then(|c| c.get(k));
-    let truthy = |k: &str| match g(k) {
-        Some(Value::Bool(b)) => *b,
-        Some(Value::Number(n)) => n.as_f64().map(|x| x != 0.0).unwrap_or(false),
-        Some(Value::String(s)) => !s.is_empty(),
-        _ => false,
-    };
-    Cfg {
-        student: truthy("student"),
-        rpg: truthy("rpg"),
-        rpg_since: g("rpgSince")
-            .and_then(|v| v.as_str())
-            .unwrap_or("")
-            .to_string(),
-        lvl2: num(g("lvl2")),
-        lvl3: num(g("lvl3")),
-        elite_target: num(g("eliteTarget")),
-    }
+    Cfg::from_json(cfg)
 }
 
 impl Backup {
@@ -91,6 +67,12 @@ impl Backup {
         let cfg = cfg_of(self.settings.get("cfg"));
         State {
             cfg,
+            mini: self
+                .logs
+                .iter()
+                .filter(|l| l.mini)
+                .map(|l| l.id.clone())
+                .collect(),
             tasks: self.tasks,
             goals: self.goals,
             habits: self.habits,

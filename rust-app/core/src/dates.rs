@@ -77,3 +77,10 @@ pub fn local_date(ms: i64, off: Offset) -> Option<NaiveDate> {
     chrono::DateTime::from_timestamp(ms.div_euclid(1000) + off(ms) as i64, 0)
         .map(|d| d.date_naive())
 }
+
+/// UTC ms of a local wall-clock time on `date`. Handles DST by refining the offset once.
+pub fn local_ms(date: NaiveDate, h: u32, m: u32, off: Offset) -> Option<i64> {
+    let naive = date.and_hms_opt(h, m, 0)?.and_utc().timestamp() * 1000;
+    let guess = naive - off(naive) as i64 * 1000;
+    Some(naive - off(guess) as i64 * 1000)
+}

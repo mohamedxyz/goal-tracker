@@ -48,6 +48,12 @@ mod oracle {
                 .filter(|x| !x.is_empty())
                 .map(String::from)
                 .collect(),
+            mini: st["mini"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .map(|x| x.as_str().unwrap().to_string())
+                .collect(),
             cfg: cfg_of(Some(&st["cfg"])),
             ..Default::default()
         };
@@ -161,6 +167,64 @@ mod oracle {
         assert_eq!(a.day_d.len(), dd.len(), "dayD size");
         for (k, v) in dd {
             assert_eq!(a.day_d[k], v.as_i64().unwrap(), "dayD {k}");
+        }
+
+        // performance: day scores, GoalTerra scores, perfect days, best streaks
+        let p = &fx["perf"];
+        let now_ms = fx["nowMs"].as_i64().unwrap();
+        let ps = ctx.perf_stats();
+        for (d, e) in ps.days.iter().zip(p["days"].as_array().unwrap()) {
+            assert_eq!(d.k, e["k"].as_str().unwrap());
+            assert_eq!(
+                (d.due, d.done, d.pct),
+                (
+                    e["due"].as_i64().unwrap(),
+                    e["done"].as_i64().unwrap(),
+                    e["pct"].as_i64()
+                ),
+                "day {}",
+                d.k
+            );
+        }
+        assert_eq!(ps.now, p["now"].as_i64(), "perf now");
+        assert_eq!(ps.before, p["before"].as_i64(), "perf before");
+        let sc = &p["scores"];
+        assert_eq!(ctx.habit_score(0), sc["h0"].as_i64(), "habit score");
+        assert_eq!(ctx.habit_score(7), sc["h7"].as_i64(), "habit score -7");
+        assert_eq!(ctx.task_score(0, now_ms), sc["t0"].as_i64(), "task score");
+        assert_eq!(
+            ctx.task_score(7, now_ms),
+            sc["t7"].as_i64(),
+            "task score -7"
+        );
+        assert_eq!(ctx.overall_score(0, now_ms), sc["o0"].as_i64(), "overall");
+        assert_eq!(
+            ctx.overall_score(7, now_ms),
+            sc["o7"].as_i64(),
+            "overall -7"
+        );
+        assert_eq!(
+            ctx.overpace(now_ms),
+            p["overpace"].as_bool().unwrap(),
+            "overpace"
+        );
+        assert_eq!(
+            ctx.perfect_days(),
+            p["perfectDays"].as_i64().unwrap(),
+            "perfect days"
+        );
+        for e in p["best"].as_array().unwrap() {
+            let h = s
+                .habits
+                .iter()
+                .find(|h| h.id == e["id"].as_str().unwrap())
+                .unwrap();
+            assert_eq!(
+                ctx.best_streak(h) as i64,
+                e["best"].as_i64().unwrap(),
+                "best streak {}",
+                h.id
+            );
         }
 
         let t = g.tower(&a);

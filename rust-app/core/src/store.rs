@@ -112,6 +112,11 @@ impl Store {
             topics: read_all(&self.conn, "topics")?,
             exams: read_all(&self.conn, "exams")?,
             trash: keep,
+            mini: logs
+                .iter()
+                .filter(|l| l.mini)
+                .map(|l| l.id.clone())
+                .collect(),
             logs: logs.into_iter().map(|l| l.id).collect(),
             rest_days: cfg_json
                 .as_ref()

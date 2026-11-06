@@ -1,0 +1,572 @@
+{
+ "today": "2026-10-23",
+ "cases": [
+  {
+   "raw": "Essay tomorrow !high #uni",
+   "title": "Essay",
+   "due": "2026-10-24",
+   "priority": "high",
+   "tag": "uni",
+   "start": null,
+   "dur": null
+  },
+  {
+   "raw": "Read today's news",
+   "title": "Read today's news",
+   "due": null,
+   "priority": null,
+   "tag": null,
+   "start": null,
+   "dur": null
+  },
+  {
+   "raw": "Call mom fri",
+   "title": "Call mom",
+   "due": "2026-10-23",
+   "priority": null,
+   "tag": null,
+   "start": null,
+   "dur": null
+  },
+  {
+   "raw": "Gym on monday !m",
+   "title": "Gym",
+   "due": "2026-10-26",
+   "priority": "med",
+   "tag": null,
+   "start": null,
+   "dur": null
+  },
+  {
+   "raw": "Report in 3 days",
+   "title": "Report",
+   "due": "2026-10-26",
+   "priority": null,
+   "tag": null,
+   "start": null,
+   "dur": null
+  },
+  {
+   "raw": "Plan next week",
+   "title": "Plan",
+   "due": "2026-10-26",
+   "priority": null,
+   "tag": null,
+   "start": null,
+   "dur": null
+  },
+  {
+   "raw": "Exam 25 oct",
+   "title": "Exam",
+   "due": "2026-10-25",
+   "priority": null,
+   "tag": null,
+   "start": null,
+   "dur": null
+  },
+  {
+   "raw": "Exam nov 3",
+   "title": "Exam",
+   "due": "2026-11-03",
+   "priority": null,
+   "tag": null,
+   "start": null,
+   "dur": null
+  },
+  {
+   "raw": "Pay bill 2/11",
+   "title": "Pay bill",
+   "due": "2026-11-02",
+   "priority": null,
+   "tag": null,
+   "start": null,
+   "dur": null
+  },
+  {
+   "raw": "Read 1/2 of book",
+   "title": "Read 1/2 of book",
+   "due": null,
+   "priority": null,
+   "tag": null,
+   "start": null,
+   "dur": null
+  },
+  {
+   "raw": "Make money moves",
+   "title": "Make money moves",
+   "due": null,
+   "priority": null,
+   "tag": null,
+   "start": null,
+   "dur": null
+  },
+  {
+   "raw": "SAT prep",
+   "title": "SAT prep",
+   "due": null,
+   "priority": null,
+   "tag": null,
+   "start": null,
+   "dur": null
+  },
+  {
+   "raw": "مراجعة الفصل باچر !عالي #جامعة",
+   "title": "مراجعة الفصل",
+   "due": "2026-10-24",
+   "priority": "high",
+   "tag": "جامعة",
+   "start": null,
+   "dur": null
+  },
+  {
+   "raw": "واجب بعد غد",
+   "title": "واجب",
+   "due": "2026-10-25",
+   "priority": null,
+   "tag": null,
+   "start": null,
+   "dur": null
+  },
+  {
+   "raw": "امتحان الخميس",
+   "title": "امتحان",
+   "due": "2026-10-29",
+   "priority": null,
+   "tag": null,
+   "start": null,
+   "dur": null
+  },
+  {
+   "raw": "تقرير بعد 3 أيام",
+   "title": "تقرير",
+   "due": "2026-10-26",
+   "priority": null,
+   "tag": null,
+   "start": null,
+   "dur": null
+  },
+  {
+   "raw": "اجتماع اليوم",
+   "title": "اجتماع",
+   "due": "2026-10-23",
+   "priority": null,
+   "tag": null,
+   "start": null,
+   "dur": null
+  },
+  {
+   "raw": "tomorrow",
+   "title": "tomorrow",
+   "due": "2026-10-24",
+   "priority": null,
+   "tag": null,
+   "start": null,
+   "dur": null
+  },
+  {
+   "raw": "Old 2026-02-30",
+   "title": "Old 2026-02-30",
+   "due": null,
+   "priority": null,
+   "tag": null,
+   "start": null,
+   "dur": null
+  },
+  {
+   "raw": "Thursday thing 2026-12-01",
+   "title": "thing 2026-12-01",
+   "due": "2026-10-29",
+   "priority": null,
+   "tag": null,
+   "start": null,
+   "dur": null
+  },
+  {
+   "raw": "Gym at 6pm for 1h tomorrow",
+   "title": "Gym",
+   "due": "2026-10-24",
+   "priority": null,
+   "tag": null,
+   "start": "18:00",
+   "dur": 60
+  },
+  {
+   "raw": "Call 18:30 for 45 min",
+   "title": "Call",
+   "due": null,
+   "priority": null,
+   "tag": null,
+   "start": "18:30",
+   "dur": 45
+  },
+  {
+   "raw": "Report in 3 days",
+   "title": "Report",
+   "due": "2026-10-26",
+   "priority": null,
+   "tag": null,
+   "start": null,
+   "dur": null
+  },
+  {
+   "raw": "Read for 2 hours",
+   "title": "Read for 2 hours",
+   "due": null,
+   "priority": null,
+   "tag": null,
+   "start": null,
+   "dur": null
+  },
+  {
+   "raw": "اجتماع الساعة 6م لمدة ساعة",
+   "title": "اجتماع",
+   "due": null,
+   "priority": null,
+   "tag": null,
+   "start": "18:00",
+   "dur": 60
+  },
+  {
+   "raw": "Lunch 12pm",
+   "title": "Lunch",
+   "due": null,
+   "priority": null,
+   "tag": null,
+   "start": "12:00",
+   "dur": null
+  },
+  {
+   "raw": "Lunch 12am",
+   "title": "Lunch",
+   "due": null,
+   "priority": null,
+   "tag": null,
+   "start": "00:00",
+   "dur": null
+  },
+  {
+   "raw": "Meet 7:15 am for 90 minutes",
+   "title": "Meet",
+   "due": null,
+   "priority": null,
+   "tag": null,
+   "start": "07:15",
+   "dur": 90
+  },
+  {
+   "raw": "Call at 25:00",
+   "title": "Call at 25:00",
+   "due": null,
+   "priority": null,
+   "tag": null,
+   "start": null,
+   "dur": null
+  },
+  {
+   "raw": "Run 6:99pm",
+   "title": "Run 6:99pm",
+   "due": null,
+   "priority": null,
+   "tag": null,
+   "start": null,
+   "dur": null
+  },
+  {
+   "raw": "Study for an hour 9:00",
+   "title": "Study",
+   "due": null,
+   "priority": null,
+   "tag": null,
+   "start": "09:00",
+   "dur": 60
+  },
+  {
+   "raw": "Do it 9:00 for 3 min",
+   "title": "Do it for 3 min",
+   "due": null,
+   "priority": null,
+   "tag": null,
+   "start": "09:00",
+   "dur": null
+  },
+  {
+   "raw": "Do it 9:00 for 800 min",
+   "title": "Do it for 800 min",
+   "due": null,
+   "priority": null,
+   "tag": null,
+   "start": "09:00",
+   "dur": null
+  },
+  {
+   "raw": "Pay 29 feb",
+   "title": "Pay 29 feb",
+   "due": null,
+   "priority": null,
+   "tag": null,
+   "start": null,
+   "dur": null
+  },
+  {
+   "raw": "Party 29 Feb 2027",
+   "title": "Party 29 Feb 2027",
+   "due": null,
+   "priority": null,
+   "tag": null,
+   "start": null,
+   "dur": null
+  },
+  {
+   "raw": "Trip in 2 weeks",
+   "title": "Trip",
+   "due": "2026-11-06",
+   "priority": null,
+   "tag": null,
+   "start": null,
+   "dur": null
+  },
+  {
+   "raw": "Trip بعد 2 أسابيع",
+   "title": "Trip",
+   "due": "2026-11-06",
+   "priority": null,
+   "tag": null,
+   "start": null,
+   "dur": null
+  },
+  {
+   "raw": "Mon meeting",
+   "title": "meeting",
+   "due": "2026-10-26",
+   "priority": null,
+   "tag": null,
+   "start": null,
+   "dur": null
+  },
+  {
+   "raw": "MON meeting",
+   "title": "MON meeting",
+   "due": null,
+   "priority": null,
+   "tag": null,
+   "start": null,
+   "dur": null
+  },
+  {
+   "raw": "Meet on Wednesday #work !low",
+   "title": "Meet",
+   "due": "2026-10-28",
+   "priority": "low",
+   "tag": "work",
+   "start": null,
+   "dur": null
+  },
+  {
+   "raw": "#a #b two tags",
+   "title": "#b two tags",
+   "due": null,
+   "priority": null,
+   "tag": "a",
+   "start": null,
+   "dur": null
+  },
+  {
+   "raw": "!1 first !3 second",
+   "title": "first !3 second",
+   "due": null,
+   "priority": "low",
+   "tag": null,
+   "start": null,
+   "dur": null
+  },
+  {
+   "raw": "Task ! high",
+   "title": "Task ! high",
+   "due": null,
+   "priority": null,
+   "tag": null,
+   "start": null,
+   "dur": null
+  },
+  {
+   "raw": "x #tag-with-dash_1",
+   "title": "x",
+   "due": null,
+   "priority": null,
+   "tag": "tag-with-dash_1",
+   "start": null,
+   "dur": null
+  },
+  {
+   "raw": "   spaced    out   tomorrow   ",
+   "title": "spaced out",
+   "due": "2026-10-24",
+   "priority": null,
+   "tag": null,
+   "start": null,
+   "dur": null
+  },
+  {
+   "raw": "",
+   "title": "",
+   "due": null,
+   "priority": null,
+   "tag": null,
+   "start": null,
+   "dur": null
+  },
+  {
+   "raw": "tomorrow tomorrow",
+   "title": "tomorrow",
+   "due": "2026-10-24",
+   "priority": null,
+   "tag": null,
+   "start": null,
+   "dur": null
+  },
+  {
+   "raw": "next week tomorrow",
+   "title": "next week",
+   "due": "2026-10-24",
+   "priority": null,
+   "tag": null,
+   "start": null,
+   "dur": null
+  },
+  {
+   "raw": "يوم الجمعة نلتقي",
+   "title": "نلتقي",
+   "due": "2026-10-23",
+   "priority": null,
+   "tag": null,
+   "start": null,
+   "dur": null
+  },
+  {
+   "raw": "الخميس والجمعة",
+   "title": "والجمعة",
+   "due": "2026-10-29",
+   "priority": null,
+   "tag": null,
+   "start": null,
+   "dur": null
+  },
+  {
+   "raw": "Dec 31 party",
+   "title": "party",
+   "due": "2026-12-31",
+   "priority": null,
+   "tag": null,
+   "start": null,
+   "dur": null
+  },
+  {
+   "raw": "31 dec party",
+   "title": "party",
+   "due": "2026-12-31",
+   "priority": null,
+   "tag": null,
+   "start": null,
+   "dur": null
+  },
+  {
+   "raw": "0099-05-05 old",
+   "title": "old",
+   "due": "1999-05-05",
+   "priority": null,
+   "tag": null,
+   "start": null,
+   "dur": null
+  },
+  {
+   "raw": "Fri",
+   "title": "Fri",
+   "due": "2026-10-23",
+   "priority": null,
+   "tag": null,
+   "start": null,
+   "dur": null
+  },
+  {
+   "raw": "a fri b sat",
+   "title": "a b sat",
+   "due": "2026-10-23",
+   "priority": null,
+   "tag": null,
+   "start": null,
+   "dur": null
+  },
+  {
+   "raw": "Due 1/13",
+   "title": "Due 1/13",
+   "due": null,
+   "priority": null,
+   "tag": null,
+   "start": null,
+   "dur": null
+  },
+  {
+   "raw": "Due 13/1",
+   "title": "Due",
+   "due": "2027-01-13",
+   "priority": null,
+   "tag": null,
+   "start": null,
+   "dur": null
+  },
+  {
+   "raw": "Due 32/1",
+   "title": "Due 32/1",
+   "due": null,
+   "priority": null,
+   "tag": null,
+   "start": null,
+   "dur": null
+  },
+  {
+   "raw": "Report !MEDIUM now",
+   "title": "Report now",
+   "due": null,
+   "priority": "med",
+   "tag": null,
+   "start": null,
+   "dur": null
+  },
+  {
+   "raw": "Report !m",
+   "title": "Report",
+   "due": null,
+   "priority": "med",
+   "tag": null,
+   "start": null,
+   "dur": null
+  },
+  {
+   "raw": "بعد بكرة اجتماع",
+   "title": "اجتماع",
+   "due": "2026-10-25",
+   "priority": null,
+   "tag": null,
+   "start": null,
+   "dur": null
+  },
+  {
+   "raw": "بكرة",
+   "title": "بكرة",
+   "due": "2026-10-24",
+   "priority": null,
+   "tag": null,
+   "start": null,
+   "dur": null
+  },
+  {
+   "raw": "غدا الساعة 8ص لمدة ساعة ونصف",
+   "title": "ونصف",
+   "due": "2026-10-24",
+   "priority": null,
+   "tag": null,
+   "start": "08:00",
+   "dur": 60
+  }
+ ]
+}

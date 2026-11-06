@@ -1,0 +1,1320 @@
+{
+ "today": "2026-10-23",
+ "nowMs": 1792738800000,
+ "tzName": "Asia/Riyadh",
+ "state": {
+  "tasks": [
+   {
+    "id": "t1",
+    "title": "Report",
+    "due": "2026-10-23",
+    "priority": "high",
+    "created": 1792479600000
+   },
+   {
+    "id": "t2",
+    "title": "Late one",
+    "due": "2026-10-21",
+    "priority": "low",
+    "created": 1792306800000
+   },
+   {
+    "id": "t3",
+    "title": "Gym",
+    "due": "2026-10-24",
+    "start": "18:30",
+    "dur": 90,
+    "created": 1792738800000
+   },
+   {
+    "id": "t4",
+    "title": "Call",
+    "due": "2026-10-24",
+    "start": "09:00",
+    "created": 1792738800000
+   },
+   {
+    "id": "t5",
+    "title": "Done",
+    "due": "2026-10-23",
+    "done": true,
+    "doneAt": 1792738800000,
+    "created": 1792738800000
+   },
+   {
+    "id": "t6",
+    "title": "Arch",
+    "due": "2026-10-25",
+    "archived": true,
+    "created": 1792738800000
+   },
+   {
+    "id": "t7",
+    "title": "Block 75",
+    "due": "2026-10-26",
+    "start": "07:15",
+    "dur": 75,
+    "created": 1792738800000
+   }
+  ],
+  "habits": [
+   {
+    "id": "h1",
+    "name": "Read",
+    "kind": "",
+    "days": [],
+    "created": 1790146800000,
+    "at": "07:30",
+    "where": "the sofa",
+    "icon": "📖"
+   },
+   {
+    "id": "h2",
+    "name": "Stretch",
+    "kind": "",
+    "days": [
+     1,
+     3,
+     5
+    ],
+    "created": 1790146800000,
+    "at": "21:00",
+    "mini": "one pose"
+   },
+   {
+    "id": "h3",
+    "name": "Water",
+    "kind": "",
+    "days": [],
+    "created": 1790146800000,
+    "at": "bad"
+   },
+   {
+    "id": "h4",
+    "name": "No sugar",
+    "kind": "avoid",
+    "days": [],
+    "created": 1791010800000
+   },
+   {
+    "id": "h5",
+    "name": "Late",
+    "kind": "",
+    "days": [],
+    "created": 1792911600000
+   }
+  ],
+  "exams": [
+   {
+    "id": "e1",
+    "title": "Maths",
+    "kind": "exam",
+    "subject": "M",
+    "date": "2026-10-24",
+    "time": "09:00",
+    "created": 1792738800000
+   },
+   {
+    "id": "e2",
+    "title": "Quiz",
+    "kind": "quiz",
+    "subject": "M",
+    "date": "2026-10-23",
+    "created": 1792738800000
+   },
+   {
+    "id": "e3",
+    "title": "Scored",
+    "kind": "exam",
+    "subject": "M",
+    "date": "2026-10-25",
+    "score": 5,
+    "created": 1792738800000
+   }
+  ],
+  "logs": [
+   "h1|2026-10-23"
+  ]
+ },
+ "scen": [
+  {
+   "name": "en default",
+   "cfg": {
+    "nOn": true,
+    "abOn": false,
+    "abTime": "21:00",
+    "abAsked": false,
+    "habitFx": true,
+    "mile": "",
+    "nMorning": "08:00",
+    "nEvening": "20:00",
+    "nClasses": true,
+    "nExams": true,
+    "timeFmt": "auto",
+    "weekStart": "mon",
+    "planSwipe": true,
+    "ach": null,
+    "planFrom": "06:00",
+    "planTo": "24:00",
+    "nBlocks": true,
+    "nBlockLead": "10",
+    "classes": "[{\"id\":\"c1\",\"subject\":\"Physics\",\"day\":5,\"start\":\"10:30\",\"end\":\"11:30\",\"room\":\"B2\"},{\"id\":\"c2\",\"subject\":\"Chem\",\"day\":5,\"start\":\"08:00\",\"end\":\"09:00\",\"room\":\"\"},{\"id\":\"c3\",\"subject\":\"Art\",\"day\":0,\"start\":\"13:00\",\"end\":\"14:00\",\"room\":\"A1\"}]",
+    "ttStart": "sun",
+    "restDays": "",
+    "rewards": "",
+    "rpgSince": "2026-10-18",
+    "eliteTarget": "60",
+    "focusLen": "25",
+    "breakLen": "5",
+    "rpg": true,
+    "taskTarget": 6,
+    "coachTone": "off",
+    "mTime": false,
+    "dStats": false,
+    "mig84": false,
+    "haptics": true,
+    "lvl2": "3",
+    "lvl3": "5",
+    "stuCompact": false,
+    "avoidHide": true,
+    "cTask": true,
+    "cGoal": true,
+    "cHabit": true,
+    "dCharts": true,
+    "dTasks": true,
+    "dGoals": true,
+    "dHabits": true,
+    "prio": "low",
+    "showDone": true,
+    "dueDef": "today",
+    "sortBy": "due",
+    "groupTags": true,
+    "autoArch": "0",
+    "defFilter": "all",
+    "showSubs": true,
+    "showNotes": true,
+    "dOverdue": false,
+    "avoidMode": "clean",
+    "student": true,
+    "lang": "en",
+    "srOn": true,
+    "srWeak": "1",
+    "srOk": "3",
+    "srLadder": "1,3,7,14,30"
+   },
+   "backup": false,
+   "notifs": [
+    {
+     "key": "c2026-10-23c1",
+     "at": 1792740000000,
+     "title": "Physics at 10:30",
+     "body": "Room B2"
+    },
+    {
+     "key": "xe1",
+     "at": 1792767600000,
+     "title": "Tomorrow: Maths",
+     "body": "09:00 · A last review tonight helps."
+    },
+    {
+     "key": "e2026-10-23",
+     "at": 1792774800000,
+     "title": "Evening check-in",
+     "body": "2 habits and 2 tasks left today."
+    },
+    {
+     "key": "h2026-10-23h2",
+     "at": 1792778400000,
+     "title": "Stretch",
+     "body": "Two-minute version: one pose"
+    },
+    {
+     "key": "h2026-10-24h1",
+     "at": 1792816200000,
+     "title": "📖 Read",
+     "body": "Time for it, in the sofa."
+    },
+    {
+     "key": "m2026-10-24",
+     "at": 1792818000000,
+     "title": "Sat, Oct 24, 2026",
+     "body": "2 tasks due · 2 habits · 📝 Maths"
+    },
+    {
+     "key": "b2026-10-24t4",
+     "at": 1792821000000,
+     "title": "Call",
+     "body": "Starts at 9:00 AM · 1 h"
+    },
+    {
+     "key": "b2026-10-24t3",
+     "at": 1792855200000,
+     "title": "Gym",
+     "body": "Starts at 6:30 PM · 1.5 h"
+    },
+    {
+     "key": "e2026-10-24",
+     "at": 1792861200000,
+     "title": "Evening check-in",
+     "body": "Evening check-in: tick off today's habits."
+    },
+    {
+     "key": "h2026-10-25h1",
+     "at": 1792902600000,
+     "title": "📖 Read",
+     "body": "Time for it, in the sofa."
+    },
+    {
+     "key": "m2026-10-25",
+     "at": 1792904400000,
+     "title": "Sun, Oct 25, 2026",
+     "body": "3 habits · 1 class · 📝 Scored"
+    },
+    {
+     "key": "c2026-10-25c3",
+     "at": 1792921800000,
+     "title": "Art at 13:00",
+     "body": "Room A1"
+    },
+    {
+     "key": "e2026-10-25",
+     "at": 1792947600000,
+     "title": "Evening check-in",
+     "body": "Evening check-in: tick off today's habits."
+    },
+    {
+     "key": "b2026-10-26t7",
+     "at": 1792987500000,
+     "title": "Block 75",
+     "body": "Starts at 7:15 AM · 1.3 h"
+    },
+    {
+     "key": "h2026-10-26h1",
+     "at": 1792989000000,
+     "title": "📖 Read",
+     "body": "Time for it, in the sofa."
+    },
+    {
+     "key": "m2026-10-26",
+     "at": 1792990800000,
+     "title": "Mon, Oct 26, 2026",
+     "body": "1 task due · 4 habits"
+    },
+    {
+     "key": "e2026-10-26",
+     "at": 1793034000000,
+     "title": "Evening check-in",
+     "body": "Evening check-in: tick off today's habits."
+    },
+    {
+     "key": "h2026-10-26h2",
+     "at": 1793037600000,
+     "title": "Stretch",
+     "body": "Two-minute version: one pose"
+    },
+    {
+     "key": "h2026-10-27h1",
+     "at": 1793075400000,
+     "title": "📖 Read",
+     "body": "Time for it, in the sofa."
+    },
+    {
+     "key": "m2026-10-27",
+     "at": 1793077200000,
+     "title": "Tue, Oct 27, 2026",
+     "body": "3 habits"
+    },
+    {
+     "key": "e2026-10-27",
+     "at": 1793120400000,
+     "title": "Evening check-in",
+     "body": "Evening check-in: tick off today's habits."
+    },
+    {
+     "key": "h2026-10-28h1",
+     "at": 1793161800000,
+     "title": "📖 Read",
+     "body": "Time for it, in the sofa."
+    },
+    {
+     "key": "m2026-10-28",
+     "at": 1793163600000,
+     "title": "Wed, Oct 28, 2026",
+     "body": "4 habits"
+    },
+    {
+     "key": "e2026-10-28",
+     "at": 1793206800000,
+     "title": "Evening check-in",
+     "body": "Evening check-in: tick off today's habits."
+    },
+    {
+     "key": "h2026-10-28h2",
+     "at": 1793210400000,
+     "title": "Stretch",
+     "body": "Two-minute version: one pose"
+    },
+    {
+     "key": "h2026-10-29h1",
+     "at": 1793248200000,
+     "title": "📖 Read",
+     "body": "Time for it, in the sofa."
+    },
+    {
+     "key": "m2026-10-29",
+     "at": 1793250000000,
+     "title": "Thu, Oct 29, 2026",
+     "body": "3 habits"
+    },
+    {
+     "key": "e2026-10-29",
+     "at": 1793293200000,
+     "title": "Evening check-in",
+     "body": "Evening check-in: tick off today's habits."
+    }
+   ]
+  },
+  {
+   "name": "ar 24h with backup",
+   "cfg": {
+    "nOn": true,
+    "abOn": true,
+    "abTime": "22:15",
+    "abAsked": false,
+    "habitFx": true,
+    "mile": "",
+    "nMorning": "08:00",
+    "nEvening": "20:00",
+    "nClasses": true,
+    "nExams": true,
+    "timeFmt": "24",
+    "weekStart": "mon",
+    "planSwipe": true,
+    "ach": null,
+    "planFrom": "06:00",
+    "planTo": "24:00",
+    "nBlocks": true,
+    "nBlockLead": "10",
+    "classes": "[{\"id\":\"c1\",\"subject\":\"Physics\",\"day\":5,\"start\":\"10:30\",\"end\":\"11:30\",\"room\":\"B2\"},{\"id\":\"c2\",\"subject\":\"Chem\",\"day\":5,\"start\":\"08:00\",\"end\":\"09:00\",\"room\":\"\"},{\"id\":\"c3\",\"subject\":\"Art\",\"day\":0,\"start\":\"13:00\",\"end\":\"14:00\",\"room\":\"A1\"}]",
+    "ttStart": "sun",
+    "restDays": "",
+    "rewards": "",
+    "rpgSince": "2026-10-18",
+    "eliteTarget": "60",
+    "focusLen": "25",
+    "breakLen": "5",
+    "rpg": true,
+    "taskTarget": 6,
+    "coachTone": "off",
+    "mTime": false,
+    "dStats": false,
+    "mig84": false,
+    "haptics": true,
+    "lvl2": "3",
+    "lvl3": "5",
+    "stuCompact": false,
+    "avoidHide": true,
+    "cTask": true,
+    "cGoal": true,
+    "cHabit": true,
+    "dCharts": true,
+    "dTasks": true,
+    "dGoals": true,
+    "dHabits": true,
+    "prio": "low",
+    "showDone": true,
+    "dueDef": "today",
+    "sortBy": "due",
+    "groupTags": true,
+    "autoArch": "0",
+    "defFilter": "all",
+    "showSubs": true,
+    "showNotes": true,
+    "dOverdue": false,
+    "avoidMode": "clean",
+    "student": true,
+    "lang": "ar",
+    "srOn": true,
+    "srWeak": "1",
+    "srOk": "3",
+    "srLadder": "1,3,7,14,30"
+   },
+   "backup": true,
+   "notifs": [
+    {
+     "key": "c2026-10-23c1",
+     "at": 1792740000000,
+     "title": "Physics الساعة 10:30",
+     "body": "القاعة B2"
+    },
+    {
+     "key": "xe1",
+     "at": 1792767600000,
+     "title": "غدًا: Maths",
+     "body": "09:00 · مراجعة أخيرة الليلة تفيد."
+    },
+    {
+     "key": "e2026-10-23",
+     "at": 1792774800000,
+     "title": "مراجعة المساء",
+     "body": "2 عادات و2 مهام متبقية اليوم."
+    },
+    {
+     "key": "h2026-10-23h2",
+     "at": 1792778400000,
+     "title": "Stretch",
+     "body": "النسخة السريعة: one pose"
+    },
+    {
+     "key": "ab2026-10-23",
+     "at": 1792782900000,
+     "title": "النسخ الاحتياطي اليومي",
+     "body": "افتح GoalTerra لحفظ نسخة اليوم."
+    },
+    {
+     "key": "h2026-10-24h1",
+     "at": 1792816200000,
+     "title": "📖 Read",
+     "body": "حان وقتها في the sofa."
+    },
+    {
+     "key": "m2026-10-24",
+     "at": 1792818000000,
+     "title": "السبت، 24 أكتوبر 2026",
+     "body": "2 مهام مستحقة · 2 عادات · 📝 Maths"
+    },
+    {
+     "key": "b2026-10-24t4",
+     "at": 1792821000000,
+     "title": "Call",
+     "body": "تبدأ الساعة 09:00 · 1 س"
+    },
+    {
+     "key": "bk",
+     "at": 1792832400000,
+     "title": "انسخ GoalTerra احتياطيًا",
+     "body": "آخر نسخة احتياطية قديمة. افتح الإعدادات واضغط انسخ احتياطيًا الآن."
+    },
+    {
+     "key": "b2026-10-24t3",
+     "at": 1792855200000,
+     "title": "Gym",
+     "body": "تبدأ الساعة 18:30 · 1.5 س"
+    },
+    {
+     "key": "e2026-10-24",
+     "at": 1792861200000,
+     "title": "مراجعة المساء",
+     "body": "مراجعة المساء: علّم عادات اليوم."
+    },
+    {
+     "key": "ab2026-10-24",
+     "at": 1792869300000,
+     "title": "النسخ الاحتياطي اليومي",
+     "body": "افتح GoalTerra لحفظ نسخة اليوم."
+    },
+    {
+     "key": "h2026-10-25h1",
+     "at": 1792902600000,
+     "title": "📖 Read",
+     "body": "حان وقتها في the sofa."
+    },
+    {
+     "key": "m2026-10-25",
+     "at": 1792904400000,
+     "title": "الأحد، 25 أكتوبر 2026",
+     "body": "3 عادات · 1 حصص · 📝 Scored"
+    },
+    {
+     "key": "c2026-10-25c3",
+     "at": 1792921800000,
+     "title": "Art الساعة 13:00",
+     "body": "القاعة A1"
+    },
+    {
+     "key": "e2026-10-25",
+     "at": 1792947600000,
+     "title": "مراجعة المساء",
+     "body": "مراجعة المساء: علّم عادات اليوم."
+    },
+    {
+     "key": "ab2026-10-25",
+     "at": 1792955700000,
+     "title": "النسخ الاحتياطي اليومي",
+     "body": "افتح GoalTerra لحفظ نسخة اليوم."
+    },
+    {
+     "key": "b2026-10-26t7",
+     "at": 1792987500000,
+     "title": "Block 75",
+     "body": "تبدأ الساعة 07:15 · 1.3 س"
+    },
+    {
+     "key": "h2026-10-26h1",
+     "at": 1792989000000,
+     "title": "📖 Read",
+     "body": "حان وقتها في the sofa."
+    },
+    {
+     "key": "m2026-10-26",
+     "at": 1792990800000,
+     "title": "الاثنين، 26 أكتوبر 2026",
+     "body": "1 مهام مستحقة · 4 عادات"
+    },
+    {
+     "key": "e2026-10-26",
+     "at": 1793034000000,
+     "title": "مراجعة المساء",
+     "body": "مراجعة المساء: علّم عادات اليوم."
+    },
+    {
+     "key": "h2026-10-26h2",
+     "at": 1793037600000,
+     "title": "Stretch",
+     "body": "النسخة السريعة: one pose"
+    },
+    {
+     "key": "ab2026-10-26",
+     "at": 1793042100000,
+     "title": "النسخ الاحتياطي اليومي",
+     "body": "افتح GoalTerra لحفظ نسخة اليوم."
+    },
+    {
+     "key": "h2026-10-27h1",
+     "at": 1793075400000,
+     "title": "📖 Read",
+     "body": "حان وقتها في the sofa."
+    },
+    {
+     "key": "m2026-10-27",
+     "at": 1793077200000,
+     "title": "الثلاثاء، 27 أكتوبر 2026",
+     "body": "3 عادات"
+    },
+    {
+     "key": "e2026-10-27",
+     "at": 1793120400000,
+     "title": "مراجعة المساء",
+     "body": "مراجعة المساء: علّم عادات اليوم."
+    },
+    {
+     "key": "ab2026-10-27",
+     "at": 1793128500000,
+     "title": "النسخ الاحتياطي اليومي",
+     "body": "افتح GoalTerra لحفظ نسخة اليوم."
+    },
+    {
+     "key": "h2026-10-28h1",
+     "at": 1793161800000,
+     "title": "📖 Read",
+     "body": "حان وقتها في the sofa."
+    },
+    {
+     "key": "m2026-10-28",
+     "at": 1793163600000,
+     "title": "الأربعاء، 28 أكتوبر 2026",
+     "body": "4 عادات"
+    },
+    {
+     "key": "e2026-10-28",
+     "at": 1793206800000,
+     "title": "مراجعة المساء",
+     "body": "مراجعة المساء: علّم عادات اليوم."
+    },
+    {
+     "key": "h2026-10-28h2",
+     "at": 1793210400000,
+     "title": "Stretch",
+     "body": "النسخة السريعة: one pose"
+    },
+    {
+     "key": "ab2026-10-28",
+     "at": 1793214900000,
+     "title": "النسخ الاحتياطي اليومي",
+     "body": "افتح GoalTerra لحفظ نسخة اليوم."
+    },
+    {
+     "key": "h2026-10-29h1",
+     "at": 1793248200000,
+     "title": "📖 Read",
+     "body": "حان وقتها في the sofa."
+    },
+    {
+     "key": "m2026-10-29",
+     "at": 1793250000000,
+     "title": "الخميس، 29 أكتوبر 2026",
+     "body": "3 عادات"
+    },
+    {
+     "key": "e2026-10-29",
+     "at": 1793293200000,
+     "title": "مراجعة المساء",
+     "body": "مراجعة المساء: علّم عادات اليوم."
+    },
+    {
+     "key": "ab2026-10-29",
+     "at": 1793301300000,
+     "title": "النسخ الاحتياطي اليومي",
+     "body": "افتح GoalTerra لحفظ نسخة اليوم."
+    }
+   ]
+  },
+  {
+   "name": "en 12h no extras",
+   "cfg": {
+    "nOn": true,
+    "abOn": false,
+    "abTime": "21:00",
+    "abAsked": false,
+    "habitFx": true,
+    "mile": "",
+    "nMorning": "06:45",
+    "nEvening": "20:00",
+    "nClasses": false,
+    "nExams": false,
+    "timeFmt": "12",
+    "weekStart": "mon",
+    "planSwipe": true,
+    "ach": null,
+    "planFrom": "06:00",
+    "planTo": "24:00",
+    "nBlocks": true,
+    "nBlockLead": "15",
+    "classes": "[{\"id\":\"c1\",\"subject\":\"Physics\",\"day\":5,\"start\":\"10:30\",\"end\":\"11:30\",\"room\":\"B2\"},{\"id\":\"c2\",\"subject\":\"Chem\",\"day\":5,\"start\":\"08:00\",\"end\":\"09:00\",\"room\":\"\"},{\"id\":\"c3\",\"subject\":\"Art\",\"day\":0,\"start\":\"13:00\",\"end\":\"14:00\",\"room\":\"A1\"}]",
+    "ttStart": "sun",
+    "restDays": "",
+    "rewards": "",
+    "rpgSince": "2026-10-18",
+    "eliteTarget": "60",
+    "focusLen": "25",
+    "breakLen": "5",
+    "rpg": true,
+    "taskTarget": 6,
+    "coachTone": "off",
+    "mTime": false,
+    "dStats": false,
+    "mig84": false,
+    "haptics": true,
+    "lvl2": "3",
+    "lvl3": "5",
+    "stuCompact": false,
+    "avoidHide": true,
+    "cTask": true,
+    "cGoal": true,
+    "cHabit": true,
+    "dCharts": true,
+    "dTasks": true,
+    "dGoals": true,
+    "dHabits": true,
+    "prio": "low",
+    "showDone": true,
+    "dueDef": "today",
+    "sortBy": "due",
+    "groupTags": true,
+    "autoArch": "0",
+    "defFilter": "all",
+    "showSubs": true,
+    "showNotes": true,
+    "dOverdue": false,
+    "avoidMode": "clean",
+    "student": false,
+    "lang": "en",
+    "srOn": true,
+    "srWeak": "1",
+    "srOk": "3",
+    "srLadder": "1,3,7,14,30"
+   },
+   "backup": false,
+   "notifs": [
+    {
+     "key": "e2026-10-23",
+     "at": 1792774800000,
+     "title": "Evening check-in",
+     "body": "2 habits and 2 tasks left today."
+    },
+    {
+     "key": "h2026-10-23h2",
+     "at": 1792778400000,
+     "title": "Stretch",
+     "body": "Two-minute version: one pose"
+    },
+    {
+     "key": "m2026-10-24",
+     "at": 1792813500000,
+     "title": "Sat, Oct 24, 2026",
+     "body": "2 tasks due · 2 habits"
+    },
+    {
+     "key": "h2026-10-24h1",
+     "at": 1792816200000,
+     "title": "📖 Read",
+     "body": "Time for it, in the sofa."
+    },
+    {
+     "key": "b2026-10-24t4",
+     "at": 1792820700000,
+     "title": "Call",
+     "body": "Starts at 9:00 AM · 1 h"
+    },
+    {
+     "key": "b2026-10-24t3",
+     "at": 1792854900000,
+     "title": "Gym",
+     "body": "Starts at 6:30 PM · 1.5 h"
+    },
+    {
+     "key": "e2026-10-24",
+     "at": 1792861200000,
+     "title": "Evening check-in",
+     "body": "Evening check-in: tick off today's habits."
+    },
+    {
+     "key": "m2026-10-25",
+     "at": 1792899900000,
+     "title": "Sun, Oct 25, 2026",
+     "body": "3 habits · 1 class"
+    },
+    {
+     "key": "h2026-10-25h1",
+     "at": 1792902600000,
+     "title": "📖 Read",
+     "body": "Time for it, in the sofa."
+    },
+    {
+     "key": "e2026-10-25",
+     "at": 1792947600000,
+     "title": "Evening check-in",
+     "body": "Evening check-in: tick off today's habits."
+    },
+    {
+     "key": "m2026-10-26",
+     "at": 1792986300000,
+     "title": "Mon, Oct 26, 2026",
+     "body": "1 task due · 4 habits"
+    },
+    {
+     "key": "b2026-10-26t7",
+     "at": 1792987200000,
+     "title": "Block 75",
+     "body": "Starts at 7:15 AM · 1.3 h"
+    },
+    {
+     "key": "h2026-10-26h1",
+     "at": 1792989000000,
+     "title": "📖 Read",
+     "body": "Time for it, in the sofa."
+    },
+    {
+     "key": "e2026-10-26",
+     "at": 1793034000000,
+     "title": "Evening check-in",
+     "body": "Evening check-in: tick off today's habits."
+    },
+    {
+     "key": "h2026-10-26h2",
+     "at": 1793037600000,
+     "title": "Stretch",
+     "body": "Two-minute version: one pose"
+    },
+    {
+     "key": "m2026-10-27",
+     "at": 1793072700000,
+     "title": "Tue, Oct 27, 2026",
+     "body": "3 habits"
+    },
+    {
+     "key": "h2026-10-27h1",
+     "at": 1793075400000,
+     "title": "📖 Read",
+     "body": "Time for it, in the sofa."
+    },
+    {
+     "key": "e2026-10-27",
+     "at": 1793120400000,
+     "title": "Evening check-in",
+     "body": "Evening check-in: tick off today's habits."
+    },
+    {
+     "key": "m2026-10-28",
+     "at": 1793159100000,
+     "title": "Wed, Oct 28, 2026",
+     "body": "4 habits"
+    },
+    {
+     "key": "h2026-10-28h1",
+     "at": 1793161800000,
+     "title": "📖 Read",
+     "body": "Time for it, in the sofa."
+    },
+    {
+     "key": "e2026-10-28",
+     "at": 1793206800000,
+     "title": "Evening check-in",
+     "body": "Evening check-in: tick off today's habits."
+    },
+    {
+     "key": "h2026-10-28h2",
+     "at": 1793210400000,
+     "title": "Stretch",
+     "body": "Two-minute version: one pose"
+    },
+    {
+     "key": "m2026-10-29",
+     "at": 1793245500000,
+     "title": "Thu, Oct 29, 2026",
+     "body": "3 habits"
+    },
+    {
+     "key": "h2026-10-29h1",
+     "at": 1793248200000,
+     "title": "📖 Read",
+     "body": "Time for it, in the sofa."
+    },
+    {
+     "key": "e2026-10-29",
+     "at": 1793293200000,
+     "title": "Evening check-in",
+     "body": "Evening check-in: tick off today's habits."
+    }
+   ]
+  },
+  {
+   "name": "rest day, rpg off",
+   "cfg": {
+    "nOn": true,
+    "abOn": false,
+    "abTime": "21:00",
+    "abAsked": false,
+    "habitFx": true,
+    "mile": "",
+    "nMorning": "08:00",
+    "nEvening": "19:30",
+    "nClasses": true,
+    "nExams": true,
+    "timeFmt": "auto",
+    "weekStart": "mon",
+    "planSwipe": true,
+    "ach": null,
+    "planFrom": "06:00",
+    "planTo": "24:00",
+    "nBlocks": true,
+    "nBlockLead": "10",
+    "classes": "[{\"id\":\"c1\",\"subject\":\"Physics\",\"day\":5,\"start\":\"10:30\",\"end\":\"11:30\",\"room\":\"B2\"},{\"id\":\"c2\",\"subject\":\"Chem\",\"day\":5,\"start\":\"08:00\",\"end\":\"09:00\",\"room\":\"\"},{\"id\":\"c3\",\"subject\":\"Art\",\"day\":0,\"start\":\"13:00\",\"end\":\"14:00\",\"room\":\"A1\"}]",
+    "ttStart": "sun",
+    "restDays": "2026-10-23",
+    "rewards": "",
+    "rpgSince": "2026-10-18",
+    "eliteTarget": "60",
+    "focusLen": "25",
+    "breakLen": "5",
+    "rpg": false,
+    "taskTarget": 6,
+    "coachTone": "off",
+    "mTime": false,
+    "dStats": false,
+    "mig84": false,
+    "haptics": true,
+    "lvl2": "3",
+    "lvl3": "5",
+    "stuCompact": false,
+    "avoidHide": true,
+    "cTask": true,
+    "cGoal": true,
+    "cHabit": true,
+    "dCharts": true,
+    "dTasks": true,
+    "dGoals": true,
+    "dHabits": true,
+    "prio": "low",
+    "showDone": true,
+    "dueDef": "today",
+    "sortBy": "due",
+    "groupTags": true,
+    "autoArch": "0",
+    "defFilter": "all",
+    "showSubs": true,
+    "showNotes": true,
+    "dOverdue": false,
+    "avoidMode": "clean",
+    "student": true,
+    "lang": "en",
+    "srOn": true,
+    "srWeak": "1",
+    "srOk": "3",
+    "srLadder": "1,3,7,14,30"
+   },
+   "backup": false,
+   "notifs": [
+    {
+     "key": "c2026-10-23c1",
+     "at": 1792740000000,
+     "title": "Physics at 10:30",
+     "body": "Room B2"
+    },
+    {
+     "key": "xe1",
+     "at": 1792767600000,
+     "title": "Tomorrow: Maths",
+     "body": "09:00 · A last review tonight helps."
+    },
+    {
+     "key": "e2026-10-23",
+     "at": 1792773000000,
+     "title": "Evening check-in",
+     "body": "2 habits and 2 tasks left today."
+    },
+    {
+     "key": "h2026-10-23h2",
+     "at": 1792778400000,
+     "title": "Stretch",
+     "body": "Two-minute version: one pose"
+    },
+    {
+     "key": "h2026-10-24h1",
+     "at": 1792816200000,
+     "title": "📖 Read",
+     "body": "Time for it, in the sofa."
+    },
+    {
+     "key": "m2026-10-24",
+     "at": 1792818000000,
+     "title": "Sat, Oct 24, 2026",
+     "body": "2 tasks due · 2 habits · 📝 Maths"
+    },
+    {
+     "key": "b2026-10-24t4",
+     "at": 1792821000000,
+     "title": "Call",
+     "body": "Starts at 9:00 AM · 1 h"
+    },
+    {
+     "key": "b2026-10-24t3",
+     "at": 1792855200000,
+     "title": "Gym",
+     "body": "Starts at 6:30 PM · 1.5 h"
+    },
+    {
+     "key": "e2026-10-24",
+     "at": 1792859400000,
+     "title": "Evening check-in",
+     "body": "Evening check-in: tick off today's habits."
+    },
+    {
+     "key": "h2026-10-25h1",
+     "at": 1792902600000,
+     "title": "📖 Read",
+     "body": "Time for it, in the sofa."
+    },
+    {
+     "key": "m2026-10-25",
+     "at": 1792904400000,
+     "title": "Sun, Oct 25, 2026",
+     "body": "3 habits · 1 class · 📝 Scored"
+    },
+    {
+     "key": "c2026-10-25c3",
+     "at": 1792921800000,
+     "title": "Art at 13:00",
+     "body": "Room A1"
+    },
+    {
+     "key": "e2026-10-25",
+     "at": 1792945800000,
+     "title": "Evening check-in",
+     "body": "Evening check-in: tick off today's habits."
+    },
+    {
+     "key": "b2026-10-26t7",
+     "at": 1792987500000,
+     "title": "Block 75",
+     "body": "Starts at 7:15 AM · 1.3 h"
+    },
+    {
+     "key": "h2026-10-26h1",
+     "at": 1792989000000,
+     "title": "📖 Read",
+     "body": "Time for it, in the sofa."
+    },
+    {
+     "key": "m2026-10-26",
+     "at": 1792990800000,
+     "title": "Mon, Oct 26, 2026",
+     "body": "1 task due · 4 habits"
+    },
+    {
+     "key": "e2026-10-26",
+     "at": 1793032200000,
+     "title": "Evening check-in",
+     "body": "Evening check-in: tick off today's habits."
+    },
+    {
+     "key": "h2026-10-26h2",
+     "at": 1793037600000,
+     "title": "Stretch",
+     "body": "Two-minute version: one pose"
+    },
+    {
+     "key": "h2026-10-27h1",
+     "at": 1793075400000,
+     "title": "📖 Read",
+     "body": "Time for it, in the sofa."
+    },
+    {
+     "key": "m2026-10-27",
+     "at": 1793077200000,
+     "title": "Tue, Oct 27, 2026",
+     "body": "3 habits"
+    },
+    {
+     "key": "e2026-10-27",
+     "at": 1793118600000,
+     "title": "Evening check-in",
+     "body": "Evening check-in: tick off today's habits."
+    },
+    {
+     "key": "h2026-10-28h1",
+     "at": 1793161800000,
+     "title": "📖 Read",
+     "body": "Time for it, in the sofa."
+    },
+    {
+     "key": "m2026-10-28",
+     "at": 1793163600000,
+     "title": "Wed, Oct 28, 2026",
+     "body": "4 habits"
+    },
+    {
+     "key": "e2026-10-28",
+     "at": 1793205000000,
+     "title": "Evening check-in",
+     "body": "Evening check-in: tick off today's habits."
+    },
+    {
+     "key": "h2026-10-28h2",
+     "at": 1793210400000,
+     "title": "Stretch",
+     "body": "Two-minute version: one pose"
+    },
+    {
+     "key": "h2026-10-29h1",
+     "at": 1793248200000,
+     "title": "📖 Read",
+     "body": "Time for it, in the sofa."
+    },
+    {
+     "key": "m2026-10-29",
+     "at": 1793250000000,
+     "title": "Thu, Oct 29, 2026",
+     "body": "3 habits"
+    },
+    {
+     "key": "e2026-10-29",
+     "at": 1793291400000,
+     "title": "Evening check-in",
+     "body": "Evening check-in: tick off today's habits."
+    }
+   ]
+  },
+  {
+   "name": "bad times",
+   "cfg": {
+    "nOn": true,
+    "abOn": false,
+    "abTime": "21:00",
+    "abAsked": false,
+    "habitFx": true,
+    "mile": "",
+    "nMorning": "",
+    "nEvening": "x",
+    "nClasses": true,
+    "nExams": true,
+    "timeFmt": "auto",
+    "weekStart": "mon",
+    "planSwipe": true,
+    "ach": null,
+    "planFrom": "06:00",
+    "planTo": "24:00",
+    "nBlocks": true,
+    "nBlockLead": "abc",
+    "classes": "[{\"id\":\"c1\",\"subject\":\"Physics\",\"day\":5,\"start\":\"10:30\",\"end\":\"11:30\",\"room\":\"B2\"},{\"id\":\"c2\",\"subject\":\"Chem\",\"day\":5,\"start\":\"08:00\",\"end\":\"09:00\",\"room\":\"\"},{\"id\":\"c3\",\"subject\":\"Art\",\"day\":0,\"start\":\"13:00\",\"end\":\"14:00\",\"room\":\"A1\"}]",
+    "ttStart": "sun",
+    "restDays": "",
+    "rewards": "",
+    "rpgSince": "2026-10-18",
+    "eliteTarget": "60",
+    "focusLen": "25",
+    "breakLen": "5",
+    "rpg": true,
+    "taskTarget": 6,
+    "coachTone": "off",
+    "mTime": false,
+    "dStats": false,
+    "mig84": false,
+    "haptics": true,
+    "lvl2": "3",
+    "lvl3": "5",
+    "stuCompact": false,
+    "avoidHide": true,
+    "cTask": true,
+    "cGoal": true,
+    "cHabit": true,
+    "dCharts": true,
+    "dTasks": true,
+    "dGoals": true,
+    "dHabits": true,
+    "prio": "low",
+    "showDone": true,
+    "dueDef": "today",
+    "sortBy": "due",
+    "groupTags": true,
+    "autoArch": "0",
+    "defFilter": "all",
+    "showSubs": true,
+    "showNotes": true,
+    "dOverdue": false,
+    "avoidMode": "clean",
+    "student": true,
+    "lang": "en",
+    "srOn": true,
+    "srWeak": "1",
+    "srOk": "3",
+    "srLadder": "1,3,7,14,30"
+   },
+   "backup": true,
+   "notifs": [
+    {
+     "key": "c2026-10-23c1",
+     "at": 1792740000000,
+     "title": "Physics at 10:30",
+     "body": "Room B2"
+    },
+    {
+     "key": "xe1",
+     "at": 1792767600000,
+     "title": "Tomorrow: Maths",
+     "body": "09:00 · A last review tonight helps."
+    },
+    {
+     "key": "h2026-10-23h2",
+     "at": 1792778400000,
+     "title": "Stretch",
+     "body": "Two-minute version: one pose"
+    },
+    {
+     "key": "h2026-10-24h1",
+     "at": 1792816200000,
+     "title": "📖 Read",
+     "body": "Time for it, in the sofa."
+    },
+    {
+     "key": "m2026-10-24",
+     "at": 1792818000000,
+     "title": "Sat, Oct 24, 2026",
+     "body": "2 tasks due · 2 habits · 📝 Maths"
+    },
+    {
+     "key": "b2026-10-24t4",
+     "at": 1792821600000,
+     "title": "Call",
+     "body": "Starts at 9:00 AM · 1 h"
+    },
+    {
+     "key": "bk",
+     "at": 1792832400000,
+     "title": "Back up GoalTerra",
+     "body": "Your last backup is old. Open Settings and tap Back up now."
+    },
+    {
+     "key": "b2026-10-24t3",
+     "at": 1792855800000,
+     "title": "Gym",
+     "body": "Starts at 6:30 PM · 1.5 h"
+    },
+    {
+     "key": "h2026-10-25h1",
+     "at": 1792902600000,
+     "title": "📖 Read",
+     "body": "Time for it, in the sofa."
+    },
+    {
+     "key": "m2026-10-25",
+     "at": 1792904400000,
+     "title": "Sun, Oct 25, 2026",
+     "body": "3 habits · 1 class · 📝 Scored"
+    },
+    {
+     "key": "c2026-10-25c3",
+     "at": 1792921800000,
+     "title": "Art at 13:00",
+     "body": "Room A1"
+    },
+    {
+     "key": "b2026-10-26t7",
+     "at": 1792988100000,
+     "title": "Block 75",
+     "body": "Starts at 7:15 AM · 1.3 h"
+    },
+    {
+     "key": "h2026-10-26h1",
+     "at": 1792989000000,
+     "title": "📖 Read",
+     "body": "Time for it, in the sofa."
+    },
+    {
+     "key": "m2026-10-26",
+     "at": 1792990800000,
+     "title": "Mon, Oct 26, 2026",
+     "body": "1 task due · 4 habits"
+    },
+    {
+     "key": "h2026-10-26h2",
+     "at": 1793037600000,
+     "title": "Stretch",
+     "body": "Two-minute version: one pose"
+    },
+    {
+     "key": "h2026-10-27h1",
+     "at": 1793075400000,
+     "title": "📖 Read",
+     "body": "Time for it, in the sofa."
+    },
+    {
+     "key": "m2026-10-27",
+     "at": 1793077200000,
+     "title": "Tue, Oct 27, 2026",
+     "body": "3 habits"
+    },
+    {
+     "key": "h2026-10-28h1",
+     "at": 1793161800000,
+     "title": "📖 Read",
+     "body": "Time for it, in the sofa."
+    },
+    {
+     "key": "m2026-10-28",
+     "at": 1793163600000,
+     "title": "Wed, Oct 28, 2026",
+     "body": "4 habits"
+    },
+    {
+     "key": "h2026-10-28h2",
+     "at": 1793210400000,
+     "title": "Stretch",
+     "body": "Two-minute version: one pose"
+    },
+    {
+     "key": "h2026-10-29h1",
+     "at": 1793248200000,
+     "title": "📖 Read",
+     "body": "Time for it, in the sofa."
+    },
+    {
+     "key": "m2026-10-29",
+     "at": 1793250000000,
+     "title": "Thu, Oct 29, 2026",
+     "body": "3 habits"
+    }
+   ]
+  }
+ ]
+}

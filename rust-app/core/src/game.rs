@@ -221,20 +221,14 @@ fn session_xp(c: u32) -> i64 {
     SESSION_XP.get(c as usize).copied().unwrap_or(0)
 }
 
-pub fn lvl_at(cfg: &Cfg) -> [i64; 3] {
-    let l2 = if cfg.lvl2.is_finite() && cfg.lvl2 != 0.0 {
-        cfg.lvl2
-    } else {
-        3.0
-    };
-    let l3 = if cfg.lvl3.is_finite() && cfg.lvl3 != 0.0 {
-        cfg.lvl3
-    } else {
-        5.0
-    };
-    [0, l2.max(1.0) as i64, l3.max(2.0) as i64]
+pub fn lvl_at(cfg: &crate::cfg::Cfg) -> [i64; 3] {
+    [
+        0,
+        cfg.num_or("lvl2", 3.0).max(1.0) as i64,
+        cfg.num_or("lvl3", 5.0).max(2.0) as i64,
+    ]
 }
-pub fn tier_of(cfg: &Cfg, n: i64) -> u8 {
+pub fn tier_of(cfg: &crate::cfg::Cfg, n: i64) -> u8 {
     let l = lvl_at(cfg);
     if n >= l[2] {
         2
@@ -352,11 +346,7 @@ impl Game<'_> {
             Some(m) if m > 0.0 => js_round(sc / m * 100.0),
             _ => js_round(sc),
         });
-        let target = if self.s.cfg.elite_target.is_finite() && self.s.cfg.elite_target != 0.0 {
-            self.s.cfg.elite_target
-        } else {
-            60.0
-        };
+        let target = self.s.cfg.num_or("eliteTarget", 60.0);
         let state = match pct {
             Some(p) => {
                 if p as f64 >= target {
@@ -393,7 +383,7 @@ impl Game<'_> {
     }
 
     pub fn elites(&self) -> Vec<Elite> {
-        if !self.s.cfg.student {
+        if !self.s.cfg.student() {
             return vec![];
         }
         self.s.exams.iter().map(|e| self.elite_of(e)).collect()
@@ -402,7 +392,7 @@ impl Game<'_> {
     pub fn all(&self) -> Rpg {
         let s = self.s;
         let today = ds(self.today);
-        let stu = s.cfg.student;
+        let stu = s.cfg.student();
         let ctx = self.ctx();
         let mut by_day: BTreeMap<String, Vec<&Task>> = BTreeMap::new();
         for t in &s.tasks {
@@ -622,10 +612,9 @@ impl Game<'_> {
 
         // Counterattacks: replay each finished day since game mode was turned on.
         // Once a week's boss is dead it stops attacking for the rest of that week, and a knockout can never undo a win.
-        let since = if s.cfg.rpg_since.is_empty() {
-            today.clone()
-        } else {
-            s.cfg.rpg_since.clone()
+        let since = match s.cfg.rpg_since() {
+            v if v.is_empty() => today.clone(),
+            v => v,
         };
         let wmap: HashMap<&str, &Week> = weeks.iter().map(|w| (w.key.as_str(), w)).collect();
         #[derive(Default)]
