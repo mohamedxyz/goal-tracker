@@ -228,13 +228,18 @@ impl Ctx<'_> {
         if !self.good(h, &ds(d)) {
             d = add_days(d, -1);
         }
-        let mut n = 0;
+        // Never miss twice: one missed due day is forgiven, two due days in a row end the streak.
+        let (mut n, mut miss) = (0, false);
         for _ in 0..1100 {
             let k = ds(d);
             if self.good(h, &k) {
                 n += 1;
+                miss = false;
             } else if is_due(h, d) && !rest(&k) {
-                break;
+                if miss {
+                    break;
+                }
+                miss = true;
             }
             d = add_days(d, -1);
         }

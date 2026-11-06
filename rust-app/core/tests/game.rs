@@ -25,8 +25,8 @@ mod oracle {
     use goalterra_core::{backup::cfg_of, model::*};
     use serde_json::Value;
 
-    fn load() -> (Value, State) {
-        let fx: Value = serde_json::from_str(include_str!("fixtures/rpg.json")).unwrap();
+    fn load(text: &str) -> (Value, State) {
+        let fx: Value = serde_json::from_str(text).unwrap();
         let st = &fx["state"];
         let v = |k: &str| st[k].clone();
         let s = State {
@@ -56,7 +56,16 @@ mod oracle {
 
     #[test]
     fn rpg_all_matches_js() {
-        let (fx, s) = load();
+        check(include_str!("fixtures/rpg.json"), false);
+    }
+
+    #[test]
+    fn rpg_all_matches_js_with_knockouts() {
+        check(include_str!("fixtures/rpg_ko.json"), true);
+    }
+
+    fn check(text: &str, expect_ko: bool) {
+        let (fx, s) = load(text);
         let today = goalterra_core::dates::parse(fx["today"].as_str().unwrap()).unwrap();
         let tz: chrono_tz::Tz = fx["tzName"].as_str().unwrap().parse().unwrap();
         let off = move |ms: i64| {
@@ -91,6 +100,7 @@ mod oracle {
             assert_eq!(w.best, e["best"].as_i64().unwrap(), "best {ctx}");
             assert_eq!(w.won, e["won"].as_bool().unwrap(), "won {ctx}");
             assert_eq!(w.ko, e["ko"].as_i64().unwrap(), "ko {ctx}");
+            assert_eq!(w.over, e["over"].as_i64().unwrap(), "over {ctx}");
         }
         assert_eq!(a.xp, i("xp"), "xp");
         assert_eq!(a.tot_t, i("totT"));
@@ -100,9 +110,53 @@ mod oracle {
         assert_eq!(a.shields, i("shields"), "shields");
         assert_eq!(a.morale, i("morale"), "morale");
         assert_eq!(a.kos, i("kos"));
+        if expect_ko {
+            assert!(
+                a.kos > 0 && a.weeks.iter().any(|w| w.ko > 0),
+                "scenario must contain a knockout"
+            );
+        } else {
+            assert!(
+                a.weeks.iter().any(|w| w.won && w.over > 0),
+                "scenario must contain an overkill win"
+            );
+        }
         assert_eq!(a.blocked, i("blocked"));
         assert_eq!(a.hits, i("hits"));
         assert_eq!(a.tokens, i("tokens"));
+        assert_eq!(a.over_xp, i("overXp"), "overXp");
+        assert_eq!(a.streak, i("streak"), "streak");
+        assert_eq!(a.best_streak, i("bestStreak"), "bestStreak");
+        let ctx = goalterra_core::logic::Ctx {
+            s: &s,
+            today,
+            off: &off,
+        };
+        for e in fx["habits"].as_array().unwrap() {
+            let h = s
+                .habits
+                .iter()
+                .find(|h| h.id == e["id"].as_str().unwrap())
+                .unwrap();
+            assert_eq!(
+                ctx.streak(h) as i64,
+                e["streak"].as_i64().unwrap(),
+                "streak {}",
+                h.id
+            );
+            assert_eq!(
+                ctx.rate30(h) as i64,
+                e["rate30"].as_i64().unwrap(),
+                "rate30 {}",
+                h.id
+            );
+            assert_eq!(
+                ctx.week_count(h) as i64,
+                e["weekCount"].as_i64().unwrap(),
+                "weekCount {}",
+                h.id
+            );
+        }
         let dd = j["dayD"].as_object().unwrap();
         assert_eq!(a.day_d.len(), dd.len(), "dayD size");
         for (k, v) in dd {

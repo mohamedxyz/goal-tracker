@@ -107,13 +107,30 @@ fn restore_rolls_back_on_failure() {
     let path = dir.join("r.db");
     let mut s = Store::open(&path).unwrap();
     s.restore(&backup::parse(BACKUP).unwrap()).unwrap();
-    s.put("tasks", "keep", &Task { id: "keep".into(), ..Default::default() }).unwrap();
+    s.put(
+        "tasks",
+        "keep",
+        &Task {
+            id: "keep".into(),
+            ..Default::default()
+        },
+    )
+    .unwrap();
     // break the DB from outside: the restore fails halfway (after tasks were already wiped)
-    rusqlite::Connection::open(&path).unwrap().execute_batch("DROP TABLE goals;").unwrap();
+    rusqlite::Connection::open(&path)
+        .unwrap()
+        .execute_batch("DROP TABLE goals;")
+        .unwrap();
     let mut other = backup::parse(BACKUP).unwrap();
     other.tasks.clear();
     assert!(s.restore(&other).is_err());
-    let n: i64 = rusqlite::Connection::open(&path).unwrap().query_row("SELECT COUNT(*) FROM tasks", [], |r| r.get(0)).unwrap();
-    assert_eq!(n, 2, "failed restore must roll back: original task and 'keep' remain");
+    let n: i64 = rusqlite::Connection::open(&path)
+        .unwrap()
+        .query_row("SELECT COUNT(*) FROM tasks", [], |r| r.get(0))
+        .unwrap();
+    assert_eq!(
+        n, 2,
+        "failed restore must roll back: original task and 'keep' remain"
+    );
     std::fs::remove_dir_all(dir).ok();
 }

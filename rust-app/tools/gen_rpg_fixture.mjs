@@ -1,11 +1,13 @@
 // Generates core/tests/fixtures/rpg.json by running the web app's own game code (the oracle) in Node.
+// Scenarios: default (boss dies early, later quiet days are safe) and GT_SCENARIO=ko (knockouts and heal).
 // Usage: node rust-app/tools/gen_rpg_fixture.mjs   (no browser needed)
 import fs from 'fs';
 import vm from 'vm';
 import path from 'path';
 import { fileURLToPath } from 'url';
 const HERE = path.dirname(fileURLToPath(import.meta.url));
-const SRC = path.join(HERE, '..', '..', 'src', 'js');
+// GT_SRC can point at another checkout's src/js (default: this repo).
+const SRC = process.env.GT_SRC || path.join(HERE, '..', '..', 'src', 'js');
 const load = (f) => fs.readFileSync(path.join(SRC, f), 'utf8');
 // tierOf/lvlAt live in 50-coach-goals-ladder.js (which touches the DOM at load); copy only those two lines.
 const coach = load('50-coach-goals-ladder.js');
@@ -32,6 +34,9 @@ for(let i=-4;i<60;i++){const c=i<0?2:(i>=3&&i<=13)?0:Math.floor(R()*7);
   if(R()<0.2)t.focusLog=[{at:at,m:Math.floor(R()*50)}];
   if(R()<0.2)t.items=[{text:'a',done:true,dmg:7,at:at}];
   S.tasks.push(t)}}
+// Boss of last week dies on Monday; the quiet days after it must not counterattack (0.81.0 rule).
+if(SCENARIO!=='ko'){const mon=addDays(new Date(),-(((new Date().getDay()+6)%7)+7));mon.setHours(12,0,0,0);
+ for(let j=0;j<14;j++)S.tasks.push({id:'big'+j,title:'big',priority:'high',due:null,goalId:null,done:true,doneAt:mon.getTime()+j*600e3,created:mon.getTime()-3*D,items:[],pushes:[]})}
 const mkh=(id,kind,days,age,mode)=>({id,name:id,kind,mode:mode||'',target:7,group:'',days,created:now-age*D});
 S.habits.push(mkh('hb1','',[],70),mkh('hb2','',[1,3,5],50),mkh('hn1','avoid',[],45),mkh('hn2','avoid',[],30,'confirm'));
 for(const h of S.habits)for(let i=0;i<70;i++){if(h.id!=='hn1'&&i>=3&&i<=13)continue;if(h.id==='hn1'&&i>=3&&i<=13){S.logs.add(h.id+'|'+ds(addDays(new Date(),-i)));continue}if(R()<(h.kind==='avoid'&&h.mode!=='confirm'?0.06:0.7)){S.logs.add(h.id+'|'+ds(addDays(new Date(),-i)))}}
@@ -43,12 +48,13 @@ S.exams.push({id:'e1',subject:'Math',title:'E',kind:'exam',date:ds(addDays(new D
 const A=rpgAll(),T=rpgTower(),E=elites();
 ({today:TODAY(),tzName:Intl.DateTimeFormat().resolvedOptions().timeZone,
  state:{tasks:S.tasks,goals:S.goals,habits:S.habits,topics:S.topics,exams:S.exams,logs:[...S.logs],cfg:S.cfg},
- rpg:{weeks:A.weeks.map(w=>({key:w.key,keys:w.keys,tD:w.tD,hD:w.hD,sD:w.sD,fD:w.fD,total:w.total,hp:w.hp,best:w.best,won:w.won,ko:w.ko||0})),
-  xp:A.xp,totT:A.totT,totH:A.totH,totS:A.totS,clean:A.clean,shields:A.shields,morale:A.morale,kos:A.kos,blocked:A.blocked,hits:A.hits,tokens:A.tokens,dayD:A.dayD},
+ rpg:{weeks:A.weeks.map(w=>({key:w.key,keys:w.keys,tD:w.tD,hD:w.hD,sD:w.sD,fD:w.fD,total:w.total,hp:w.hp,best:w.best,won:w.won,ko:w.ko||0,over:w.over})),
+  xp:A.xp,totT:A.totT,totH:A.totH,totS:A.totS,clean:A.clean,shields:A.shields,morale:A.morale,kos:A.kos,blocked:A.blocked,hits:A.hits,tokens:A.tokens,dayD:A.dayD,overXp:A.overXp,streak:A.streak,bestStreak:A.bestStreak},
+ habits:S.habits.map(h=>({id:h.id,streak:streak(h),rate30:rate30(h),weekCount:weekCount(h)})),
  tower:{months:T.months.map(m=>({key:m.key,wins:m.wins,gd:m.gd,hp:m.hp,dmg:m.dmg,won:m.won,past:m.past})),years:T.years.map(y=>({key:y.key,gw:y.gw,ad:y.ad,hp:y.hp,dmg:y.dmg,won:y.won,past:y.past}))},
  elites:E.map(x=>({id:x.e.id,hp:x.hp,prep:x.prep,pct:x.pct,state:x.state,bonus:x.bonus}))})
 `;
-const out = vm.runInNewContext(run, { Intl, Date, Math, console, JSON, Set, Map, localStorage: { getItem: () => null, setItem() {} }, document: {}, window: {}, navigator: {} });
-const file = path.join(HERE, '..', 'core', 'tests', 'fixtures', 'rpg.json');
+const out = vm.runInNewContext(run, { SCENARIO: process.env.GT_SCENARIO || '', Intl, Date, Math, console, JSON, Set, Map, localStorage: { getItem: () => null, setItem() {} }, document: {}, window: {}, navigator: {} });
+const file = path.join(HERE, '..', 'core', 'tests', 'fixtures', process.env.GT_SCENARIO === 'ko' ? 'rpg_ko.json' : 'rpg.json');
 fs.writeFileSync(file, JSON.stringify(out, null, 1));
 console.log('wrote', file, 'weeks', out.rpg.weeks.length, 'today', out.today, 'tz', out.tzName);

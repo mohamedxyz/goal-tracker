@@ -1,6 +1,6 @@
 {
  "today": "2026-11-06",
- "tzName": "UTC",
+ "tzName": "Australia/Lord_Howe",
  "state": {
   "tasks": [
    {
@@ -11,13 +11,13 @@
     "goalId": null,
     "done": false,
     "doneAt": null,
-    "created": 1794023200199,
+    "created": 1794026315792,
     "items": [
      {
       "text": "a",
       "done": true,
       "dmg": 7,
-      "at": 1794282400199
+      "at": 1794285515792
      }
     ],
     "pushes": []
@@ -30,7 +30,7 @@
     "goalId": "gw",
     "done": false,
     "doneAt": null,
-    "created": 1794008380199,
+    "created": 1794011495792,
     "items": [],
     "pushes": [
      {
@@ -39,7 +39,7 @@
     ],
     "focusLog": [
      {
-      "at": 1794267580199,
+      "at": 1794270695792,
       "m": 33
      }
     ]
@@ -52,19 +52,19 @@
     "goalId": null,
     "done": false,
     "doneAt": null,
-    "created": 1793926000199,
+    "created": 1793929115792,
     "items": [
      {
       "text": "a",
       "done": true,
       "dmg": 7,
-      "at": 1794185200199
+      "at": 1794188315792
      }
     ],
     "pushes": [],
     "focusLog": [
      {
-      "at": 1794185200199,
+      "at": 1794188315792,
       "m": 40
      }
     ]
@@ -77,13 +77,13 @@
     "goalId": null,
     "done": false,
     "doneAt": null,
-    "created": 1793954380199,
+    "created": 1793957495792,
     "items": [
      {
       "text": "a",
       "done": true,
       "dmg": 7,
-      "at": 1794213580199
+      "at": 1794216695792
      }
     ],
     "pushes": []
@@ -96,7 +96,7 @@
     "goalId": null,
     "done": false,
     "doneAt": null,
-    "created": 1793857600199,
+    "created": 1793860715792,
     "items": [],
     "pushes": []
    },
@@ -108,7 +108,7 @@
     "goalId": null,
     "done": false,
     "doneAt": null,
-    "created": 1793860780199,
+    "created": 1793863895792,
     "items": [],
     "pushes": []
    },
@@ -120,7 +120,7 @@
     "goalId": "gw",
     "done": false,
     "doneAt": null,
-    "created": 1793764000199,
+    "created": 1793767115792,
     "items": [],
     "pushes": []
    },
@@ -132,7 +132,7 @@
     "goalId": null,
     "done": false,
     "doneAt": null,
-    "created": 1794026320199,
+    "created": 1794029435792,
     "items": [],
     "pushes": []
    },
@@ -143,8 +143,8 @@
     "due": "2026-11-07",
     "goalId": null,
     "done": true,
-    "doneAt": 1793940400199,
-    "created": 1793940340199,
+    "doneAt": 1793943515792,
+    "created": 1793943455792,
     "items": [],
     "pushes": [],
     "dmg": 9
@@ -156,8 +156,8 @@
     "due": "2026-11-07",
     "goalId": null,
     "done": true,
-    "doneAt": 1793936380199,
-    "created": 1793677180199,
+    "doneAt": 1793939495792,
+    "created": 1793680295792,
     "items": [],
     "pushes": [
      {
@@ -172,8 +172,8 @@
     "due": "2026-11-06",
     "goalId": null,
     "done": true,
-    "doneAt": 1793925160199,
-    "created": 1793665960199,
+    "doneAt": 1793928275792,
+    "created": 1793669075792,
     "items": [],
     "pushes": [
      {
@@ -182,7 +182,7 @@
     ],
     "focusLog": [
      {
-      "at": 1793925160199,
+      "at": 1793928275792,
       "m": 49
      }
     ]
@@ -194,8 +194,8 @@
     "due": null,
     "goalId": null,
     "done": true,
-    "doneAt": 1793935540199,
-    "created": 1793676340199,
+    "doneAt": 1793938655792,
+    "created": 1793679455792,
     "items": [],
     "pushes": []
    },
@@ -206,8 +206,8 @@
     "due": "2026-11-07",
     "goalId": null,
     "done": true,
-    "doneAt": 1793920720199,
-    "created": 1793661520199,
+    "doneAt": 1793923835792,
+    "created": 1793664635792,
     "items": [],
     "pushes": []
    },
@@ -219,7 +219,7 @@
     "goalId": "gw",
     "done": false,
     "doneAt": null,
-    "created": 1793923840199,
+    "created": 1793926955792,
     "items": [],
     "pushes": []
    },
@@ -230,8 +230,8 @@
     "due": "2026-11-06",
     "goalId": null,
     "done": true,
-    "doneAt": 1793864800199,
-    "created": 1793605600199,
+    "doneAt": 1793867915792,
+    "created": 1793608715792,
     "items": [],
     "pushes": [],
     "dmg": 25
@@ -243,14 +243,14 @@
     "due": "2026-11-05",
     "goalId": null,
     "done": true,
-    "doneAt": 1793839180199,
-    "created": 1793579980199,
+    "doneAt": 1793842295792,
+    "created": 1793583095792,
     "items": [
      {
       "text": "a",
       "done": true,
       "dmg": 7,
-      "at": 1793839180199
+      "at": 1793842295792
      }
     ],
     "pushes": []
@@ -262,8 +262,8 @@
     "due": "2026-11-06",
     "goalId": null,
     "done": true,
-    "doneAt": 1793845960199,
-    "created": 1793845900199,
+    "doneAt": 1793849075792,
+    "created": 1793849015792,
     "items": [],
     "pushes": []
    },
@@ -274,13 +274,13 @@
     "due": "2026-11-03",
     "goalId": "gw",
     "done": true,
-    "doneAt": 1793753200199,
-    "created": 1793494000199,
+    "doneAt": 1793756315792,
+    "created": 1793497115792,
     "items": [],
     "pushes": [],
     "focusLog": [
      {
-      "at": 1793753200199,
+      "at": 1793756315792,
       "m": 20
      }
     ]
@@ -292,14 +292,14 @@
     "due": "2026-11-04",
     "goalId": null,
     "done": true,
-    "doneAt": 1793777980199,
-    "created": 1793518780199,
+    "doneAt": 1793781095792,
+    "created": 1793521895792,
     "items": [
      {
       "text": "a",
       "done": true,
       "dmg": 7,
-      "at": 1793777980199
+      "at": 1793781095792
      }
     ],
     "pushes": [],
@@ -313,8 +313,8 @@
     "due": "2026-11-05",
     "goalId": "gw",
     "done": true,
-    "doneAt": 1793781160199,
-    "created": 1793781100199,
+    "doneAt": 1793784275792,
+    "created": 1793784215792,
     "items": [],
     "pushes": [
      {
@@ -331,8 +331,8 @@
     "due": "2026-11-04",
     "goalId": null,
     "done": true,
-    "doneAt": 1793773540199,
-    "created": 1793514340199,
+    "doneAt": 1793776655792,
+    "created": 1793517455792,
     "items": [],
     "pushes": [],
     "dmg": 9
@@ -344,8 +344,8 @@
     "due": "2026-11-03",
     "goalId": null,
     "done": true,
-    "doneAt": 1793755120199,
-    "created": 1793495920199,
+    "doneAt": 1793758235792,
+    "created": 1793499035792,
     "items": [],
     "pushes": []
    },
@@ -357,7 +357,7 @@
     "goalId": null,
     "done": false,
     "doneAt": null,
-    "created": 1792468000199,
+    "created": 1792471115792,
     "items": [],
     "pushes": []
    },
@@ -369,13 +369,13 @@
     "goalId": null,
     "done": false,
     "doneAt": null,
-    "created": 1792474780199,
+    "created": 1792477895792,
     "items": [
      {
       "text": "a",
       "done": true,
       "dmg": 7,
-      "at": 1792733980199
+      "at": 1792737095792
      }
     ],
     "pushes": []
@@ -387,14 +387,14 @@
     "due": "2026-10-24",
     "goalId": "gw",
     "done": true,
-    "doneAt": 1792744360199,
-    "created": 1792485160199,
+    "doneAt": 1792747475792,
+    "created": 1792488275792,
     "items": [
      {
       "text": "a",
       "done": true,
       "dmg": 7,
-      "at": 1792744360199
+      "at": 1792747475792
      }
     ],
     "pushes": [],
@@ -408,14 +408,14 @@
     "due": null,
     "goalId": null,
     "done": true,
-    "doneAt": 1792644400199,
-    "created": 1792385200199,
+    "doneAt": 1792647515792,
+    "created": 1792388315792,
     "items": [
      {
       "text": "a",
       "done": true,
       "dmg": 7,
-      "at": 1792644400199
+      "at": 1792647515792
      }
     ],
     "pushes": []
@@ -427,8 +427,8 @@
     "due": "2026-10-21",
     "goalId": null,
     "done": true,
-    "doneAt": 1792640380199,
-    "created": 1792381180199,
+    "doneAt": 1792643495792,
+    "created": 1792384295792,
     "items": [],
     "pushes": []
    },
@@ -440,7 +440,7 @@
     "goalId": "gw",
     "done": false,
     "doneAt": null,
-    "created": 1792539940199,
+    "created": 1792543055792,
     "items": [],
     "pushes": []
    },
@@ -451,8 +451,8 @@
     "due": null,
     "goalId": null,
     "done": true,
-    "doneAt": 1792568380199,
-    "created": 1792309180199,
+    "doneAt": 1792571495792,
+    "created": 1792312295792,
     "items": [],
     "pushes": [],
     "dmg": 7
@@ -464,8 +464,8 @@
     "due": "2026-10-22",
     "goalId": null,
     "done": true,
-    "doneAt": 1792564360199,
-    "created": 1792564300199,
+    "doneAt": 1792567475792,
+    "created": 1792567415792,
     "items": [],
     "pushes": []
    },
@@ -476,8 +476,8 @@
     "due": "2026-10-20",
     "goalId": null,
     "done": true,
-    "doneAt": 1792563940199,
-    "created": 1792304740199,
+    "doneAt": 1792567055792,
+    "created": 1792307855792,
     "items": [],
     "pushes": []
    },
@@ -488,8 +488,8 @@
     "due": "2026-10-20",
     "goalId": null,
     "done": true,
-    "doneAt": 1792468000199,
-    "created": 1792208800199,
+    "doneAt": 1792471115792,
+    "created": 1792211915792,
     "items": [],
     "pushes": [
      {
@@ -505,7 +505,7 @@
     "goalId": null,
     "done": false,
     "doneAt": null,
-    "created": 1792204780199,
+    "created": 1792207895792,
     "items": [],
     "pushes": [
      {
@@ -520,8 +520,8 @@
     "due": "2026-10-20",
     "goalId": null,
     "done": true,
-    "doneAt": 1792459960199,
-    "created": 1792200760199,
+    "doneAt": 1792463075792,
+    "created": 1792203875792,
     "items": [],
     "pushes": [
      {
@@ -536,8 +536,8 @@
     "due": "2026-10-20",
     "goalId": null,
     "done": true,
-    "doneAt": 1792470340199,
-    "created": 1792470280199,
+    "doneAt": 1792473455792,
+    "created": 1792473395792,
     "items": [],
     "pushes": [
      {
@@ -553,13 +553,13 @@
     "goalId": null,
     "done": false,
     "doneAt": null,
-    "created": 1792136800199,
+    "created": 1792139915792,
     "items": [
      {
       "text": "a",
       "done": true,
       "dmg": 7,
-      "at": 1792396000199
+      "at": 1792399115792
      }
     ],
     "pushes": [
@@ -569,7 +569,7 @@
     ],
     "focusLog": [
      {
-      "at": 1792396000199,
+      "at": 1792399115792,
       "m": 22
      }
     ]
@@ -582,13 +582,13 @@
     "goalId": null,
     "done": false,
     "doneAt": null,
-    "created": 1792377520199,
+    "created": 1792380635792,
     "items": [
      {
       "text": "a",
       "done": true,
       "dmg": 7,
-      "at": 1792377580199
+      "at": 1792380695792
      }
     ],
     "pushes": [
@@ -604,14 +604,14 @@
     "due": "2026-10-18",
     "goalId": null,
     "done": true,
-    "doneAt": 1792369960199,
-    "created": 1792369900199,
+    "doneAt": 1792373075792,
+    "created": 1792373015792,
     "items": [
      {
       "text": "a",
       "done": true,
       "dmg": 7,
-      "at": 1792369960199
+      "at": 1792373075792
      }
     ],
     "pushes": [
@@ -622,7 +622,7 @@
     "dmg": 1,
     "focusLog": [
      {
-      "at": 1792369960199,
+      "at": 1792373075792,
       "m": 22
      }
     ]
@@ -635,13 +635,13 @@
     "goalId": null,
     "done": false,
     "doneAt": null,
-    "created": 1792394680199,
+    "created": 1792397795792,
     "items": [
      {
       "text": "a",
       "done": true,
       "dmg": 7,
-      "at": 1792394740199
+      "at": 1792397855792
      }
     ],
     "pushes": []
@@ -653,8 +653,8 @@
     "due": "2026-10-20",
     "goalId": null,
     "done": true,
-    "doneAt": 1792365520199,
-    "created": 1792106320199,
+    "doneAt": 1792368635792,
+    "created": 1792109435792,
     "items": [],
     "pushes": []
    },
@@ -665,8 +665,8 @@
     "due": null,
     "goalId": null,
     "done": true,
-    "doneAt": 1792386700199,
-    "created": 1792386640199,
+    "doneAt": 1792389815792,
+    "created": 1792389755792,
     "items": [],
     "pushes": []
    },
@@ -678,13 +678,13 @@
     "goalId": "gw",
     "done": false,
     "doneAt": null,
-    "created": 1792032400199,
+    "created": 1792035515792,
     "items": [
      {
       "text": "a",
       "done": true,
       "dmg": 7,
-      "at": 1792291600199
+      "at": 1792294715792
      }
     ],
     "pushes": []
@@ -696,14 +696,14 @@
     "due": "2026-10-18",
     "goalId": null,
     "done": true,
-    "doneAt": 1792287580199,
-    "created": 1792028380199,
+    "doneAt": 1792290695792,
+    "created": 1792031495792,
     "items": [
      {
       "text": "a",
       "done": true,
       "dmg": 7,
-      "at": 1792287580199
+      "at": 1792290695792
      }
     ],
     "pushes": []
@@ -715,14 +715,14 @@
     "due": "2026-10-19",
     "goalId": null,
     "done": true,
-    "doneAt": 1792294360199,
-    "created": 1792294300199,
+    "doneAt": 1792297475792,
+    "created": 1792297415792,
     "items": [
      {
       "text": "a",
       "done": true,
       "dmg": 7,
-      "at": 1792294360199
+      "at": 1792297475792
      }
     ],
     "pushes": [],
@@ -730,7 +730,7 @@
     "crit": true,
     "focusLog": [
      {
-      "at": 1792294360199,
+      "at": 1792297475792,
       "m": 36
      }
     ]
@@ -742,8 +742,8 @@
     "due": "2026-10-19",
     "goalId": null,
     "done": true,
-    "doneAt": 1792293940199,
-    "created": 1792034740199,
+    "doneAt": 1792297055792,
+    "created": 1792037855792,
     "items": [],
     "pushes": []
    },
@@ -754,8 +754,8 @@
     "due": "2026-10-17",
     "goalId": null,
     "done": true,
-    "doneAt": 1792226800199,
-    "created": 1791967600199,
+    "doneAt": 1792229915792,
+    "created": 1791970715792,
     "items": [],
     "pushes": []
    },
@@ -766,8 +766,8 @@
     "due": null,
     "goalId": null,
     "done": true,
-    "doneAt": 1792222780199,
-    "created": 1791963580199,
+    "doneAt": 1792225895792,
+    "created": 1791966695792,
     "items": [],
     "pushes": []
    },
@@ -778,14 +778,14 @@
     "due": "2026-10-18",
     "goalId": "gw",
     "done": true,
-    "doneAt": 1792193560199,
-    "created": 1791934360199,
+    "doneAt": 1792196675792,
+    "created": 1791937475792,
     "items": [
      {
       "text": "a",
       "done": true,
       "dmg": 7,
-      "at": 1792193560199
+      "at": 1792196675792
      }
     ],
     "pushes": []
@@ -797,20 +797,20 @@
     "due": "2026-10-16",
     "goalId": null,
     "done": true,
-    "doneAt": 1792211140199,
-    "created": 1791951940199,
+    "doneAt": 1792214255792,
+    "created": 1791955055792,
     "items": [
      {
       "text": "a",
       "done": true,
       "dmg": 7,
-      "at": 1792211140199
+      "at": 1792214255792
      }
     ],
     "pushes": [],
     "focusLog": [
      {
-      "at": 1792211140199,
+      "at": 1792214255792,
       "m": 11
      }
     ]
@@ -822,14 +822,14 @@
     "due": "2026-10-15",
     "goalId": null,
     "done": true,
-    "doneAt": 1792118800199,
-    "created": 1791859600199,
+    "doneAt": 1792121915792,
+    "created": 1791862715792,
     "items": [],
     "pushes": [],
     "dmg": 22,
     "focusLog": [
      {
-      "at": 1792118800199,
+      "at": 1792121915792,
       "m": 19
      }
     ]
@@ -841,14 +841,14 @@
     "due": "2026-10-17",
     "goalId": null,
     "done": true,
-    "doneAt": 1792136380199,
-    "created": 1791877180199,
+    "doneAt": 1792139495792,
+    "created": 1791880295792,
     "items": [
      {
       "text": "a",
       "done": true,
       "dmg": 7,
-      "at": 1792136380199
+      "at": 1792139495792
      }
     ],
     "pushes": []
@@ -860,8 +860,8 @@
     "due": "2026-10-15",
     "goalId": null,
     "done": true,
-    "doneAt": 1792114360199,
-    "created": 1791855160199,
+    "doneAt": 1792117475792,
+    "created": 1791858275792,
     "items": [],
     "pushes": []
    },
@@ -872,8 +872,8 @@
     "due": null,
     "goalId": null,
     "done": true,
-    "doneAt": 1792121140199,
-    "created": 1791861940199,
+    "doneAt": 1792124255792,
+    "created": 1791865055792,
     "items": [],
     "pushes": []
    },
@@ -884,8 +884,8 @@
     "due": "2026-10-13",
     "goalId": null,
     "done": true,
-    "doneAt": 1791953200199,
-    "created": 1791694000199,
+    "doneAt": 1791956315792,
+    "created": 1791697115792,
     "items": [],
     "pushes": []
    },
@@ -896,8 +896,8 @@
     "due": "2026-10-13",
     "goalId": null,
     "done": true,
-    "doneAt": 1791856000199,
-    "created": 1791855940199,
+    "doneAt": 1791859115792,
+    "created": 1791859055792,
     "items": [],
     "pushes": [
      {
@@ -912,8 +912,8 @@
     "due": "2026-10-12",
     "goalId": null,
     "done": true,
-    "doneAt": 1791877180199,
-    "created": 1791617980199,
+    "doneAt": 1791880295792,
+    "created": 1791621095792,
     "items": [],
     "pushes": []
    },
@@ -924,20 +924,20 @@
     "due": "2026-10-13",
     "goalId": null,
     "done": true,
-    "doneAt": 1791847960199,
-    "created": 1791588760199,
+    "doneAt": 1791851075792,
+    "created": 1791591875792,
     "items": [
      {
       "text": "a",
       "done": true,
       "dmg": 7,
-      "at": 1791847960199
+      "at": 1791851075792
      }
     ],
     "pushes": [],
     "focusLog": [
      {
-      "at": 1791847960199,
+      "at": 1791851075792,
       "m": 9
      }
     ]
@@ -949,14 +949,14 @@
     "due": null,
     "goalId": null,
     "done": true,
-    "doneAt": 1791865540199,
-    "created": 1791606340199,
+    "doneAt": 1791868655792,
+    "created": 1791609455792,
     "items": [
      {
       "text": "a",
       "done": true,
       "dmg": 7,
-      "at": 1791865540199
+      "at": 1791868655792
      }
     ],
     "pushes": []
@@ -968,8 +968,8 @@
     "due": "2026-10-13",
     "goalId": null,
     "done": true,
-    "doneAt": 1791791200199,
-    "created": 1791532000199,
+    "doneAt": 1791794315792,
+    "created": 1791535115792,
     "items": [],
     "pushes": [],
     "dmg": 23,
@@ -982,8 +982,8 @@
     "due": "2026-10-10",
     "goalId": "gw",
     "done": true,
-    "doneAt": 1791686800199,
-    "created": 1791427600199,
+    "doneAt": 1791689915792,
+    "created": 1791430715792,
     "items": [],
     "pushes": [
      {
@@ -998,8 +998,8 @@
     "due": null,
     "goalId": null,
     "done": true,
-    "doneAt": 1791686380199,
-    "created": 1791686320199,
+    "doneAt": 1791689495792,
+    "created": 1791689435792,
     "items": [],
     "pushes": [],
     "dmg": 18
@@ -1011,8 +1011,8 @@
     "due": "2026-10-11",
     "goalId": "gw",
     "done": true,
-    "doneAt": 1791685960199,
-    "created": 1791426760199,
+    "doneAt": 1791689075792,
+    "created": 1791429875792,
     "items": [],
     "pushes": [
      {
@@ -1028,7 +1028,7 @@
     "goalId": null,
     "done": false,
     "doneAt": null,
-    "created": 1791348400199,
+    "created": 1791351515792,
     "items": [],
     "pushes": []
    },
@@ -1040,7 +1040,7 @@
     "goalId": "gw",
     "done": false,
     "doneAt": null,
-    "created": 1791344380199,
+    "created": 1791347495792,
     "items": [],
     "pushes": []
    },
@@ -1051,13 +1051,13 @@
     "due": null,
     "goalId": null,
     "done": true,
-    "doneAt": 1791613960199,
-    "created": 1791354760199,
+    "doneAt": 1791617075792,
+    "created": 1791357875792,
     "items": [],
     "pushes": [],
     "focusLog": [
      {
-      "at": 1791613960199,
+      "at": 1791617075792,
       "m": 8
      }
     ]
@@ -1069,8 +1069,8 @@
     "due": "2026-10-09",
     "goalId": null,
     "done": true,
-    "doneAt": 1791617140199,
-    "created": 1791357940199,
+    "doneAt": 1791620255792,
+    "created": 1791361055792,
     "items": [],
     "pushes": [
      {
@@ -1085,8 +1085,8 @@
     "due": "2026-10-09",
     "goalId": null,
     "done": true,
-    "doneAt": 1791609520199,
-    "created": 1791350320199,
+    "doneAt": 1791612635792,
+    "created": 1791353435792,
     "items": [],
     "pushes": []
    },
@@ -1097,8 +1097,8 @@
     "due": "2026-10-08",
     "goalId": null,
     "done": true,
-    "doneAt": 1791535600199,
-    "created": 1791276400199,
+    "doneAt": 1791538715792,
+    "created": 1791279515792,
     "items": [],
     "pushes": []
    },
@@ -1110,7 +1110,7 @@
     "goalId": null,
     "done": false,
     "doneAt": null,
-    "created": 1791254380199,
+    "created": 1791257495792,
     "items": [],
     "pushes": []
    },
@@ -1122,7 +1122,7 @@
     "goalId": null,
     "done": false,
     "doneAt": null,
-    "created": 1791246760199,
+    "created": 1791249875792,
     "items": [],
     "pushes": [
      {
@@ -1137,8 +1137,8 @@
     "due": null,
     "goalId": null,
     "done": true,
-    "doneAt": 1791516340199,
-    "created": 1791257140199,
+    "doneAt": 1791519455792,
+    "created": 1791260255792,
     "items": [],
     "pushes": [],
     "dmg": 6
@@ -1150,14 +1150,14 @@
     "due": "2026-10-09",
     "goalId": null,
     "done": true,
-    "doneAt": 1791505120199,
-    "created": 1791245920199,
+    "doneAt": 1791508235792,
+    "created": 1791249035792,
     "items": [
      {
       "text": "a",
       "done": true,
       "dmg": 7,
-      "at": 1791505120199
+      "at": 1791508235792
      }
     ],
     "pushes": []
@@ -1169,8 +1169,8 @@
     "due": "2026-10-07",
     "goalId": null,
     "done": true,
-    "doneAt": 1791362800199,
-    "created": 1791362740199,
+    "doneAt": 1791365915792,
+    "created": 1791365855792,
     "items": [],
     "pushes": [],
     "dmg": 29,
@@ -1183,8 +1183,8 @@
     "due": "2026-10-07",
     "goalId": null,
     "done": true,
-    "doneAt": 1791333580199,
-    "created": 1791074380199,
+    "doneAt": 1791336695792,
+    "created": 1791077495792,
     "items": [],
     "pushes": [
      {
@@ -1193,7 +1193,7 @@
     ],
     "focusLog": [
      {
-      "at": 1791333580199,
+      "at": 1791336695792,
       "m": 47
      }
     ]
@@ -1205,8 +1205,8 @@
     "due": "2026-10-08",
     "goalId": null,
     "done": true,
-    "doneAt": 1791336760199,
-    "created": 1791077560199,
+    "doneAt": 1791339875792,
+    "created": 1791080675792,
     "items": [],
     "pushes": [
      {
@@ -1221,8 +1221,8 @@
     "due": "2026-10-08",
     "goalId": null,
     "done": true,
-    "doneAt": 1791354340199,
-    "created": 1791354280199,
+    "doneAt": 1791357455792,
+    "created": 1791357395792,
     "items": [],
     "pushes": []
    },
@@ -1234,7 +1234,7 @@
     "goalId": null,
     "done": false,
     "doneAt": null,
-    "created": 1791073120199,
+    "created": 1791076235792,
     "items": [],
     "pushes": []
    },
@@ -1245,8 +1245,8 @@
     "due": "2026-10-07",
     "goalId": null,
     "done": true,
-    "doneAt": 1791258400199,
-    "created": 1790999200199,
+    "doneAt": 1791261515792,
+    "created": 1791002315792,
     "items": [],
     "pushes": [],
     "dmg": 20
@@ -1258,13 +1258,13 @@
     "due": null,
     "goalId": null,
     "done": true,
-    "doneAt": 1791268780199,
-    "created": 1791009580199,
+    "doneAt": 1791271895792,
+    "created": 1791012695792,
     "items": [],
     "pushes": [],
     "focusLog": [
      {
-      "at": 1791268780199,
+      "at": 1791271895792,
       "m": 14
      }
     ]
@@ -1276,8 +1276,8 @@
     "due": null,
     "goalId": null,
     "done": true,
-    "doneAt": 1791243160199,
-    "created": 1790983960199,
+    "doneAt": 1791246275792,
+    "created": 1790987075792,
     "items": [],
     "pushes": []
    },
@@ -1288,14 +1288,14 @@
     "due": "2026-10-07",
     "goalId": null,
     "done": true,
-    "doneAt": 1791257140199,
-    "created": 1790997940199,
+    "doneAt": 1791260255792,
+    "created": 1791001055792,
     "items": [
      {
       "text": "a",
       "done": true,
       "dmg": 7,
-      "at": 1791257140199
+      "at": 1791260255792
      }
     ],
     "pushes": [],
@@ -1308,8 +1308,8 @@
     "due": "2026-10-07",
     "goalId": null,
     "done": true,
-    "doneAt": 1791271120199,
-    "created": 1791011920199,
+    "doneAt": 1791274235792,
+    "created": 1791015035792,
     "items": [],
     "pushes": [],
     "dmg": 4
@@ -1321,14 +1321,14 @@
     "due": "2026-10-07",
     "goalId": null,
     "done": true,
-    "doneAt": 1791263500199,
-    "created": 1791263440199,
+    "doneAt": 1791266615792,
+    "created": 1791266555792,
     "items": [
      {
       "text": "a",
       "done": true,
       "dmg": 7,
-      "at": 1791263500199
+      "at": 1791266615792
      }
     ],
     "pushes": [
@@ -1346,7 +1346,7 @@
     "goalId": "gw",
     "done": false,
     "doneAt": null,
-    "created": 1791013540199,
+    "created": 1791016655792,
     "items": [],
     "pushes": []
    },
@@ -1357,8 +1357,8 @@
     "due": null,
     "goalId": null,
     "done": true,
-    "doneAt": 1790909200199,
-    "created": 1790650000199,
+    "doneAt": 1790912315792,
+    "created": 1790653115792,
     "items": [],
     "pushes": []
    },
@@ -1369,8 +1369,8 @@
     "due": null,
     "goalId": null,
     "done": true,
-    "doneAt": 1790908780199,
-    "created": 1790649580199,
+    "doneAt": 1790911895792,
+    "created": 1790652695792,
     "items": [],
     "pushes": []
    },
@@ -1382,7 +1382,7 @@
     "goalId": "gw",
     "done": false,
     "doneAt": null,
-    "created": 1790652760199,
+    "created": 1790655875792,
     "items": [],
     "pushes": []
    },
@@ -1393,8 +1393,8 @@
     "due": "2026-10-03",
     "goalId": null,
     "done": true,
-    "doneAt": 1790918740199,
-    "created": 1790659540199,
+    "doneAt": 1790921855792,
+    "created": 1790662655792,
     "items": [],
     "pushes": []
    },
@@ -1405,15 +1405,15 @@
     "due": "2026-10-02",
     "goalId": null,
     "done": true,
-    "doneAt": 1790822800199,
-    "created": 1790563600199,
+    "doneAt": 1790825915792,
+    "created": 1790566715792,
     "items": [],
     "pushes": [],
     "dmg": 28,
     "crit": true,
     "focusLog": [
      {
-      "at": 1790822800199,
+      "at": 1790825915792,
       "m": 20
      }
     ]
@@ -1425,14 +1425,14 @@
     "due": "2026-09-30",
     "goalId": null,
     "done": true,
-    "doneAt": 1790815180199,
-    "created": 1790555980199,
+    "doneAt": 1790818295792,
+    "created": 1790559095792,
     "items": [
      {
       "text": "a",
       "done": true,
       "dmg": 7,
-      "at": 1790815180199
+      "at": 1790818295792
      }
     ],
     "pushes": [
@@ -1449,14 +1449,14 @@
     "due": "2026-10-01",
     "goalId": "gw",
     "done": true,
-    "doneAt": 1790825560199,
-    "created": 1790825500199,
+    "doneAt": 1790828675792,
+    "created": 1790828615792,
     "items": [
      {
       "text": "a",
       "done": true,
       "dmg": 7,
-      "at": 1790825560199
+      "at": 1790828675792
      }
     ],
     "pushes": []
@@ -1468,8 +1468,8 @@
     "due": null,
     "goalId": null,
     "done": true,
-    "doneAt": 1790843140199,
-    "created": 1790583940199,
+    "doneAt": 1790846255792,
+    "created": 1790587055792,
     "items": [],
     "pushes": [
      {
@@ -1484,8 +1484,8 @@
     "due": "2026-09-30",
     "goalId": null,
     "done": true,
-    "doneAt": 1790736400199,
-    "created": 1790477200199,
+    "doneAt": 1790739515792,
+    "created": 1790480315792,
     "items": [],
     "pushes": [
      {
@@ -1500,13 +1500,13 @@
     "due": null,
     "goalId": null,
     "done": true,
-    "doneAt": 1790732380199,
-    "created": 1790473180199,
+    "doneAt": 1790735495792,
+    "created": 1790476295792,
     "items": [],
     "pushes": [],
     "focusLog": [
      {
-      "at": 1790732380199,
+      "at": 1790735495792,
       "m": 49
      }
     ]
@@ -1519,12 +1519,12 @@
     "goalId": null,
     "done": false,
     "doneAt": null,
-    "created": 1790494360199,
+    "created": 1790497475792,
     "items": [],
     "pushes": [],
     "focusLog": [
      {
-      "at": 1790753560199,
+      "at": 1790756675792,
       "m": 10
      }
     ]
@@ -1536,8 +1536,8 @@
     "due": "2026-10-01",
     "goalId": null,
     "done": true,
-    "doneAt": 1790749540199,
-    "created": 1790490340199,
+    "doneAt": 1790752655792,
+    "created": 1790493455792,
     "items": [],
     "pushes": [
      {
@@ -1552,8 +1552,8 @@
     "due": "2026-09-30",
     "goalId": null,
     "done": true,
-    "doneAt": 1790727520199,
-    "created": 1790468320199,
+    "doneAt": 1790730635792,
+    "created": 1790471435792,
     "items": [],
     "pushes": [],
     "dmg": 7
@@ -1565,8 +1565,8 @@
     "due": "2026-10-01",
     "goalId": null,
     "done": true,
-    "doneAt": 1790730700199,
-    "created": 1790471500199,
+    "doneAt": 1790733815792,
+    "created": 1790474615792,
     "items": [],
     "pushes": [],
     "dmg": 18
@@ -1579,19 +1579,19 @@
     "goalId": null,
     "done": false,
     "doneAt": null,
-    "created": 1790398000199,
+    "created": 1790401115792,
     "items": [
      {
       "text": "a",
       "done": true,
       "dmg": 7,
-      "at": 1790657200199
+      "at": 1790660315792
      }
     ],
     "pushes": [],
     "focusLog": [
      {
-      "at": 1790657200199,
+      "at": 1790660315792,
       "m": 3
      }
     ]
@@ -1603,14 +1603,14 @@
     "due": "2026-09-28",
     "goalId": null,
     "done": true,
-    "doneAt": 1790663980199,
-    "created": 1790404780199,
+    "doneAt": 1790667095792,
+    "created": 1790407895792,
     "items": [
      {
       "text": "a",
       "done": true,
       "dmg": 7,
-      "at": 1790663980199
+      "at": 1790667095792
      }
     ],
     "pushes": []
@@ -1622,8 +1622,8 @@
     "due": "2026-09-29",
     "goalId": null,
     "done": true,
-    "doneAt": 1790570800199,
-    "created": 1790311600199,
+    "doneAt": 1790573915792,
+    "created": 1790314715792,
     "items": [],
     "pushes": []
    },
@@ -1634,13 +1634,13 @@
     "due": "2026-09-29",
     "goalId": null,
     "done": true,
-    "doneAt": 1790559580199,
-    "created": 1790300380199,
+    "doneAt": 1790562695792,
+    "created": 1790303495792,
     "items": [],
     "pushes": [],
     "focusLog": [
      {
-      "at": 1790559580199,
+      "at": 1790562695792,
       "m": 47
      }
     ]
@@ -1652,21 +1652,21 @@
     "due": "2026-09-28",
     "goalId": null,
     "done": true,
-    "doneAt": 1790580760199,
-    "created": 1790321560199,
+    "doneAt": 1790583875792,
+    "created": 1790324675792,
     "items": [
      {
       "text": "a",
       "done": true,
       "dmg": 7,
-      "at": 1790580760199
+      "at": 1790583875792
      }
     ],
     "pushes": [],
     "dmg": 24,
     "focusLog": [
      {
-      "at": 1790580760199,
+      "at": 1790583875792,
       "m": 16
      }
     ]
@@ -1678,8 +1678,8 @@
     "due": "2026-09-27",
     "goalId": null,
     "done": true,
-    "doneAt": 1790470000199,
-    "created": 1790210800199,
+    "doneAt": 1790473115792,
+    "created": 1790213915792,
     "items": [],
     "pushes": [
      {
@@ -1694,8 +1694,8 @@
     "due": null,
     "goalId": null,
     "done": true,
-    "doneAt": 1790473180199,
-    "created": 1790213980199,
+    "doneAt": 1790476295792,
+    "created": 1790217095792,
     "items": [],
     "pushes": [
      {
@@ -1704,7 +1704,7 @@
     ],
     "focusLog": [
      {
-      "at": 1790473180199,
+      "at": 1790476295792,
       "m": 36
      }
     ]
@@ -1716,8 +1716,8 @@
     "due": null,
     "goalId": null,
     "done": true,
-    "doneAt": 1790469160199,
-    "created": 1790209960199,
+    "doneAt": 1790472275792,
+    "created": 1790213075792,
     "items": [],
     "pushes": [
      {
@@ -1733,8 +1733,8 @@
     "due": "2026-09-27",
     "goalId": null,
     "done": true,
-    "doneAt": 1790390800199,
-    "created": 1790131600199,
+    "doneAt": 1790393915792,
+    "created": 1790134715792,
     "items": [],
     "pushes": [
      {
@@ -1749,8 +1749,8 @@
     "due": null,
     "goalId": null,
     "done": true,
-    "doneAt": 1790404780199,
-    "created": 1790145580199,
+    "doneAt": 1790407895792,
+    "created": 1790148695792,
     "items": [],
     "pushes": []
    },
@@ -1761,8 +1761,8 @@
     "due": null,
     "goalId": null,
     "done": true,
-    "doneAt": 1790379160199,
-    "created": 1790119960199,
+    "doneAt": 1790382275792,
+    "created": 1790123075792,
     "items": [],
     "pushes": [
      {
@@ -1777,14 +1777,14 @@
     "due": "2026-09-26",
     "goalId": null,
     "done": true,
-    "doneAt": 1790378740199,
-    "created": 1790119540199,
+    "doneAt": 1790381855792,
+    "created": 1790122655792,
     "items": [
      {
       "text": "a",
       "done": true,
       "dmg": 7,
-      "at": 1790378740199
+      "at": 1790381855792
      }
     ],
     "pushes": []
@@ -1796,8 +1796,8 @@
     "due": "2026-09-26",
     "goalId": null,
     "done": true,
-    "doneAt": 1790410720199,
-    "created": 1790151520199,
+    "doneAt": 1790413835792,
+    "created": 1790154635792,
     "items": [],
     "pushes": []
    },
@@ -1809,7 +1809,7 @@
     "goalId": null,
     "done": false,
     "doneAt": null,
-    "created": 1789955200199,
+    "created": 1789958315792,
     "items": [],
     "pushes": []
    },
@@ -1820,8 +1820,8 @@
     "due": "2026-09-24",
     "goalId": null,
     "done": true,
-    "doneAt": 1790128000199,
-    "created": 1789868800199,
+    "doneAt": 1790131115792,
+    "created": 1789871915792,
     "items": [],
     "pushes": []
    },
@@ -1832,14 +1832,14 @@
     "due": "2026-09-23",
     "goalId": null,
     "done": true,
-    "doneAt": 1790152780199,
-    "created": 1789893580199,
+    "doneAt": 1790155895792,
+    "created": 1789896695792,
     "items": [
      {
       "text": "a",
       "done": true,
       "dmg": 7,
-      "at": 1790152780199
+      "at": 1790155895792
      }
     ],
     "pushes": []
@@ -1851,8 +1851,8 @@
     "due": "2026-09-24",
     "goalId": null,
     "done": true,
-    "doneAt": 1790134360199,
-    "created": 1790134300199,
+    "doneAt": 1790137475792,
+    "created": 1790137415792,
     "items": [],
     "pushes": []
    },
@@ -1863,8 +1863,8 @@
     "due": null,
     "goalId": null,
     "done": true,
-    "doneAt": 1790123140199,
-    "created": 1789863940199,
+    "doneAt": 1790126255792,
+    "created": 1789867055792,
     "items": [],
     "pushes": [],
     "dmg": 22
@@ -1876,8 +1876,8 @@
     "due": "2026-09-23",
     "goalId": null,
     "done": true,
-    "doneAt": 1790034400199,
-    "created": 1789775200199,
+    "doneAt": 1790037515792,
+    "created": 1789778315792,
     "items": [],
     "pushes": []
    },
@@ -1889,7 +1889,7 @@
     "goalId": null,
     "done": false,
     "doneAt": null,
-    "created": 1789699600199,
+    "created": 1789702715792,
     "items": [],
     "pushes": []
    },
@@ -1900,8 +1900,8 @@
     "due": "2026-09-22",
     "goalId": null,
     "done": true,
-    "doneAt": 1789947580199,
-    "created": 1789947520199,
+    "doneAt": 1789950695792,
+    "created": 1789950635792,
     "items": [],
     "pushes": [
      {
@@ -1917,7 +1917,7 @@
     "goalId": null,
     "done": false,
     "doneAt": null,
-    "created": 1789695160199,
+    "created": 1789698275792,
     "items": [],
     "pushes": []
    },
@@ -1928,13 +1928,13 @@
     "due": null,
     "goalId": null,
     "done": true,
-    "doneAt": 1789953940199,
-    "created": 1789694740199,
+    "doneAt": 1789957055792,
+    "created": 1789697855792,
     "items": [],
     "pushes": [],
     "focusLog": [
      {
-      "at": 1789953940199,
+      "at": 1789957055792,
       "m": 43
      }
     ]
@@ -1946,8 +1946,8 @@
     "due": "2026-09-22",
     "goalId": null,
     "done": true,
-    "doneAt": 1789957120199,
-    "created": 1789697920199,
+    "doneAt": 1789960235792,
+    "created": 1789701035792,
     "items": [],
     "pushes": [
      {
@@ -1963,8 +1963,8 @@
     "due": "2026-09-21",
     "goalId": null,
     "done": true,
-    "doneAt": 1789949500199,
-    "created": 1789690300199,
+    "doneAt": 1789952615792,
+    "created": 1789693415792,
     "items": [],
     "pushes": [],
     "dmg": 13,
@@ -1977,8 +1977,8 @@
     "due": "2026-09-19",
     "goalId": null,
     "done": true,
-    "doneAt": 1789868800199,
-    "created": 1789609600199,
+    "doneAt": 1789871915792,
+    "created": 1789612715792,
     "items": [],
     "pushes": [],
     "dmg": 30
@@ -1990,8 +1990,8 @@
     "due": "2026-09-20",
     "goalId": null,
     "done": true,
-    "doneAt": 1789879180199,
-    "created": 1789879120199,
+    "doneAt": 1789882295792,
+    "created": 1789882235792,
     "items": [],
     "pushes": [],
     "dmg": 22
@@ -2004,7 +2004,7 @@
     "goalId": null,
     "done": false,
     "doneAt": null,
-    "created": 1789612360199,
+    "created": 1789615475792,
     "items": [],
     "pushes": []
    },
@@ -2015,14 +2015,14 @@
     "due": "2026-09-20",
     "goalId": null,
     "done": true,
-    "doneAt": 1789878340199,
-    "created": 1789619140199,
+    "doneAt": 1789881455792,
+    "created": 1789622255792,
     "items": [
      {
       "text": "a",
       "done": true,
       "dmg": 7,
-      "at": 1789878340199
+      "at": 1789881455792
      }
     ],
     "pushes": []
@@ -2034,8 +2034,8 @@
     "due": null,
     "goalId": null,
     "done": true,
-    "doneAt": 1789775200199,
-    "created": 1789516000199,
+    "doneAt": 1789778315792,
+    "created": 1789519115792,
     "items": [],
     "pushes": []
    },
@@ -2046,8 +2046,8 @@
     "due": "2026-09-20",
     "goalId": null,
     "done": true,
-    "doneAt": 1789781980199,
-    "created": 1789522780199,
+    "doneAt": 1789785095792,
+    "created": 1789525895792,
     "items": [],
     "pushes": []
    },
@@ -2058,14 +2058,14 @@
     "due": null,
     "goalId": null,
     "done": true,
-    "doneAt": 1789799560199,
-    "created": 1789540360199,
+    "doneAt": 1789802675792,
+    "created": 1789543475792,
     "items": [
      {
       "text": "a",
       "done": true,
       "dmg": 7,
-      "at": 1789799560199
+      "at": 1789802675792
      }
     ],
     "pushes": []
@@ -2077,13 +2077,13 @@
     "due": "2026-09-19",
     "goalId": null,
     "done": true,
-    "doneAt": 1789773940199,
-    "created": 1789514740199,
+    "doneAt": 1789777055792,
+    "created": 1789517855792,
     "items": [],
     "pushes": [],
     "focusLog": [
      {
-      "at": 1789773940199,
+      "at": 1789777055792,
       "m": 12
      }
     ]
@@ -2095,8 +2095,8 @@
     "due": null,
     "goalId": null,
     "done": true,
-    "doneAt": 1789795120199,
-    "created": 1789535920199,
+    "doneAt": 1789798235792,
+    "created": 1789539035792,
     "items": [],
     "pushes": []
    },
@@ -2107,14 +2107,14 @@
     "due": "2026-09-18",
     "goalId": null,
     "done": true,
-    "doneAt": 1789805500199,
-    "created": 1789546300199,
+    "doneAt": 1789808615792,
+    "created": 1789549415792,
     "items": [
      {
       "text": "a",
       "done": true,
       "dmg": 7,
-      "at": 1789805500199
+      "at": 1789808615792
      }
     ],
     "pushes": []
@@ -2126,14 +2126,14 @@
     "due": "2026-09-18",
     "goalId": null,
     "done": true,
-    "doneAt": 1789696000199,
-    "created": 1789695940199,
+    "doneAt": 1789699115792,
+    "created": 1789699055792,
     "items": [
      {
       "text": "a",
       "done": true,
       "dmg": 7,
-      "at": 1789696000199
+      "at": 1789699115792
      }
     ],
     "pushes": []
@@ -2145,8 +2145,8 @@
     "due": "2026-09-17",
     "goalId": "gw",
     "done": true,
-    "doneAt": 1789717180199,
-    "created": 1789457980199,
+    "doneAt": 1789720295792,
+    "created": 1789461095792,
     "items": [],
     "pushes": []
    },
@@ -2157,8 +2157,8 @@
     "due": "2026-09-18",
     "goalId": null,
     "done": true,
-    "doneAt": 1789609600199,
-    "created": 1789609540199,
+    "doneAt": 1789612715792,
+    "created": 1789612655792,
     "items": [],
     "pushes": []
    },
@@ -2169,14 +2169,14 @@
     "due": "2026-09-16",
     "goalId": null,
     "done": true,
-    "doneAt": 1789616380199,
-    "created": 1789357180199,
+    "doneAt": 1789619495792,
+    "created": 1789360295792,
     "items": [
      {
       "text": "a",
       "done": true,
       "dmg": 7,
-      "at": 1789616380199
+      "at": 1789619495792
      }
     ],
     "pushes": []
@@ -2188,8 +2188,8 @@
     "due": "2026-09-17",
     "goalId": null,
     "done": true,
-    "doneAt": 1789612360199,
-    "created": 1789353160199,
+    "doneAt": 1789615475792,
+    "created": 1789356275792,
     "items": [],
     "pushes": [
      {
@@ -2199,7 +2199,7 @@
     "dmg": 26,
     "focusLog": [
      {
-      "at": 1789612360199,
+      "at": 1789615475792,
       "m": 0
      }
     ]
@@ -2211,8 +2211,8 @@
     "due": "2026-09-17",
     "goalId": null,
     "done": true,
-    "doneAt": 1789619140199,
-    "created": 1789359940199,
+    "doneAt": 1789622255792,
+    "created": 1789363055792,
     "items": [],
     "pushes": []
    },
@@ -2223,8 +2223,8 @@
     "due": "2026-09-17",
     "goalId": null,
     "done": true,
-    "doneAt": 1789607920199,
-    "created": 1789348720199,
+    "doneAt": 1789611035792,
+    "created": 1789351835792,
     "items": [],
     "pushes": [
      {
@@ -2239,14 +2239,14 @@
     "due": "2026-09-15",
     "goalId": null,
     "done": true,
-    "doneAt": 1789361200199,
-    "created": 1789361140199,
+    "doneAt": 1789364315792,
+    "created": 1789364255792,
     "items": [
      {
       "text": "a",
       "done": true,
       "dmg": 7,
-      "at": 1789361200199
+      "at": 1789364315792
      }
     ],
     "pushes": [],
@@ -2260,8 +2260,8 @@
     "due": "2026-09-13",
     "goalId": null,
     "done": true,
-    "doneAt": 1789342780199,
-    "created": 1789083580199,
+    "doneAt": 1789345895792,
+    "created": 1789086695792,
     "items": [],
     "pushes": [],
     "dmg": 6,
@@ -2274,8 +2274,8 @@
     "due": "2026-09-13",
     "goalId": null,
     "done": true,
-    "doneAt": 1789356760199,
-    "created": 1789097560199,
+    "doneAt": 1789359875792,
+    "created": 1789100675792,
     "items": [],
     "pushes": []
    },
@@ -2286,8 +2286,8 @@
     "due": "2026-09-14",
     "goalId": null,
     "done": true,
-    "doneAt": 1789374340199,
-    "created": 1789115140199,
+    "doneAt": 1789377455792,
+    "created": 1789118255792,
     "items": [],
     "pushes": [],
     "dmg": 19,
@@ -2301,12 +2301,12 @@
     "goalId": "gw",
     "done": false,
     "doneAt": null,
-    "created": 1789111120199,
+    "created": 1789114235792,
     "items": [],
     "pushes": [],
     "focusLog": [
      {
-      "at": 1789370320199,
+      "at": 1789373435792,
       "m": 13
      }
     ]
@@ -2318,8 +2318,8 @@
     "due": "2026-09-14",
     "goalId": null,
     "done": true,
-    "doneAt": 1789348300199,
-    "created": 1789089100199,
+    "doneAt": 1789351415792,
+    "created": 1789092215792,
     "items": [],
     "pushes": [],
     "dmg": 16
@@ -2331,8 +2331,8 @@
     "due": null,
     "goalId": null,
     "done": true,
-    "doneAt": 1789260400199,
-    "created": 1789001200199,
+    "doneAt": 1789263515792,
+    "created": 1789004315792,
     "items": [],
     "pushes": []
    },
@@ -2343,8 +2343,8 @@
     "due": "2026-09-13",
     "goalId": null,
     "done": true,
-    "doneAt": 1789277980199,
-    "created": 1789018780199,
+    "doneAt": 1789281095792,
+    "created": 1789021895792,
     "items": [],
     "pushes": []
    },
@@ -2355,13 +2355,13 @@
     "due": "2026-09-14",
     "goalId": null,
     "done": true,
-    "doneAt": 1789277560199,
-    "created": 1789018360199,
+    "doneAt": 1789280675792,
+    "created": 1789021475792,
     "items": [],
     "pushes": [],
     "focusLog": [
      {
-      "at": 1789277560199,
+      "at": 1789280675792,
       "m": 40
      }
     ]
@@ -2374,7 +2374,7 @@
     "goalId": null,
     "done": false,
     "doneAt": null,
-    "created": 1789284280199,
+    "created": 1789287395792,
     "items": [],
     "pushes": []
    },
@@ -2385,8 +2385,8 @@
     "due": "2026-09-14",
     "goalId": null,
     "done": true,
-    "doneAt": 1789258720199,
-    "created": 1788999520199,
+    "doneAt": 1789261835792,
+    "created": 1789002635792,
     "items": [],
     "pushes": [
      {
@@ -2401,8 +2401,8 @@
     "due": null,
     "goalId": null,
     "done": true,
-    "doneAt": 1789199200199,
-    "created": 1788940000199,
+    "doneAt": 1789202315792,
+    "created": 1788943115792,
     "items": [],
     "pushes": [
      {
@@ -2411,7 +2411,7 @@
     ],
     "focusLog": [
      {
-      "at": 1789199200199,
+      "at": 1789202315792,
       "m": 23
      }
     ]
@@ -2423,8 +2423,8 @@
     "due": null,
     "goalId": null,
     "done": true,
-    "doneAt": 1789102000199,
-    "created": 1789101940199,
+    "doneAt": 1789105115792,
+    "created": 1789105055792,
     "items": [],
     "pushes": []
    },
@@ -2435,8 +2435,8 @@
     "due": null,
     "goalId": null,
     "done": true,
-    "doneAt": 1789112380199,
-    "created": 1789112320199,
+    "doneAt": 1789115495792,
+    "created": 1789115435792,
     "items": [],
     "pushes": [],
     "dmg": 6
@@ -2448,8 +2448,8 @@
     "due": "2026-09-11",
     "goalId": null,
     "done": true,
-    "doneAt": 1789093960199,
-    "created": 1788834760199,
+    "doneAt": 1789097075792,
+    "created": 1788837875792,
     "items": [],
     "pushes": [],
     "dmg": 1,
@@ -2462,8 +2462,8 @@
     "due": null,
     "goalId": null,
     "done": true,
-    "doneAt": 1789086340199,
-    "created": 1788827140199,
+    "doneAt": 1789089455792,
+    "created": 1788830255792,
     "items": [],
     "pushes": [],
     "dmg": 1
@@ -2475,8 +2475,8 @@
     "due": null,
     "goalId": "gw",
     "done": true,
-    "doneAt": 1789085920199,
-    "created": 1788826720199,
+    "doneAt": 1789089035792,
+    "created": 1788829835792,
     "items": [],
     "pushes": []
    },
@@ -2487,8 +2487,8 @@
     "due": "2026-09-10",
     "goalId": "gw",
     "done": true,
-    "doneAt": 1789004800199,
-    "created": 1788745600199,
+    "doneAt": 1789007915792,
+    "created": 1788748715792,
     "items": [],
     "pushes": []
    },
@@ -2500,7 +2500,7 @@
     "goalId": null,
     "done": false,
     "doneAt": null,
-    "created": 1788745180199,
+    "created": 1788748295792,
     "items": [],
     "pushes": []
    },
@@ -2511,8 +2511,8 @@
     "due": null,
     "goalId": null,
     "done": true,
-    "doneAt": 1789014760199,
-    "created": 1788755560199,
+    "doneAt": 1789017875792,
+    "created": 1788758675792,
     "items": [],
     "pushes": []
    },
@@ -2523,8 +2523,8 @@
     "due": "2026-09-11",
     "goalId": null,
     "done": true,
-    "doneAt": 1789025140199,
-    "created": 1789025080199,
+    "doneAt": 1789028255792,
+    "created": 1789028195792,
     "items": [],
     "pushes": []
    },
@@ -2535,8 +2535,8 @@
     "due": "2026-09-10",
     "goalId": null,
     "done": true,
-    "doneAt": 1789006720199,
-    "created": 1788747520199,
+    "doneAt": 1789009835792,
+    "created": 1788750635792,
     "items": [],
     "pushes": [],
     "dmg": 5,
@@ -2549,11 +2549,179 @@
     "due": "2026-09-09",
     "goalId": null,
     "done": true,
-    "doneAt": 1788857200199,
-    "created": 1788598000199,
+    "doneAt": 1788860315792,
+    "created": 1788601115792,
     "items": [],
     "pushes": [],
     "dmg": 22
+   },
+   {
+    "id": "big0",
+    "title": "big",
+    "priority": "high",
+    "due": null,
+    "goalId": null,
+    "done": true,
+    "doneAt": 1792976400000,
+    "created": 1792717200000,
+    "items": [],
+    "pushes": []
+   },
+   {
+    "id": "big1",
+    "title": "big",
+    "priority": "high",
+    "due": null,
+    "goalId": null,
+    "done": true,
+    "doneAt": 1792977000000,
+    "created": 1792717200000,
+    "items": [],
+    "pushes": []
+   },
+   {
+    "id": "big2",
+    "title": "big",
+    "priority": "high",
+    "due": null,
+    "goalId": null,
+    "done": true,
+    "doneAt": 1792977600000,
+    "created": 1792717200000,
+    "items": [],
+    "pushes": []
+   },
+   {
+    "id": "big3",
+    "title": "big",
+    "priority": "high",
+    "due": null,
+    "goalId": null,
+    "done": true,
+    "doneAt": 1792978200000,
+    "created": 1792717200000,
+    "items": [],
+    "pushes": []
+   },
+   {
+    "id": "big4",
+    "title": "big",
+    "priority": "high",
+    "due": null,
+    "goalId": null,
+    "done": true,
+    "doneAt": 1792978800000,
+    "created": 1792717200000,
+    "items": [],
+    "pushes": []
+   },
+   {
+    "id": "big5",
+    "title": "big",
+    "priority": "high",
+    "due": null,
+    "goalId": null,
+    "done": true,
+    "doneAt": 1792979400000,
+    "created": 1792717200000,
+    "items": [],
+    "pushes": []
+   },
+   {
+    "id": "big6",
+    "title": "big",
+    "priority": "high",
+    "due": null,
+    "goalId": null,
+    "done": true,
+    "doneAt": 1792980000000,
+    "created": 1792717200000,
+    "items": [],
+    "pushes": []
+   },
+   {
+    "id": "big7",
+    "title": "big",
+    "priority": "high",
+    "due": null,
+    "goalId": null,
+    "done": true,
+    "doneAt": 1792980600000,
+    "created": 1792717200000,
+    "items": [],
+    "pushes": []
+   },
+   {
+    "id": "big8",
+    "title": "big",
+    "priority": "high",
+    "due": null,
+    "goalId": null,
+    "done": true,
+    "doneAt": 1792981200000,
+    "created": 1792717200000,
+    "items": [],
+    "pushes": []
+   },
+   {
+    "id": "big9",
+    "title": "big",
+    "priority": "high",
+    "due": null,
+    "goalId": null,
+    "done": true,
+    "doneAt": 1792981800000,
+    "created": 1792717200000,
+    "items": [],
+    "pushes": []
+   },
+   {
+    "id": "big10",
+    "title": "big",
+    "priority": "high",
+    "due": null,
+    "goalId": null,
+    "done": true,
+    "doneAt": 1792982400000,
+    "created": 1792717200000,
+    "items": [],
+    "pushes": []
+   },
+   {
+    "id": "big11",
+    "title": "big",
+    "priority": "high",
+    "due": null,
+    "goalId": null,
+    "done": true,
+    "doneAt": 1792983000000,
+    "created": 1792717200000,
+    "items": [],
+    "pushes": []
+   },
+   {
+    "id": "big12",
+    "title": "big",
+    "priority": "high",
+    "due": null,
+    "goalId": null,
+    "done": true,
+    "doneAt": 1792983600000,
+    "created": 1792717200000,
+    "items": [],
+    "pushes": []
+   },
+   {
+    "id": "big13",
+    "title": "big",
+    "priority": "high",
+    "due": null,
+    "goalId": null,
+    "done": true,
+    "doneAt": 1792984200000,
+    "created": 1792717200000,
+    "items": [],
+    "pushes": []
    }
   ],
   "goals": [
@@ -2563,7 +2731,7 @@
     "horizon": "weekly",
     "period": "2026-W45",
     "kind": "check",
-    "created": 1793954800199,
+    "created": 1793957915792,
     "done": false
    },
    {
@@ -2572,7 +2740,7 @@
     "horizon": "monthly",
     "period": "2026-09",
     "kind": "check",
-    "created": 1793954800199,
+    "created": 1793957915792,
     "done": true
    },
    {
@@ -2581,7 +2749,7 @@
     "horizon": "annual",
     "period": "2026",
     "kind": "check",
-    "created": 1793954800199,
+    "created": 1793957915792,
     "done": true
    }
   ],
@@ -2594,7 +2762,7 @@
     "target": 7,
     "group": "",
     "days": [],
-    "created": 1787906800199
+    "created": 1787909915792
    },
    {
     "id": "hb2",
@@ -2608,7 +2776,7 @@
      3,
      5
     ],
-    "created": 1789634800199
+    "created": 1789637915792
    },
    {
     "id": "hn1",
@@ -2618,7 +2786,7 @@
     "target": 7,
     "group": "",
     "days": [],
-    "created": 1790066800199
+    "created": 1790069915792
    },
    {
     "id": "hn2",
@@ -2628,7 +2796,7 @@
     "target": 7,
     "group": "",
     "days": [],
-    "created": 1791362800199
+    "created": 1791365915792
    }
   ],
   "topics": [
@@ -2670,7 +2838,7 @@
       "c": 3
      }
     ],
-    "created": 1793954800199
+    "created": 1793957915792
    }
   ],
   "exams": [
@@ -2682,7 +2850,7 @@
     "date": "2026-11-03",
     "score": 70,
     "max": 100,
-    "created": 1793954800199
+    "created": 1793957915792
    },
    {
     "id": "e2",
@@ -2692,7 +2860,7 @@
     "date": "2026-10-29",
     "score": 20,
     "max": 100,
-    "created": 1793954800199
+    "created": 1793957915792
    },
    {
     "id": "e3",
@@ -2700,7 +2868,7 @@
     "title": "F",
     "kind": "exam",
     "date": "2026-11-12",
-    "created": 1793954800199
+    "created": 1793957915792
    },
    {
     "id": "e4",
@@ -2708,7 +2876,7 @@
     "title": "G",
     "kind": "exam",
     "date": "2026-11-05",
-    "created": 1793954800199
+    "created": 1793957915792
    }
   ],
   "logs": [
@@ -2881,7 +3049,8 @@
     "hp": 60,
     "best": 0,
     "won": false,
-    "ko": 0
+    "ko": 0,
+    "over": 0
    },
    {
     "key": "2026-W36",
@@ -2902,7 +3071,8 @@
     "hp": 60,
     "best": 0,
     "won": false,
-    "ko": 0
+    "ko": 0,
+    "over": 0
    },
    {
     "key": "2026-W37",
@@ -2915,15 +3085,16 @@
      "2026-09-12",
      "2026-09-13"
     ],
-    "tD": 248,
+    "tD": 242,
     "hD": 52,
     "sD": 0,
     "fD": 24,
-    "total": 324,
+    "total": 318,
     "hp": 180,
     "best": 33,
     "won": true,
-    "ko": 0
+    "ko": 0,
+    "over": 138
    },
    {
     "key": "2026-W38",
@@ -2936,15 +3107,16 @@
      "2026-09-19",
      "2026-09-20"
     ],
-    "tD": 473,
+    "tD": 461,
     "hD": 45,
     "sD": 0,
     "fD": 8,
-    "total": 526,
+    "total": 514,
     "hp": 356,
-    "best": 40,
+    "best": 38,
     "won": true,
-    "ko": 0
+    "ko": 0,
+    "over": 158
    },
    {
     "key": "2026-W39",
@@ -2957,15 +3129,16 @@
      "2026-09-26",
      "2026-09-27"
     ],
-    "tD": 358,
+    "tD": 368,
     "hD": 53,
     "sD": 0,
     "fD": 30,
-    "total": 441,
+    "total": 451,
     "hp": 232,
-    "best": 45,
+    "best": 38,
     "won": true,
-    "ko": 0
+    "ko": 0,
+    "over": 219
    },
    {
     "key": "2026-W40",
@@ -2986,7 +3159,8 @@
     "hp": 332,
     "best": 36,
     "won": true,
-    "ko": 0
+    "ko": 0,
+    "over": 158
    },
    {
     "key": "2026-W41",
@@ -3004,10 +3178,11 @@
     "sD": 12,
     "fD": 24,
     "total": 391,
-    "hp": 401,
+    "hp": 356,
     "best": 29,
-    "won": false,
-    "ko": 0
+    "won": true,
+    "ko": 0,
+    "over": 35
    },
    {
     "key": "2026-W42",
@@ -3020,15 +3195,16 @@
      "2026-10-17",
      "2026-10-18"
     ],
-    "tD": 407,
+    "tD": 353,
     "hD": 45,
     "sD": 0,
     "fD": 26,
-    "total": 478,
-    "hp": 416,
-    "best": 45,
+    "total": 424,
+    "hp": 347,
+    "best": 30,
     "won": true,
-    "ko": 0
+    "ko": 0,
+    "over": 77
    },
    {
     "key": "2026-W43",
@@ -3041,15 +3217,16 @@
      "2026-10-24",
      "2026-10-25"
     ],
-    "tD": 187,
+    "tD": 223,
     "hD": 47,
     "sD": 8,
     "fD": 16,
-    "total": 258,
-    "hp": 405,
-    "best": 33,
+    "total": 294,
+    "hp": 342,
+    "best": 36,
     "won": false,
-    "ko": 0
+    "ko": 0,
+    "over": 0
    },
    {
     "key": "2026-W44",
@@ -3062,15 +3239,16 @@
      "2026-10-31",
      "2026-11-01"
     ],
-    "tD": 0,
+    "tD": 476,
     "hD": 0,
     "sD": 5,
     "fD": 0,
-    "total": 5,
-    "hp": 437,
-    "best": 0,
-    "won": false,
-    "ko": 1
+    "total": 481,
+    "hp": 343,
+    "best": 38,
+    "won": true,
+    "ko": 0,
+    "over": 138
    },
    {
     "key": "2026-W45",
@@ -3083,28 +3261,29 @@
      "2026-11-07",
      "2026-11-08"
     ],
-    "tD": 249,
+    "tD": 243,
     "hD": 20,
     "sD": 25,
     "fD": 26,
-    "total": 320,
-    "hp": 284,
-    "best": 45,
-    "won": true,
-    "ko": 0
+    "total": 314,
+    "hp": 346,
+    "best": 36,
+    "won": false,
+    "ko": 0,
+    "over": 0
    }
   ],
-  "xp": 3355,
-  "totT": 2824,
+  "xp": 4017,
+  "totT": 3268,
   "totH": 431,
   "totS": 50,
   "clean": 49,
   "shields": 3,
   "morale": 100,
-  "kos": 1,
-  "blocked": 3,
-  "hits": 5,
-  "tokens": 5,
+  "kos": 0,
+  "blocked": 2,
+  "hits": 0,
+  "tokens": 6,
   "dayD": {
    "2026-08-29": 5,
    "2026-08-30": 10,
@@ -3121,19 +3300,19 @@
    "2026-09-10": 88,
    "2026-09-11": 34,
    "2026-09-12": 40,
-   "2026-09-13": 113,
-   "2026-09-14": 103,
+   "2026-09-13": 107,
+   "2026-09-14": 109,
    "2026-09-15": 5,
    "2026-09-17": 100,
-   "2026-09-18": 104,
-   "2026-09-19": 98,
-   "2026-09-20": 116,
-   "2026-09-21": 120,
-   "2026-09-22": 5,
+   "2026-09-18": 35,
+   "2026-09-19": 163,
+   "2026-09-20": 102,
+   "2026-09-21": 86,
+   "2026-09-22": 41,
    "2026-09-23": 67,
    "2026-09-24": 5,
-   "2026-09-25": 72,
-   "2026-09-26": 99,
+   "2026-09-25": 11,
+   "2026-09-26": 168,
    "2026-09-27": 73,
    "2026-09-28": 123,
    "2026-09-29": 30,
@@ -3142,33 +3321,63 @@
    "2026-10-02": 85,
    "2026-10-03": 5,
    "2026-10-04": 7,
-   "2026-10-05": 22,
-   "2026-10-06": 98,
+   "2026-10-05": 12,
+   "2026-10-06": 108,
    "2026-10-07": 113,
    "2026-10-08": 10,
    "2026-10-09": 39,
    "2026-10-10": 49,
    "2026-10-11": 60,
-   "2026-10-12": 77,
-   "2026-10-13": 54,
+   "2026-10-12": 28,
+   "2026-10-13": 96,
    "2026-10-14": 20,
    "2026-10-15": 10,
-   "2026-10-16": 132,
-   "2026-10-17": 48,
-   "2026-10-18": 137,
-   "2026-10-19": 72,
+   "2026-10-16": 102,
+   "2026-10-17": 76,
+   "2026-10-18": 92,
+   "2026-10-19": 108,
    "2026-10-20": 54,
    "2026-10-21": 29,
    "2026-10-22": 56,
    "2026-10-23": 39,
    "2026-10-25": 8,
+   "2026-10-26": 476,
    "2026-10-28": 5,
    "2026-11-03": 12,
    "2026-11-04": 103,
-   "2026-11-05": 119,
-   "2026-11-06": 86
-  }
+   "2026-11-05": 74,
+   "2026-11-06": 125
+  },
+  "overXp": 218,
+  "streak": 1,
+  "bestStreak": 6
  },
+ "habits": [
+  {
+   "id": "hb1",
+   "streak": 3,
+   "rate30": 43,
+   "weekCount": 3
+  },
+  {
+   "id": "hb2",
+   "streak": 1,
+   "rate30": 38,
+   "weekCount": 1
+  },
+  {
+   "id": "hn1",
+   "streak": 3,
+   "rate30": 63,
+   "weekCount": 3
+  },
+  {
+   "id": "hn2",
+   "streak": 1,
+   "rate30": 47,
+   "weekCount": 1
+  }
+ ],
  "tower": {
   "months": [
    {
@@ -3191,19 +3400,19 @@
    },
    {
     "key": "2026-10",
-    "wins": 2,
+    "wins": 4,
     "gd": 0,
     "hp": 5,
-    "dmg": 2,
+    "dmg": 4,
     "won": false,
     "past": true
    },
    {
     "key": "2026-11",
-    "wins": 1,
+    "wins": 0,
     "gd": 0,
     "hp": 4,
-    "dmg": 1,
+    "dmg": 0,
     "won": false,
     "past": false
    }

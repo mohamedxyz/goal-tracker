@@ -580,7 +580,7 @@ impl Game<'_> {
                 prev.iter().sum::<i64>() as f64 / prev.len() as f64
             };
             let hp = 60.max(js_round(planned * 0.8)).max(js_round(avg * 0.9));
-            hist.push(total);
+            hist.push(total.min(js_round(hp as f64 * 1.25))); // one huge week raises the next boss by at most 25%
             xp += total;
             tot_t += t_d + f_d;
             tot_h += h_d;
@@ -597,6 +597,7 @@ impl Game<'_> {
                 best,
                 won: total >= hp,
                 ko: 0,
+                over: 0,
             });
             m = add_days(m, 7);
         }
@@ -620,17 +621,51 @@ impl Game<'_> {
         }
 
         // Counterattacks: replay each finished day since game mode was turned on.
+        // Once a week's boss is dead it stops attacking for the rest of that week, and a knockout can never undo a win.
         let since = if s.cfg.rpg_since.is_empty() {
             today.clone()
         } else {
             s.cfg.rpg_since.clone()
         };
-        let mut heal: HashMap<String, i64> = HashMap::new();
+        let wmap: HashMap<&str, &Week> = weeks.iter().map(|w| (w.key.as_str(), w)).collect();
+        #[derive(Default)]
+        struct Wk {
+            cum: i64,
+            ko: i64,
+            dead: bool,
+        }
+        let mut st: HashMap<String, Wk> = HashMap::new();
         let (mut sh, mut mor, mut kos, mut blocked, mut hits) = (0i64, 100i64, 0i64, 0i64, 0i64);
         let mut d = parse(&since).unwrap_or(self.today);
         let mut i = 0;
         while ds(d) < today && i < 800 {
             let k = ds(d);
+            let wk = iso_week(d);
+            let w = wmap.get(wk.as_str());
+            if !st.contains_key(&wk) {
+                let mut cum = 0;
+                if let Some(w) = w {
+                    for kk in &w.keys {
+                        if *kk < k {
+                            cum += day_d.get(kk).copied().unwrap_or(0);
+                        }
+                    }
+                }
+                st.insert(
+                    wk.clone(),
+                    Wk {
+                        cum,
+                        ..Default::default()
+                    },
+                );
+            }
+            let ws = st.get_mut(&wk).unwrap();
+            ws.cum += day_d.get(&k).copied().unwrap_or(0);
+            if let Some(w) = w {
+                if !ws.dead && ws.cum >= js_round(w.hp as f64 * (1.0 + 0.2 * ws.ko as f64)) {
+                    ws.dead = true;
+                }
+            }
             for h in &negs {
                 if k >= born(h, self.off) && ctx.good(h, &k) {
                     sh = (sh + 1).min(3);
@@ -638,7 +673,7 @@ impl Game<'_> {
             }
             if day_d.get(&k).copied().unwrap_or(0) > 0 {
                 mor = (mor + 10).min(100);
-            } else if s.rest_days.contains(&k) {
+            } else if s.rest_days.contains(&k) || ws.dead {
             } else if sh > 0 {
                 sh -= 1;
                 blocked += 1;
@@ -647,22 +682,43 @@ impl Game<'_> {
                 mor -= 25;
                 if mor <= 0 {
                     kos += 1;
-                    *heal.entry(iso_week(d)).or_default() += 1;
+                    ws.ko += 1;
                     mor = 100;
                 }
             }
             d = add_days(d, 1);
             i += 1;
         }
+        let mut over_xp = 0i64;
         for w in &mut weeks {
-            if let Some(&n) = heal.get(&w.key) {
-                if n != 0 {
-                    w.ko = n;
-                    w.hp = js_round(w.hp as f64 * (1.0 + 0.2 * n as f64));
-                    w.won = w.total >= w.hp;
+            if let Some(ws) = st.get(&w.key) {
+                if ws.ko != 0 {
+                    w.ko = ws.ko;
+                    w.hp = js_round(w.hp as f64 * (1.0 + 0.2 * w.ko as f64));
                 }
             }
+            w.won = w.total >= w.hp;
+            w.over = (w.total - w.hp).max(0);
+            // overkill: a small bonus, not a bigger boss
+            if w.won {
+                over_xp += 40.min(js_round(w.over as f64 * 0.25));
+            }
         }
+        xp += over_xp;
+        // Weeks won in a row (the week in progress never breaks the streak).
+        let (mut run, mut best_streak) = (0i64, 0i64);
+        let nweeks = weeks.len();
+        for (i, w) in weeks.iter().enumerate() {
+            run = if w.won {
+                run + 1
+            } else if i == nweeks - 1 {
+                run
+            } else {
+                0
+            };
+            best_streak = best_streak.max(run);
+        }
+        let streak = run;
         let mut shields = sh;
         for h in &negs {
             if today >= born(h, self.off) && ctx.good(h, &today) {
@@ -686,6 +742,9 @@ impl Game<'_> {
             blocked,
             hits,
             tokens,
+            over_xp,
+            streak,
+            best_streak,
         }
     }
 
@@ -820,6 +879,8 @@ pub struct Week {
     pub best: i64,
     pub won: bool,
     pub ko: i64,
+    /// Damage beyond the boss HP (0 unless won).
+    pub over: i64,
 }
 
 #[derive(Debug, Clone)]
@@ -837,6 +898,9 @@ pub struct Rpg {
     pub blocked: i64,
     pub hits: i64,
     pub tokens: i64,
+    pub over_xp: i64,
+    pub streak: i64,
+    pub best_streak: i64,
 }
 impl Rpg {
     pub fn cur(&self) -> &Week {
