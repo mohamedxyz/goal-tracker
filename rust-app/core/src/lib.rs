@@ -8,6 +8,7 @@ pub mod game;
 pub mod logic;
 pub mod model;
 pub mod notify;
+pub mod ops;
 pub mod perf;
 pub mod quick;
 pub mod store;

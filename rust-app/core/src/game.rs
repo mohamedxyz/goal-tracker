@@ -275,6 +275,11 @@ impl Game<'_> {
         }
     }
 
+    /// Base damage of a task before bonuses (priority, weekly-goal bonus).
+    pub fn base_dmg(&self, t: &Task) -> f64 {
+        self.base(t)
+    }
+
     fn base(&self, t: &Task) -> f64 {
         let mut v = pri_dmg(&t.priority);
         if let Some(gid) = &t.goal_id {

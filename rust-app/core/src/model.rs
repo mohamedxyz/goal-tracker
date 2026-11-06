@@ -83,6 +83,17 @@ pub struct Task {
     #[serde(default)]
     #[serde(skip_serializing_if = "is_false")]
     pub crit: bool,
+    #[serde(
+        default,
+        rename = "archivedAt",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub archived_at: Option<i64>,
+    /// Repeating tasks: the generated next / previous task.
+    #[serde(default, rename = "nextId", skip_serializing_if = "Option::is_none")]
+    pub next_id: Option<String>,
+    #[serde(default, rename = "prevId", skip_serializing_if = "Option::is_none")]
+    pub prev_id: Option<String>,
     /// Start time `HH:MM` (time blocking).
     #[serde(default, skip_serializing_if = "String::is_empty")]
     pub start: String,
@@ -111,6 +122,14 @@ pub struct Goal {
     pub parent_id: Option<String>,
     #[serde(default, skip_serializing_if = "String::is_empty")]
     pub icon: String,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub carried: Vec<String>,
+    #[serde(
+        default,
+        rename = "reviewedAt",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub reviewed_at: Option<i64>,
     #[serde(default)]
     pub notes: String,
     /// "check" | "number" | "rollup" | absent
