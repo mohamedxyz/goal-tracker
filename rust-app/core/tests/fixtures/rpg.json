@@ -1,0 +1,3257 @@
+{
+ "today": "2026-11-06",
+ "tzName": "UTC",
+ "state": {
+  "tasks": [
+   {
+    "id": "t0",
+    "title": "x",
+    "priority": "low",
+    "due": "2026-11-11",
+    "goalId": null,
+    "done": false,
+    "doneAt": null,
+    "created": 1794023200199,
+    "items": [
+     {
+      "text": "a",
+      "done": true,
+      "dmg": 7,
+      "at": 1794282400199
+     }
+    ],
+    "pushes": []
+   },
+   {
+    "id": "t1",
+    "title": "x",
+    "priority": "low",
+    "due": "2026-11-11",
+    "goalId": "gw",
+    "done": false,
+    "doneAt": null,
+    "created": 1794008380199,
+    "items": [],
+    "pushes": [
+     {
+      "at": 1
+     }
+    ],
+    "focusLog": [
+     {
+      "at": 1794267580199,
+      "m": 33
+     }
+    ]
+   },
+   {
+    "id": "t2",
+    "title": "x",
+    "priority": "high",
+    "due": "2026-11-09",
+    "goalId": null,
+    "done": false,
+    "doneAt": null,
+    "created": 1793926000199,
+    "items": [
+     {
+      "text": "a",
+      "done": true,
+      "dmg": 7,
+      "at": 1794185200199
+     }
+    ],
+    "pushes": [],
+    "focusLog": [
+     {
+      "at": 1794185200199,
+      "m": 40
+     }
+    ]
+   },
+   {
+    "id": "t3",
+    "title": "x",
+    "priority": "high",
+    "due": null,
+    "goalId": null,
+    "done": false,
+    "doneAt": null,
+    "created": 1793954380199,
+    "items": [
+     {
+      "text": "a",
+      "done": true,
+      "dmg": 7,
+      "at": 1794213580199
+     }
+    ],
+    "pushes": []
+   },
+   {
+    "id": "t4",
+    "title": "x",
+    "priority": "low",
+    "due": "2026-11-08",
+    "goalId": null,
+    "done": false,
+    "doneAt": null,
+    "created": 1793857600199,
+    "items": [],
+    "pushes": []
+   },
+   {
+    "id": "t5",
+    "title": "x",
+    "priority": "med",
+    "due": "2026-11-08",
+    "goalId": null,
+    "done": false,
+    "doneAt": null,
+    "created": 1793860780199,
+    "items": [],
+    "pushes": []
+   },
+   {
+    "id": "t6",
+    "title": "x",
+    "priority": "med",
+    "due": "2026-11-06",
+    "goalId": "gw",
+    "done": false,
+    "doneAt": null,
+    "created": 1793764000199,
+    "items": [],
+    "pushes": []
+   },
+   {
+    "id": "t7",
+    "title": "x",
+    "priority": "low",
+    "due": null,
+    "goalId": null,
+    "done": false,
+    "doneAt": null,
+    "created": 1794026320199,
+    "items": [],
+    "pushes": []
+   },
+   {
+    "id": "t8",
+    "title": "x",
+    "priority": "med",
+    "due": "2026-11-07",
+    "goalId": null,
+    "done": true,
+    "doneAt": 1793940400199,
+    "created": 1793940340199,
+    "items": [],
+    "pushes": [],
+    "dmg": 9
+   },
+   {
+    "id": "t9",
+    "title": "x",
+    "priority": "low",
+    "due": "2026-11-07",
+    "goalId": null,
+    "done": true,
+    "doneAt": 1793936380199,
+    "created": 1793677180199,
+    "items": [],
+    "pushes": [
+     {
+      "at": 1
+     }
+    ]
+   },
+   {
+    "id": "t10",
+    "title": "x",
+    "priority": "low",
+    "due": "2026-11-06",
+    "goalId": null,
+    "done": true,
+    "doneAt": 1793925160199,
+    "created": 1793665960199,
+    "items": [],
+    "pushes": [
+     {
+      "at": 1
+     }
+    ],
+    "focusLog": [
+     {
+      "at": 1793925160199,
+      "m": 49
+     }
+    ]
+   },
+   {
+    "id": "t11",
+    "title": "x",
+    "priority": "high",
+    "due": null,
+    "goalId": null,
+    "done": true,
+    "doneAt": 1793935540199,
+    "created": 1793676340199,
+    "items": [],
+    "pushes": []
+   },
+   {
+    "id": "t12",
+    "title": "x",
+    "priority": "high",
+    "due": "2026-11-07",
+    "goalId": null,
+    "done": true,
+    "doneAt": 1793920720199,
+    "created": 1793661520199,
+    "items": [],
+    "pushes": []
+   },
+   {
+    "id": "t13",
+    "title": "x",
+    "priority": "low",
+    "due": "2026-11-06",
+    "goalId": "gw",
+    "done": false,
+    "doneAt": null,
+    "created": 1793923840199,
+    "items": [],
+    "pushes": []
+   },
+   {
+    "id": "t14",
+    "title": "x",
+    "priority": "med",
+    "due": "2026-11-06",
+    "goalId": null,
+    "done": true,
+    "doneAt": 1793864800199,
+    "created": 1793605600199,
+    "items": [],
+    "pushes": [],
+    "dmg": 25
+   },
+   {
+    "id": "t15",
+    "title": "x",
+    "priority": "med",
+    "due": "2026-11-05",
+    "goalId": null,
+    "done": true,
+    "doneAt": 1793839180199,
+    "created": 1793579980199,
+    "items": [
+     {
+      "text": "a",
+      "done": true,
+      "dmg": 7,
+      "at": 1793839180199
+     }
+    ],
+    "pushes": []
+   },
+   {
+    "id": "t16",
+    "title": "x",
+    "priority": "low",
+    "due": "2026-11-06",
+    "goalId": null,
+    "done": true,
+    "doneAt": 1793845960199,
+    "created": 1793845900199,
+    "items": [],
+    "pushes": []
+   },
+   {
+    "id": "t17",
+    "title": "x",
+    "priority": "low",
+    "due": "2026-11-03",
+    "goalId": "gw",
+    "done": true,
+    "doneAt": 1793753200199,
+    "created": 1793494000199,
+    "items": [],
+    "pushes": [],
+    "focusLog": [
+     {
+      "at": 1793753200199,
+      "m": 20
+     }
+    ]
+   },
+   {
+    "id": "t18",
+    "title": "x",
+    "priority": "low",
+    "due": "2026-11-04",
+    "goalId": null,
+    "done": true,
+    "doneAt": 1793777980199,
+    "created": 1793518780199,
+    "items": [
+     {
+      "text": "a",
+      "done": true,
+      "dmg": 7,
+      "at": 1793777980199
+     }
+    ],
+    "pushes": [],
+    "dmg": 26,
+    "crit": true
+   },
+   {
+    "id": "t19",
+    "title": "x",
+    "priority": "high",
+    "due": "2026-11-05",
+    "goalId": "gw",
+    "done": true,
+    "doneAt": 1793781160199,
+    "created": 1793781100199,
+    "items": [],
+    "pushes": [
+     {
+      "at": 1
+     }
+    ],
+    "dmg": 15,
+    "crit": true
+   },
+   {
+    "id": "t20",
+    "title": "x",
+    "priority": "low",
+    "due": "2026-11-04",
+    "goalId": null,
+    "done": true,
+    "doneAt": 1793773540199,
+    "created": 1793514340199,
+    "items": [],
+    "pushes": [],
+    "dmg": 9
+   },
+   {
+    "id": "t21",
+    "title": "x",
+    "priority": "high",
+    "due": "2026-11-03",
+    "goalId": null,
+    "done": true,
+    "doneAt": 1793755120199,
+    "created": 1793495920199,
+    "items": [],
+    "pushes": []
+   },
+   {
+    "id": "t22",
+    "title": "x",
+    "priority": "low",
+    "due": "2026-10-23",
+    "goalId": null,
+    "done": false,
+    "doneAt": null,
+    "created": 1792468000199,
+    "items": [],
+    "pushes": []
+   },
+   {
+    "id": "t23",
+    "title": "x",
+    "priority": "high",
+    "due": "2026-10-24",
+    "goalId": null,
+    "done": false,
+    "doneAt": null,
+    "created": 1792474780199,
+    "items": [
+     {
+      "text": "a",
+      "done": true,
+      "dmg": 7,
+      "at": 1792733980199
+     }
+    ],
+    "pushes": []
+   },
+   {
+    "id": "t24",
+    "title": "x",
+    "priority": "med",
+    "due": "2026-10-24",
+    "goalId": "gw",
+    "done": true,
+    "doneAt": 1792744360199,
+    "created": 1792485160199,
+    "items": [
+     {
+      "text": "a",
+      "done": true,
+      "dmg": 7,
+      "at": 1792744360199
+     }
+    ],
+    "pushes": [],
+    "dmg": 14,
+    "crit": true
+   },
+   {
+    "id": "t25",
+    "title": "x",
+    "priority": "high",
+    "due": null,
+    "goalId": null,
+    "done": true,
+    "doneAt": 1792644400199,
+    "created": 1792385200199,
+    "items": [
+     {
+      "text": "a",
+      "done": true,
+      "dmg": 7,
+      "at": 1792644400199
+     }
+    ],
+    "pushes": []
+   },
+   {
+    "id": "t26",
+    "title": "x",
+    "priority": "low",
+    "due": "2026-10-21",
+    "goalId": null,
+    "done": true,
+    "doneAt": 1792640380199,
+    "created": 1792381180199,
+    "items": [],
+    "pushes": []
+   },
+   {
+    "id": "t27",
+    "title": "x",
+    "priority": "high",
+    "due": "2026-10-22",
+    "goalId": "gw",
+    "done": false,
+    "doneAt": null,
+    "created": 1792539940199,
+    "items": [],
+    "pushes": []
+   },
+   {
+    "id": "t28",
+    "title": "x",
+    "priority": "high",
+    "due": null,
+    "goalId": null,
+    "done": true,
+    "doneAt": 1792568380199,
+    "created": 1792309180199,
+    "items": [],
+    "pushes": [],
+    "dmg": 7
+   },
+   {
+    "id": "t29",
+    "title": "x",
+    "priority": "low",
+    "due": "2026-10-22",
+    "goalId": null,
+    "done": true,
+    "doneAt": 1792564360199,
+    "created": 1792564300199,
+    "items": [],
+    "pushes": []
+   },
+   {
+    "id": "t30",
+    "title": "x",
+    "priority": "low",
+    "due": "2026-10-20",
+    "goalId": null,
+    "done": true,
+    "doneAt": 1792563940199,
+    "created": 1792304740199,
+    "items": [],
+    "pushes": []
+   },
+   {
+    "id": "t31",
+    "title": "x",
+    "priority": "high",
+    "due": "2026-10-20",
+    "goalId": null,
+    "done": true,
+    "doneAt": 1792468000199,
+    "created": 1792208800199,
+    "items": [],
+    "pushes": [
+     {
+      "at": 1
+     }
+    ]
+   },
+   {
+    "id": "t32",
+    "title": "x",
+    "priority": "low",
+    "due": "2026-10-19",
+    "goalId": null,
+    "done": false,
+    "doneAt": null,
+    "created": 1792204780199,
+    "items": [],
+    "pushes": [
+     {
+      "at": 1
+     }
+    ]
+   },
+   {
+    "id": "t33",
+    "title": "x",
+    "priority": "low",
+    "due": "2026-10-20",
+    "goalId": null,
+    "done": true,
+    "doneAt": 1792459960199,
+    "created": 1792200760199,
+    "items": [],
+    "pushes": [
+     {
+      "at": 1
+     }
+    ]
+   },
+   {
+    "id": "t34",
+    "title": "x",
+    "priority": "med",
+    "due": "2026-10-20",
+    "goalId": null,
+    "done": true,
+    "doneAt": 1792470340199,
+    "created": 1792470280199,
+    "items": [],
+    "pushes": [
+     {
+      "at": 1
+     }
+    ]
+   },
+   {
+    "id": "t35",
+    "title": "x",
+    "priority": "high",
+    "due": "2026-10-19",
+    "goalId": null,
+    "done": false,
+    "doneAt": null,
+    "created": 1792136800199,
+    "items": [
+     {
+      "text": "a",
+      "done": true,
+      "dmg": 7,
+      "at": 1792396000199
+     }
+    ],
+    "pushes": [
+     {
+      "at": 1
+     }
+    ],
+    "focusLog": [
+     {
+      "at": 1792396000199,
+      "m": 22
+     }
+    ]
+   },
+   {
+    "id": "t36",
+    "title": "x",
+    "priority": "high",
+    "due": "2026-10-19",
+    "goalId": null,
+    "done": false,
+    "doneAt": null,
+    "created": 1792377520199,
+    "items": [
+     {
+      "text": "a",
+      "done": true,
+      "dmg": 7,
+      "at": 1792377580199
+     }
+    ],
+    "pushes": [
+     {
+      "at": 1
+     }
+    ]
+   },
+   {
+    "id": "t37",
+    "title": "x",
+    "priority": "med",
+    "due": "2026-10-18",
+    "goalId": null,
+    "done": true,
+    "doneAt": 1792369960199,
+    "created": 1792369900199,
+    "items": [
+     {
+      "text": "a",
+      "done": true,
+      "dmg": 7,
+      "at": 1792369960199
+     }
+    ],
+    "pushes": [
+     {
+      "at": 1
+     }
+    ],
+    "dmg": 1,
+    "focusLog": [
+     {
+      "at": 1792369960199,
+      "m": 22
+     }
+    ]
+   },
+   {
+    "id": "t38",
+    "title": "x",
+    "priority": "med",
+    "due": "2026-10-20",
+    "goalId": null,
+    "done": false,
+    "doneAt": null,
+    "created": 1792394680199,
+    "items": [
+     {
+      "text": "a",
+      "done": true,
+      "dmg": 7,
+      "at": 1792394740199
+     }
+    ],
+    "pushes": []
+   },
+   {
+    "id": "t39",
+    "title": "x",
+    "priority": "high",
+    "due": "2026-10-20",
+    "goalId": null,
+    "done": true,
+    "doneAt": 1792365520199,
+    "created": 1792106320199,
+    "items": [],
+    "pushes": []
+   },
+   {
+    "id": "t40",
+    "title": "x",
+    "priority": "high",
+    "due": null,
+    "goalId": null,
+    "done": true,
+    "doneAt": 1792386700199,
+    "created": 1792386640199,
+    "items": [],
+    "pushes": []
+   },
+   {
+    "id": "t41",
+    "title": "x",
+    "priority": "high",
+    "due": "2026-10-18",
+    "goalId": "gw",
+    "done": false,
+    "doneAt": null,
+    "created": 1792032400199,
+    "items": [
+     {
+      "text": "a",
+      "done": true,
+      "dmg": 7,
+      "at": 1792291600199
+     }
+    ],
+    "pushes": []
+   },
+   {
+    "id": "t42",
+    "title": "x",
+    "priority": "high",
+    "due": "2026-10-18",
+    "goalId": null,
+    "done": true,
+    "doneAt": 1792287580199,
+    "created": 1792028380199,
+    "items": [
+     {
+      "text": "a",
+      "done": true,
+      "dmg": 7,
+      "at": 1792287580199
+     }
+    ],
+    "pushes": []
+   },
+   {
+    "id": "t43",
+    "title": "x",
+    "priority": "med",
+    "due": "2026-10-19",
+    "goalId": null,
+    "done": true,
+    "doneAt": 1792294360199,
+    "created": 1792294300199,
+    "items": [
+     {
+      "text": "a",
+      "done": true,
+      "dmg": 7,
+      "at": 1792294360199
+     }
+    ],
+    "pushes": [],
+    "dmg": 9,
+    "crit": true,
+    "focusLog": [
+     {
+      "at": 1792294360199,
+      "m": 36
+     }
+    ]
+   },
+   {
+    "id": "t44",
+    "title": "x",
+    "priority": "low",
+    "due": "2026-10-19",
+    "goalId": null,
+    "done": true,
+    "doneAt": 1792293940199,
+    "created": 1792034740199,
+    "items": [],
+    "pushes": []
+   },
+   {
+    "id": "t45",
+    "title": "x",
+    "priority": "low",
+    "due": "2026-10-17",
+    "goalId": null,
+    "done": true,
+    "doneAt": 1792226800199,
+    "created": 1791967600199,
+    "items": [],
+    "pushes": []
+   },
+   {
+    "id": "t46",
+    "title": "x",
+    "priority": "low",
+    "due": null,
+    "goalId": null,
+    "done": true,
+    "doneAt": 1792222780199,
+    "created": 1791963580199,
+    "items": [],
+    "pushes": []
+   },
+   {
+    "id": "t47",
+    "title": "x",
+    "priority": "low",
+    "due": "2026-10-18",
+    "goalId": "gw",
+    "done": true,
+    "doneAt": 1792193560199,
+    "created": 1791934360199,
+    "items": [
+     {
+      "text": "a",
+      "done": true,
+      "dmg": 7,
+      "at": 1792193560199
+     }
+    ],
+    "pushes": []
+   },
+   {
+    "id": "t48",
+    "title": "x",
+    "priority": "low",
+    "due": "2026-10-16",
+    "goalId": null,
+    "done": true,
+    "doneAt": 1792211140199,
+    "created": 1791951940199,
+    "items": [
+     {
+      "text": "a",
+      "done": true,
+      "dmg": 7,
+      "at": 1792211140199
+     }
+    ],
+    "pushes": [],
+    "focusLog": [
+     {
+      "at": 1792211140199,
+      "m": 11
+     }
+    ]
+   },
+   {
+    "id": "t49",
+    "title": "x",
+    "priority": "med",
+    "due": "2026-10-15",
+    "goalId": null,
+    "done": true,
+    "doneAt": 1792118800199,
+    "created": 1791859600199,
+    "items": [],
+    "pushes": [],
+    "dmg": 22,
+    "focusLog": [
+     {
+      "at": 1792118800199,
+      "m": 19
+     }
+    ]
+   },
+   {
+    "id": "t50",
+    "title": "x",
+    "priority": "med",
+    "due": "2026-10-17",
+    "goalId": null,
+    "done": true,
+    "doneAt": 1792136380199,
+    "created": 1791877180199,
+    "items": [
+     {
+      "text": "a",
+      "done": true,
+      "dmg": 7,
+      "at": 1792136380199
+     }
+    ],
+    "pushes": []
+   },
+   {
+    "id": "t51",
+    "title": "x",
+    "priority": "med",
+    "due": "2026-10-15",
+    "goalId": null,
+    "done": true,
+    "doneAt": 1792114360199,
+    "created": 1791855160199,
+    "items": [],
+    "pushes": []
+   },
+   {
+    "id": "t52",
+    "title": "x",
+    "priority": "med",
+    "due": null,
+    "goalId": null,
+    "done": true,
+    "doneAt": 1792121140199,
+    "created": 1791861940199,
+    "items": [],
+    "pushes": []
+   },
+   {
+    "id": "t53",
+    "title": "x",
+    "priority": "high",
+    "due": "2026-10-13",
+    "goalId": null,
+    "done": true,
+    "doneAt": 1791953200199,
+    "created": 1791694000199,
+    "items": [],
+    "pushes": []
+   },
+   {
+    "id": "t54",
+    "title": "x",
+    "priority": "med",
+    "due": "2026-10-13",
+    "goalId": null,
+    "done": true,
+    "doneAt": 1791856000199,
+    "created": 1791855940199,
+    "items": [],
+    "pushes": [
+     {
+      "at": 1
+     }
+    ]
+   },
+   {
+    "id": "t55",
+    "title": "x",
+    "priority": "med",
+    "due": "2026-10-12",
+    "goalId": null,
+    "done": true,
+    "doneAt": 1791877180199,
+    "created": 1791617980199,
+    "items": [],
+    "pushes": []
+   },
+   {
+    "id": "t56",
+    "title": "x",
+    "priority": "high",
+    "due": "2026-10-13",
+    "goalId": null,
+    "done": true,
+    "doneAt": 1791847960199,
+    "created": 1791588760199,
+    "items": [
+     {
+      "text": "a",
+      "done": true,
+      "dmg": 7,
+      "at": 1791847960199
+     }
+    ],
+    "pushes": [],
+    "focusLog": [
+     {
+      "at": 1791847960199,
+      "m": 9
+     }
+    ]
+   },
+   {
+    "id": "t57",
+    "title": "x",
+    "priority": "med",
+    "due": null,
+    "goalId": null,
+    "done": true,
+    "doneAt": 1791865540199,
+    "created": 1791606340199,
+    "items": [
+     {
+      "text": "a",
+      "done": true,
+      "dmg": 7,
+      "at": 1791865540199
+     }
+    ],
+    "pushes": []
+   },
+   {
+    "id": "t58",
+    "title": "x",
+    "priority": "high",
+    "due": "2026-10-13",
+    "goalId": null,
+    "done": true,
+    "doneAt": 1791791200199,
+    "created": 1791532000199,
+    "items": [],
+    "pushes": [],
+    "dmg": 23,
+    "crit": true
+   },
+   {
+    "id": "t59",
+    "title": "x",
+    "priority": "med",
+    "due": "2026-10-10",
+    "goalId": "gw",
+    "done": true,
+    "doneAt": 1791686800199,
+    "created": 1791427600199,
+    "items": [],
+    "pushes": [
+     {
+      "at": 1
+     }
+    ]
+   },
+   {
+    "id": "t60",
+    "title": "x",
+    "priority": "med",
+    "due": null,
+    "goalId": null,
+    "done": true,
+    "doneAt": 1791686380199,
+    "created": 1791686320199,
+    "items": [],
+    "pushes": [],
+    "dmg": 18
+   },
+   {
+    "id": "t61",
+    "title": "x",
+    "priority": "med",
+    "due": "2026-10-11",
+    "goalId": "gw",
+    "done": true,
+    "doneAt": 1791685960199,
+    "created": 1791426760199,
+    "items": [],
+    "pushes": [
+     {
+      "at": 1
+     }
+    ]
+   },
+   {
+    "id": "t62",
+    "title": "x",
+    "priority": "med",
+    "due": "2026-10-09",
+    "goalId": null,
+    "done": false,
+    "doneAt": null,
+    "created": 1791348400199,
+    "items": [],
+    "pushes": []
+   },
+   {
+    "id": "t63",
+    "title": "x",
+    "priority": "high",
+    "due": "2026-10-11",
+    "goalId": "gw",
+    "done": false,
+    "doneAt": null,
+    "created": 1791344380199,
+    "items": [],
+    "pushes": []
+   },
+   {
+    "id": "t64",
+    "title": "x",
+    "priority": "med",
+    "due": null,
+    "goalId": null,
+    "done": true,
+    "doneAt": 1791613960199,
+    "created": 1791354760199,
+    "items": [],
+    "pushes": [],
+    "focusLog": [
+     {
+      "at": 1791613960199,
+      "m": 8
+     }
+    ]
+   },
+   {
+    "id": "t65",
+    "title": "x",
+    "priority": "high",
+    "due": "2026-10-09",
+    "goalId": null,
+    "done": true,
+    "doneAt": 1791617140199,
+    "created": 1791357940199,
+    "items": [],
+    "pushes": [
+     {
+      "at": 1
+     }
+    ]
+   },
+   {
+    "id": "t66",
+    "title": "x",
+    "priority": "low",
+    "due": "2026-10-09",
+    "goalId": null,
+    "done": true,
+    "doneAt": 1791609520199,
+    "created": 1791350320199,
+    "items": [],
+    "pushes": []
+   },
+   {
+    "id": "t67",
+    "title": "x",
+    "priority": "low",
+    "due": "2026-10-08",
+    "goalId": null,
+    "done": true,
+    "doneAt": 1791535600199,
+    "created": 1791276400199,
+    "items": [],
+    "pushes": []
+   },
+   {
+    "id": "t68",
+    "title": "x",
+    "priority": "low",
+    "due": "2026-10-10",
+    "goalId": null,
+    "done": false,
+    "doneAt": null,
+    "created": 1791254380199,
+    "items": [],
+    "pushes": []
+   },
+   {
+    "id": "t69",
+    "title": "x",
+    "priority": "high",
+    "due": "2026-10-08",
+    "goalId": null,
+    "done": false,
+    "doneAt": null,
+    "created": 1791246760199,
+    "items": [],
+    "pushes": [
+     {
+      "at": 1
+     }
+    ]
+   },
+   {
+    "id": "t70",
+    "title": "x",
+    "priority": "high",
+    "due": null,
+    "goalId": null,
+    "done": true,
+    "doneAt": 1791516340199,
+    "created": 1791257140199,
+    "items": [],
+    "pushes": [],
+    "dmg": 6
+   },
+   {
+    "id": "t71",
+    "title": "x",
+    "priority": "med",
+    "due": "2026-10-09",
+    "goalId": null,
+    "done": true,
+    "doneAt": 1791505120199,
+    "created": 1791245920199,
+    "items": [
+     {
+      "text": "a",
+      "done": true,
+      "dmg": 7,
+      "at": 1791505120199
+     }
+    ],
+    "pushes": []
+   },
+   {
+    "id": "t72",
+    "title": "x",
+    "priority": "low",
+    "due": "2026-10-07",
+    "goalId": null,
+    "done": true,
+    "doneAt": 1791362800199,
+    "created": 1791362740199,
+    "items": [],
+    "pushes": [],
+    "dmg": 29,
+    "crit": true
+   },
+   {
+    "id": "t73",
+    "title": "x",
+    "priority": "med",
+    "due": "2026-10-07",
+    "goalId": null,
+    "done": true,
+    "doneAt": 1791333580199,
+    "created": 1791074380199,
+    "items": [],
+    "pushes": [
+     {
+      "at": 1
+     }
+    ],
+    "focusLog": [
+     {
+      "at": 1791333580199,
+      "m": 47
+     }
+    ]
+   },
+   {
+    "id": "t74",
+    "title": "x",
+    "priority": "med",
+    "due": "2026-10-08",
+    "goalId": null,
+    "done": true,
+    "doneAt": 1791336760199,
+    "created": 1791077560199,
+    "items": [],
+    "pushes": [
+     {
+      "at": 1
+     }
+    ]
+   },
+   {
+    "id": "t75",
+    "title": "x",
+    "priority": "low",
+    "due": "2026-10-08",
+    "goalId": null,
+    "done": true,
+    "doneAt": 1791354340199,
+    "created": 1791354280199,
+    "items": [],
+    "pushes": []
+   },
+   {
+    "id": "t76",
+    "title": "x",
+    "priority": "med",
+    "due": "2026-10-06",
+    "goalId": null,
+    "done": false,
+    "doneAt": null,
+    "created": 1791073120199,
+    "items": [],
+    "pushes": []
+   },
+   {
+    "id": "t77",
+    "title": "x",
+    "priority": "med",
+    "due": "2026-10-07",
+    "goalId": null,
+    "done": true,
+    "doneAt": 1791258400199,
+    "created": 1790999200199,
+    "items": [],
+    "pushes": [],
+    "dmg": 20
+   },
+   {
+    "id": "t78",
+    "title": "x",
+    "priority": "med",
+    "due": null,
+    "goalId": null,
+    "done": true,
+    "doneAt": 1791268780199,
+    "created": 1791009580199,
+    "items": [],
+    "pushes": [],
+    "focusLog": [
+     {
+      "at": 1791268780199,
+      "m": 14
+     }
+    ]
+   },
+   {
+    "id": "t79",
+    "title": "x",
+    "priority": "low",
+    "due": null,
+    "goalId": null,
+    "done": true,
+    "doneAt": 1791243160199,
+    "created": 1790983960199,
+    "items": [],
+    "pushes": []
+   },
+   {
+    "id": "t80",
+    "title": "x",
+    "priority": "low",
+    "due": "2026-10-07",
+    "goalId": null,
+    "done": true,
+    "doneAt": 1791257140199,
+    "created": 1790997940199,
+    "items": [
+     {
+      "text": "a",
+      "done": true,
+      "dmg": 7,
+      "at": 1791257140199
+     }
+    ],
+    "pushes": [],
+    "dmg": 14
+   },
+   {
+    "id": "t81",
+    "title": "x",
+    "priority": "med",
+    "due": "2026-10-07",
+    "goalId": null,
+    "done": true,
+    "doneAt": 1791271120199,
+    "created": 1791011920199,
+    "items": [],
+    "pushes": [],
+    "dmg": 4
+   },
+   {
+    "id": "t82",
+    "title": "x",
+    "priority": "high",
+    "due": "2026-10-07",
+    "goalId": null,
+    "done": true,
+    "doneAt": 1791263500199,
+    "created": 1791263440199,
+    "items": [
+     {
+      "text": "a",
+      "done": true,
+      "dmg": 7,
+      "at": 1791263500199
+     }
+    ],
+    "pushes": [
+     {
+      "at": 1
+     }
+    ],
+    "dmg": 5
+   },
+   {
+    "id": "t83",
+    "title": "x",
+    "priority": "high",
+    "due": "2026-10-03",
+    "goalId": "gw",
+    "done": false,
+    "doneAt": null,
+    "created": 1791013540199,
+    "items": [],
+    "pushes": []
+   },
+   {
+    "id": "t84",
+    "title": "x",
+    "priority": "med",
+    "due": null,
+    "goalId": null,
+    "done": true,
+    "doneAt": 1790909200199,
+    "created": 1790650000199,
+    "items": [],
+    "pushes": []
+   },
+   {
+    "id": "t85",
+    "title": "x",
+    "priority": "high",
+    "due": null,
+    "goalId": null,
+    "done": true,
+    "doneAt": 1790908780199,
+    "created": 1790649580199,
+    "items": [],
+    "pushes": []
+   },
+   {
+    "id": "t86",
+    "title": "x",
+    "priority": "high",
+    "due": "2026-10-02",
+    "goalId": "gw",
+    "done": false,
+    "doneAt": null,
+    "created": 1790652760199,
+    "items": [],
+    "pushes": []
+   },
+   {
+    "id": "t87",
+    "title": "x",
+    "priority": "med",
+    "due": "2026-10-03",
+    "goalId": null,
+    "done": true,
+    "doneAt": 1790918740199,
+    "created": 1790659540199,
+    "items": [],
+    "pushes": []
+   },
+   {
+    "id": "t88",
+    "title": "x",
+    "priority": "med",
+    "due": "2026-10-02",
+    "goalId": null,
+    "done": true,
+    "doneAt": 1790822800199,
+    "created": 1790563600199,
+    "items": [],
+    "pushes": [],
+    "dmg": 28,
+    "crit": true,
+    "focusLog": [
+     {
+      "at": 1790822800199,
+      "m": 20
+     }
+    ]
+   },
+   {
+    "id": "t89",
+    "title": "x",
+    "priority": "med",
+    "due": "2026-09-30",
+    "goalId": null,
+    "done": true,
+    "doneAt": 1790815180199,
+    "created": 1790555980199,
+    "items": [
+     {
+      "text": "a",
+      "done": true,
+      "dmg": 7,
+      "at": 1790815180199
+     }
+    ],
+    "pushes": [
+     {
+      "at": 1
+     }
+    ],
+    "dmg": 23
+   },
+   {
+    "id": "t90",
+    "title": "x",
+    "priority": "low",
+    "due": "2026-10-01",
+    "goalId": "gw",
+    "done": true,
+    "doneAt": 1790825560199,
+    "created": 1790825500199,
+    "items": [
+     {
+      "text": "a",
+      "done": true,
+      "dmg": 7,
+      "at": 1790825560199
+     }
+    ],
+    "pushes": []
+   },
+   {
+    "id": "t91",
+    "title": "x",
+    "priority": "med",
+    "due": null,
+    "goalId": null,
+    "done": true,
+    "doneAt": 1790843140199,
+    "created": 1790583940199,
+    "items": [],
+    "pushes": [
+     {
+      "at": 1
+     }
+    ]
+   },
+   {
+    "id": "t92",
+    "title": "x",
+    "priority": "med",
+    "due": "2026-09-30",
+    "goalId": null,
+    "done": true,
+    "doneAt": 1790736400199,
+    "created": 1790477200199,
+    "items": [],
+    "pushes": [
+     {
+      "at": 1
+     }
+    ]
+   },
+   {
+    "id": "t93",
+    "title": "x",
+    "priority": "med",
+    "due": null,
+    "goalId": null,
+    "done": true,
+    "doneAt": 1790732380199,
+    "created": 1790473180199,
+    "items": [],
+    "pushes": [],
+    "focusLog": [
+     {
+      "at": 1790732380199,
+      "m": 49
+     }
+    ]
+   },
+   {
+    "id": "t94",
+    "title": "x",
+    "priority": "low",
+    "due": "2026-09-29",
+    "goalId": null,
+    "done": false,
+    "doneAt": null,
+    "created": 1790494360199,
+    "items": [],
+    "pushes": [],
+    "focusLog": [
+     {
+      "at": 1790753560199,
+      "m": 10
+     }
+    ]
+   },
+   {
+    "id": "t95",
+    "title": "x",
+    "priority": "med",
+    "due": "2026-10-01",
+    "goalId": null,
+    "done": true,
+    "doneAt": 1790749540199,
+    "created": 1790490340199,
+    "items": [],
+    "pushes": [
+     {
+      "at": 1
+     }
+    ]
+   },
+   {
+    "id": "t96",
+    "title": "x",
+    "priority": "high",
+    "due": "2026-09-30",
+    "goalId": null,
+    "done": true,
+    "doneAt": 1790727520199,
+    "created": 1790468320199,
+    "items": [],
+    "pushes": [],
+    "dmg": 7
+   },
+   {
+    "id": "t97",
+    "title": "x",
+    "priority": "low",
+    "due": "2026-10-01",
+    "goalId": null,
+    "done": true,
+    "doneAt": 1790730700199,
+    "created": 1790471500199,
+    "items": [],
+    "pushes": [],
+    "dmg": 18
+   },
+   {
+    "id": "t98",
+    "title": "x",
+    "priority": "med",
+    "due": "2026-09-29",
+    "goalId": null,
+    "done": false,
+    "doneAt": null,
+    "created": 1790398000199,
+    "items": [
+     {
+      "text": "a",
+      "done": true,
+      "dmg": 7,
+      "at": 1790657200199
+     }
+    ],
+    "pushes": [],
+    "focusLog": [
+     {
+      "at": 1790657200199,
+      "m": 3
+     }
+    ]
+   },
+   {
+    "id": "t99",
+    "title": "x",
+    "priority": "low",
+    "due": "2026-09-28",
+    "goalId": null,
+    "done": true,
+    "doneAt": 1790663980199,
+    "created": 1790404780199,
+    "items": [
+     {
+      "text": "a",
+      "done": true,
+      "dmg": 7,
+      "at": 1790663980199
+     }
+    ],
+    "pushes": []
+   },
+   {
+    "id": "t100",
+    "title": "x",
+    "priority": "med",
+    "due": "2026-09-29",
+    "goalId": null,
+    "done": true,
+    "doneAt": 1790570800199,
+    "created": 1790311600199,
+    "items": [],
+    "pushes": []
+   },
+   {
+    "id": "t101",
+    "title": "x",
+    "priority": "high",
+    "due": "2026-09-29",
+    "goalId": null,
+    "done": true,
+    "doneAt": 1790559580199,
+    "created": 1790300380199,
+    "items": [],
+    "pushes": [],
+    "focusLog": [
+     {
+      "at": 1790559580199,
+      "m": 47
+     }
+    ]
+   },
+   {
+    "id": "t102",
+    "title": "x",
+    "priority": "high",
+    "due": "2026-09-28",
+    "goalId": null,
+    "done": true,
+    "doneAt": 1790580760199,
+    "created": 1790321560199,
+    "items": [
+     {
+      "text": "a",
+      "done": true,
+      "dmg": 7,
+      "at": 1790580760199
+     }
+    ],
+    "pushes": [],
+    "dmg": 24,
+    "focusLog": [
+     {
+      "at": 1790580760199,
+      "m": 16
+     }
+    ]
+   },
+   {
+    "id": "t103",
+    "title": "x",
+    "priority": "low",
+    "due": "2026-09-27",
+    "goalId": null,
+    "done": true,
+    "doneAt": 1790470000199,
+    "created": 1790210800199,
+    "items": [],
+    "pushes": [
+     {
+      "at": 1
+     }
+    ]
+   },
+   {
+    "id": "t104",
+    "title": "x",
+    "priority": "med",
+    "due": null,
+    "goalId": null,
+    "done": true,
+    "doneAt": 1790473180199,
+    "created": 1790213980199,
+    "items": [],
+    "pushes": [
+     {
+      "at": 1
+     }
+    ],
+    "focusLog": [
+     {
+      "at": 1790473180199,
+      "m": 36
+     }
+    ]
+   },
+   {
+    "id": "t105",
+    "title": "x",
+    "priority": "high",
+    "due": null,
+    "goalId": null,
+    "done": true,
+    "doneAt": 1790469160199,
+    "created": 1790209960199,
+    "items": [],
+    "pushes": [
+     {
+      "at": 1
+     }
+    ],
+    "dmg": 23
+   },
+   {
+    "id": "t106",
+    "title": "x",
+    "priority": "med",
+    "due": "2026-09-27",
+    "goalId": null,
+    "done": true,
+    "doneAt": 1790390800199,
+    "created": 1790131600199,
+    "items": [],
+    "pushes": [
+     {
+      "at": 1
+     }
+    ]
+   },
+   {
+    "id": "t107",
+    "title": "x",
+    "priority": "high",
+    "due": null,
+    "goalId": null,
+    "done": true,
+    "doneAt": 1790404780199,
+    "created": 1790145580199,
+    "items": [],
+    "pushes": []
+   },
+   {
+    "id": "t108",
+    "title": "x",
+    "priority": "high",
+    "due": null,
+    "goalId": null,
+    "done": true,
+    "doneAt": 1790379160199,
+    "created": 1790119960199,
+    "items": [],
+    "pushes": [
+     {
+      "at": 1
+     }
+    ]
+   },
+   {
+    "id": "t109",
+    "title": "x",
+    "priority": "med",
+    "due": "2026-09-26",
+    "goalId": null,
+    "done": true,
+    "doneAt": 1790378740199,
+    "created": 1790119540199,
+    "items": [
+     {
+      "text": "a",
+      "done": true,
+      "dmg": 7,
+      "at": 1790378740199
+     }
+    ],
+    "pushes": []
+   },
+   {
+    "id": "t110",
+    "title": "x",
+    "priority": "high",
+    "due": "2026-09-26",
+    "goalId": null,
+    "done": true,
+    "doneAt": 1790410720199,
+    "created": 1790151520199,
+    "items": [],
+    "pushes": []
+   },
+   {
+    "id": "t111",
+    "title": "x",
+    "priority": "med",
+    "due": "2026-09-25",
+    "goalId": null,
+    "done": false,
+    "doneAt": null,
+    "created": 1789955200199,
+    "items": [],
+    "pushes": []
+   },
+   {
+    "id": "t112",
+    "title": "x",
+    "priority": "low",
+    "due": "2026-09-24",
+    "goalId": null,
+    "done": true,
+    "doneAt": 1790128000199,
+    "created": 1789868800199,
+    "items": [],
+    "pushes": []
+   },
+   {
+    "id": "t113",
+    "title": "x",
+    "priority": "low",
+    "due": "2026-09-23",
+    "goalId": null,
+    "done": true,
+    "doneAt": 1790152780199,
+    "created": 1789893580199,
+    "items": [
+     {
+      "text": "a",
+      "done": true,
+      "dmg": 7,
+      "at": 1790152780199
+     }
+    ],
+    "pushes": []
+   },
+   {
+    "id": "t114",
+    "title": "x",
+    "priority": "low",
+    "due": "2026-09-24",
+    "goalId": null,
+    "done": true,
+    "doneAt": 1790134360199,
+    "created": 1790134300199,
+    "items": [],
+    "pushes": []
+   },
+   {
+    "id": "t115",
+    "title": "x",
+    "priority": "low",
+    "due": null,
+    "goalId": null,
+    "done": true,
+    "doneAt": 1790123140199,
+    "created": 1789863940199,
+    "items": [],
+    "pushes": [],
+    "dmg": 22
+   },
+   {
+    "id": "t116",
+    "title": "x",
+    "priority": "high",
+    "due": "2026-09-23",
+    "goalId": null,
+    "done": true,
+    "doneAt": 1790034400199,
+    "created": 1789775200199,
+    "items": [],
+    "pushes": []
+   },
+   {
+    "id": "t117",
+    "title": "x",
+    "priority": "high",
+    "due": "2026-09-22",
+    "goalId": null,
+    "done": false,
+    "doneAt": null,
+    "created": 1789699600199,
+    "items": [],
+    "pushes": []
+   },
+   {
+    "id": "t118",
+    "title": "x",
+    "priority": "med",
+    "due": "2026-09-22",
+    "goalId": null,
+    "done": true,
+    "doneAt": 1789947580199,
+    "created": 1789947520199,
+    "items": [],
+    "pushes": [
+     {
+      "at": 1
+     }
+    ]
+   },
+   {
+    "id": "t119",
+    "title": "x",
+    "priority": "med",
+    "due": "2026-09-20",
+    "goalId": null,
+    "done": false,
+    "doneAt": null,
+    "created": 1789695160199,
+    "items": [],
+    "pushes": []
+   },
+   {
+    "id": "t120",
+    "title": "x",
+    "priority": "low",
+    "due": null,
+    "goalId": null,
+    "done": true,
+    "doneAt": 1789953940199,
+    "created": 1789694740199,
+    "items": [],
+    "pushes": [],
+    "focusLog": [
+     {
+      "at": 1789953940199,
+      "m": 43
+     }
+    ]
+   },
+   {
+    "id": "t121",
+    "title": "x",
+    "priority": "low",
+    "due": "2026-09-22",
+    "goalId": null,
+    "done": true,
+    "doneAt": 1789957120199,
+    "created": 1789697920199,
+    "items": [],
+    "pushes": [
+     {
+      "at": 1
+     }
+    ],
+    "dmg": 25
+   },
+   {
+    "id": "t122",
+    "title": "x",
+    "priority": "med",
+    "due": "2026-09-21",
+    "goalId": null,
+    "done": true,
+    "doneAt": 1789949500199,
+    "created": 1789690300199,
+    "items": [],
+    "pushes": [],
+    "dmg": 13,
+    "crit": true
+   },
+   {
+    "id": "t123",
+    "title": "x",
+    "priority": "med",
+    "due": "2026-09-19",
+    "goalId": null,
+    "done": true,
+    "doneAt": 1789868800199,
+    "created": 1789609600199,
+    "items": [],
+    "pushes": [],
+    "dmg": 30
+   },
+   {
+    "id": "t124",
+    "title": "x",
+    "priority": "low",
+    "due": "2026-09-20",
+    "goalId": null,
+    "done": true,
+    "doneAt": 1789879180199,
+    "created": 1789879120199,
+    "items": [],
+    "pushes": [],
+    "dmg": 22
+   },
+   {
+    "id": "t125",
+    "title": "x",
+    "priority": "low",
+    "due": "2026-09-20",
+    "goalId": null,
+    "done": false,
+    "doneAt": null,
+    "created": 1789612360199,
+    "items": [],
+    "pushes": []
+   },
+   {
+    "id": "t126",
+    "title": "x",
+    "priority": "high",
+    "due": "2026-09-20",
+    "goalId": null,
+    "done": true,
+    "doneAt": 1789878340199,
+    "created": 1789619140199,
+    "items": [
+     {
+      "text": "a",
+      "done": true,
+      "dmg": 7,
+      "at": 1789878340199
+     }
+    ],
+    "pushes": []
+   },
+   {
+    "id": "t127",
+    "title": "x",
+    "priority": "med",
+    "due": null,
+    "goalId": null,
+    "done": true,
+    "doneAt": 1789775200199,
+    "created": 1789516000199,
+    "items": [],
+    "pushes": []
+   },
+   {
+    "id": "t128",
+    "title": "x",
+    "priority": "med",
+    "due": "2026-09-20",
+    "goalId": null,
+    "done": true,
+    "doneAt": 1789781980199,
+    "created": 1789522780199,
+    "items": [],
+    "pushes": []
+   },
+   {
+    "id": "t129",
+    "title": "x",
+    "priority": "high",
+    "due": null,
+    "goalId": null,
+    "done": true,
+    "doneAt": 1789799560199,
+    "created": 1789540360199,
+    "items": [
+     {
+      "text": "a",
+      "done": true,
+      "dmg": 7,
+      "at": 1789799560199
+     }
+    ],
+    "pushes": []
+   },
+   {
+    "id": "t130",
+    "title": "x",
+    "priority": "high",
+    "due": "2026-09-19",
+    "goalId": null,
+    "done": true,
+    "doneAt": 1789773940199,
+    "created": 1789514740199,
+    "items": [],
+    "pushes": [],
+    "focusLog": [
+     {
+      "at": 1789773940199,
+      "m": 12
+     }
+    ]
+   },
+   {
+    "id": "t131",
+    "title": "x",
+    "priority": "low",
+    "due": null,
+    "goalId": null,
+    "done": true,
+    "doneAt": 1789795120199,
+    "created": 1789535920199,
+    "items": [],
+    "pushes": []
+   },
+   {
+    "id": "t132",
+    "title": "x",
+    "priority": "low",
+    "due": "2026-09-18",
+    "goalId": null,
+    "done": true,
+    "doneAt": 1789805500199,
+    "created": 1789546300199,
+    "items": [
+     {
+      "text": "a",
+      "done": true,
+      "dmg": 7,
+      "at": 1789805500199
+     }
+    ],
+    "pushes": []
+   },
+   {
+    "id": "t133",
+    "title": "x",
+    "priority": "high",
+    "due": "2026-09-18",
+    "goalId": null,
+    "done": true,
+    "doneAt": 1789696000199,
+    "created": 1789695940199,
+    "items": [
+     {
+      "text": "a",
+      "done": true,
+      "dmg": 7,
+      "at": 1789696000199
+     }
+    ],
+    "pushes": []
+   },
+   {
+    "id": "t134",
+    "title": "x",
+    "priority": "low",
+    "due": "2026-09-17",
+    "goalId": "gw",
+    "done": true,
+    "doneAt": 1789717180199,
+    "created": 1789457980199,
+    "items": [],
+    "pushes": []
+   },
+   {
+    "id": "t135",
+    "title": "x",
+    "priority": "med",
+    "due": "2026-09-18",
+    "goalId": null,
+    "done": true,
+    "doneAt": 1789609600199,
+    "created": 1789609540199,
+    "items": [],
+    "pushes": []
+   },
+   {
+    "id": "t136",
+    "title": "x",
+    "priority": "low",
+    "due": "2026-09-16",
+    "goalId": null,
+    "done": true,
+    "doneAt": 1789616380199,
+    "created": 1789357180199,
+    "items": [
+     {
+      "text": "a",
+      "done": true,
+      "dmg": 7,
+      "at": 1789616380199
+     }
+    ],
+    "pushes": []
+   },
+   {
+    "id": "t137",
+    "title": "x",
+    "priority": "med",
+    "due": "2026-09-17",
+    "goalId": null,
+    "done": true,
+    "doneAt": 1789612360199,
+    "created": 1789353160199,
+    "items": [],
+    "pushes": [
+     {
+      "at": 1
+     }
+    ],
+    "dmg": 26,
+    "focusLog": [
+     {
+      "at": 1789612360199,
+      "m": 0
+     }
+    ]
+   },
+   {
+    "id": "t138",
+    "title": "x",
+    "priority": "med",
+    "due": "2026-09-17",
+    "goalId": null,
+    "done": true,
+    "doneAt": 1789619140199,
+    "created": 1789359940199,
+    "items": [],
+    "pushes": []
+   },
+   {
+    "id": "t139",
+    "title": "x",
+    "priority": "med",
+    "due": "2026-09-17",
+    "goalId": null,
+    "done": true,
+    "doneAt": 1789607920199,
+    "created": 1789348720199,
+    "items": [],
+    "pushes": [
+     {
+      "at": 1
+     }
+    ]
+   },
+   {
+    "id": "t140",
+    "title": "x",
+    "priority": "high",
+    "due": "2026-09-15",
+    "goalId": null,
+    "done": true,
+    "doneAt": 1789361200199,
+    "created": 1789361140199,
+    "items": [
+     {
+      "text": "a",
+      "done": true,
+      "dmg": 7,
+      "at": 1789361200199
+     }
+    ],
+    "pushes": [],
+    "dmg": 30,
+    "crit": true
+   },
+   {
+    "id": "t141",
+    "title": "x",
+    "priority": "med",
+    "due": "2026-09-13",
+    "goalId": null,
+    "done": true,
+    "doneAt": 1789342780199,
+    "created": 1789083580199,
+    "items": [],
+    "pushes": [],
+    "dmg": 6,
+    "crit": true
+   },
+   {
+    "id": "t142",
+    "title": "x",
+    "priority": "high",
+    "due": "2026-09-13",
+    "goalId": null,
+    "done": true,
+    "doneAt": 1789356760199,
+    "created": 1789097560199,
+    "items": [],
+    "pushes": []
+   },
+   {
+    "id": "t143",
+    "title": "x",
+    "priority": "med",
+    "due": "2026-09-14",
+    "goalId": null,
+    "done": true,
+    "doneAt": 1789374340199,
+    "created": 1789115140199,
+    "items": [],
+    "pushes": [],
+    "dmg": 19,
+    "crit": true
+   },
+   {
+    "id": "t144",
+    "title": "x",
+    "priority": "high",
+    "due": null,
+    "goalId": "gw",
+    "done": false,
+    "doneAt": null,
+    "created": 1789111120199,
+    "items": [],
+    "pushes": [],
+    "focusLog": [
+     {
+      "at": 1789370320199,
+      "m": 13
+     }
+    ]
+   },
+   {
+    "id": "t145",
+    "title": "x",
+    "priority": "med",
+    "due": "2026-09-14",
+    "goalId": null,
+    "done": true,
+    "doneAt": 1789348300199,
+    "created": 1789089100199,
+    "items": [],
+    "pushes": [],
+    "dmg": 16
+   },
+   {
+    "id": "t146",
+    "title": "x",
+    "priority": "low",
+    "due": null,
+    "goalId": null,
+    "done": true,
+    "doneAt": 1789260400199,
+    "created": 1789001200199,
+    "items": [],
+    "pushes": []
+   },
+   {
+    "id": "t147",
+    "title": "x",
+    "priority": "med",
+    "due": "2026-09-13",
+    "goalId": null,
+    "done": true,
+    "doneAt": 1789277980199,
+    "created": 1789018780199,
+    "items": [],
+    "pushes": []
+   },
+   {
+    "id": "t148",
+    "title": "x",
+    "priority": "low",
+    "due": "2026-09-14",
+    "goalId": null,
+    "done": true,
+    "doneAt": 1789277560199,
+    "created": 1789018360199,
+    "items": [],
+    "pushes": [],
+    "focusLog": [
+     {
+      "at": 1789277560199,
+      "m": 40
+     }
+    ]
+   },
+   {
+    "id": "t149",
+    "title": "x",
+    "priority": "low",
+    "due": "2026-09-14",
+    "goalId": null,
+    "done": false,
+    "doneAt": null,
+    "created": 1789284280199,
+    "items": [],
+    "pushes": []
+   },
+   {
+    "id": "t150",
+    "title": "x",
+    "priority": "high",
+    "due": "2026-09-14",
+    "goalId": null,
+    "done": true,
+    "doneAt": 1789258720199,
+    "created": 1788999520199,
+    "items": [],
+    "pushes": [
+     {
+      "at": 1
+     }
+    ]
+   },
+   {
+    "id": "t151",
+    "title": "x",
+    "priority": "high",
+    "due": null,
+    "goalId": null,
+    "done": true,
+    "doneAt": 1789199200199,
+    "created": 1788940000199,
+    "items": [],
+    "pushes": [
+     {
+      "at": 1
+     }
+    ],
+    "focusLog": [
+     {
+      "at": 1789199200199,
+      "m": 23
+     }
+    ]
+   },
+   {
+    "id": "t152",
+    "title": "x",
+    "priority": "low",
+    "due": null,
+    "goalId": null,
+    "done": true,
+    "doneAt": 1789102000199,
+    "created": 1789101940199,
+    "items": [],
+    "pushes": []
+   },
+   {
+    "id": "t153",
+    "title": "x",
+    "priority": "med",
+    "due": null,
+    "goalId": null,
+    "done": true,
+    "doneAt": 1789112380199,
+    "created": 1789112320199,
+    "items": [],
+    "pushes": [],
+    "dmg": 6
+   },
+   {
+    "id": "t154",
+    "title": "x",
+    "priority": "high",
+    "due": "2026-09-11",
+    "goalId": null,
+    "done": true,
+    "doneAt": 1789093960199,
+    "created": 1788834760199,
+    "items": [],
+    "pushes": [],
+    "dmg": 1,
+    "crit": true
+   },
+   {
+    "id": "t155",
+    "title": "x",
+    "priority": "high",
+    "due": null,
+    "goalId": null,
+    "done": true,
+    "doneAt": 1789086340199,
+    "created": 1788827140199,
+    "items": [],
+    "pushes": [],
+    "dmg": 1
+   },
+   {
+    "id": "t156",
+    "title": "x",
+    "priority": "low",
+    "due": null,
+    "goalId": "gw",
+    "done": true,
+    "doneAt": 1789085920199,
+    "created": 1788826720199,
+    "items": [],
+    "pushes": []
+   },
+   {
+    "id": "t157",
+    "title": "x",
+    "priority": "med",
+    "due": "2026-09-10",
+    "goalId": "gw",
+    "done": true,
+    "doneAt": 1789004800199,
+    "created": 1788745600199,
+    "items": [],
+    "pushes": []
+   },
+   {
+    "id": "t158",
+    "title": "x",
+    "priority": "high",
+    "due": null,
+    "goalId": null,
+    "done": false,
+    "doneAt": null,
+    "created": 1788745180199,
+    "items": [],
+    "pushes": []
+   },
+   {
+    "id": "t159",
+    "title": "x",
+    "priority": "high",
+    "due": null,
+    "goalId": null,
+    "done": true,
+    "doneAt": 1789014760199,
+    "created": 1788755560199,
+    "items": [],
+    "pushes": []
+   },
+   {
+    "id": "t160",
+    "title": "x",
+    "priority": "med",
+    "due": "2026-09-11",
+    "goalId": null,
+    "done": true,
+    "doneAt": 1789025140199,
+    "created": 1789025080199,
+    "items": [],
+    "pushes": []
+   },
+   {
+    "id": "t161",
+    "title": "x",
+    "priority": "low",
+    "due": "2026-09-10",
+    "goalId": null,
+    "done": true,
+    "doneAt": 1789006720199,
+    "created": 1788747520199,
+    "items": [],
+    "pushes": [],
+    "dmg": 5,
+    "crit": true
+   },
+   {
+    "id": "t162",
+    "title": "x",
+    "priority": "high",
+    "due": "2026-09-09",
+    "goalId": null,
+    "done": true,
+    "doneAt": 1788857200199,
+    "created": 1788598000199,
+    "items": [],
+    "pushes": [],
+    "dmg": 22
+   }
+  ],
+  "goals": [
+   {
+    "id": "gw",
+    "title": "W",
+    "horizon": "weekly",
+    "period": "2026-W45",
+    "kind": "check",
+    "created": 1793954800199,
+    "done": false
+   },
+   {
+    "id": "gm",
+    "title": "M",
+    "horizon": "monthly",
+    "period": "2026-09",
+    "kind": "check",
+    "created": 1793954800199,
+    "done": true
+   },
+   {
+    "id": "ga",
+    "title": "A",
+    "horizon": "annual",
+    "period": "2026",
+    "kind": "check",
+    "created": 1793954800199,
+    "done": true
+   }
+  ],
+  "habits": [
+   {
+    "id": "hb1",
+    "name": "hb1",
+    "kind": "",
+    "mode": "",
+    "target": 7,
+    "group": "",
+    "days": [],
+    "created": 1787906800199
+   },
+   {
+    "id": "hb2",
+    "name": "hb2",
+    "kind": "",
+    "mode": "",
+    "target": 7,
+    "group": "",
+    "days": [
+     1,
+     3,
+     5
+    ],
+    "created": 1789634800199
+   },
+   {
+    "id": "hn1",
+    "name": "hn1",
+    "kind": "avoid",
+    "mode": "",
+    "target": 7,
+    "group": "",
+    "days": [],
+    "created": 1790066800199
+   },
+   {
+    "id": "hn2",
+    "name": "hn2",
+    "kind": "avoid",
+    "mode": "confirm",
+    "target": 7,
+    "group": "",
+    "days": [],
+    "created": 1791362800199
+   }
+  ],
+  "topics": [
+   {
+    "id": "tp1",
+    "subject": "Math",
+    "name": "a",
+    "sessions": [
+     {
+      "d": "2026-11-06",
+      "c": 0
+     },
+     {
+      "d": "2026-11-05",
+      "c": 1
+     },
+     {
+      "d": "2026-11-04",
+      "c": 2
+     },
+     {
+      "d": "2026-11-03",
+      "c": 3
+     },
+     {
+      "d": "2026-11-01",
+      "c": 0
+     },
+     {
+      "d": "2026-10-28",
+      "c": 1
+     },
+     {
+      "d": "2026-10-25",
+      "c": 2
+     },
+     {
+      "d": "2026-10-07",
+      "c": 3
+     }
+    ],
+    "created": 1793954800199
+   }
+  ],
+  "exams": [
+   {
+    "id": "e1",
+    "subject": "Math",
+    "title": "E",
+    "kind": "exam",
+    "date": "2026-11-03",
+    "score": 70,
+    "max": 100,
+    "created": 1793954800199
+   },
+   {
+    "id": "e2",
+    "subject": "Math",
+    "title": "Q",
+    "kind": "quiz",
+    "date": "2026-10-29",
+    "score": 20,
+    "max": 100,
+    "created": 1793954800199
+   },
+   {
+    "id": "e3",
+    "subject": "Math",
+    "title": "F",
+    "kind": "exam",
+    "date": "2026-11-12",
+    "created": 1793954800199
+   },
+   {
+    "id": "e4",
+    "subject": "Math",
+    "title": "G",
+    "kind": "exam",
+    "date": "2026-11-05",
+    "created": 1793954800199
+   }
+  ],
+  "logs": [
+   "hb1|2026-11-06",
+   "hb1|2026-11-05",
+   "hb1|2026-11-04",
+   "hb1|2026-10-23",
+   "hb1|2026-10-22",
+   "hb1|2026-10-21",
+   "hb1|2026-10-20",
+   "hb1|2026-10-19",
+   "hb1|2026-10-17",
+   "hb1|2026-10-15",
+   "hb1|2026-10-14",
+   "hb1|2026-10-10",
+   "hb1|2026-10-08",
+   "hb1|2026-10-07",
+   "hb1|2026-10-06",
+   "hb1|2026-10-05",
+   "hb1|2026-10-03",
+   "hb1|2026-09-30",
+   "hb1|2026-09-29",
+   "hb1|2026-09-26",
+   "hb1|2026-09-25",
+   "hb1|2026-09-24",
+   "hb1|2026-09-22",
+   "hb1|2026-09-21",
+   "hb1|2026-09-20",
+   "hb1|2026-09-19",
+   "hb1|2026-09-14",
+   "hb1|2026-09-13",
+   "hb1|2026-09-12",
+   "hb1|2026-09-10",
+   "hb1|2026-09-09",
+   "hb1|2026-09-08",
+   "hb1|2026-09-07",
+   "hb1|2026-09-04",
+   "hb1|2026-09-03",
+   "hb1|2026-09-02",
+   "hb1|2026-09-01",
+   "hb1|2026-08-31",
+   "hb1|2026-08-30",
+   "hb1|2026-08-29",
+   "hb2|2026-11-05",
+   "hb2|2026-10-23",
+   "hb2|2026-10-22",
+   "hb2|2026-10-21",
+   "hb2|2026-10-19",
+   "hb2|2026-10-18",
+   "hb2|2026-10-17",
+   "hb2|2026-10-16",
+   "hb2|2026-10-15",
+   "hb2|2026-10-13",
+   "hb2|2026-10-12",
+   "hb2|2026-10-08",
+   "hb2|2026-10-06",
+   "hb2|2026-10-05",
+   "hb2|2026-10-04",
+   "hb2|2026-10-02",
+   "hb2|2026-10-01",
+   "hb2|2026-09-30",
+   "hb2|2026-09-29",
+   "hb2|2026-09-28",
+   "hb2|2026-09-27",
+   "hb2|2026-09-26",
+   "hb2|2026-09-25",
+   "hb2|2026-09-23",
+   "hb2|2026-09-21",
+   "hb2|2026-09-20",
+   "hb2|2026-09-19",
+   "hb2|2026-09-18",
+   "hb2|2026-09-17",
+   "hb2|2026-09-15",
+   "hb2|2026-09-14",
+   "hb2|2026-09-13",
+   "hb2|2026-09-11",
+   "hb2|2026-09-08",
+   "hb2|2026-09-07",
+   "hb2|2026-09-06",
+   "hb2|2026-09-05",
+   "hb2|2026-09-04",
+   "hb2|2026-09-02",
+   "hb2|2026-09-01",
+   "hb2|2026-08-31",
+   "hb2|2026-08-30",
+   "hn1|2026-11-03",
+   "hn1|2026-11-02",
+   "hn1|2026-11-01",
+   "hn1|2026-10-31",
+   "hn1|2026-10-30",
+   "hn1|2026-10-29",
+   "hn1|2026-10-28",
+   "hn1|2026-10-27",
+   "hn1|2026-10-26",
+   "hn1|2026-10-25",
+   "hn1|2026-10-24",
+   "hn1|2026-10-01",
+   "hn1|2026-09-12",
+   "hn2|2026-11-04",
+   "hn2|2026-10-23",
+   "hn2|2026-10-22",
+   "hn2|2026-10-21",
+   "hn2|2026-10-20",
+   "hn2|2026-10-18",
+   "hn2|2026-10-17",
+   "hn2|2026-10-16",
+   "hn2|2026-10-14",
+   "hn2|2026-10-13",
+   "hn2|2026-10-12",
+   "hn2|2026-10-11",
+   "hn2|2026-10-09",
+   "hn2|2026-10-08",
+   "hn2|2026-10-07",
+   "hn2|2026-10-05",
+   "hn2|2026-10-04",
+   "hn2|2026-10-03",
+   "hn2|2026-10-02",
+   "hn2|2026-10-01",
+   "hn2|2026-09-30",
+   "hn2|2026-09-29",
+   "hn2|2026-09-28",
+   "hn2|2026-09-27",
+   "hn2|2026-09-26",
+   "hn2|2026-09-25",
+   "hn2|2026-09-23",
+   "hn2|2026-09-22",
+   "hn2|2026-09-21",
+   "hn2|2026-09-16",
+   "hn2|2026-09-15",
+   "hn2|2026-09-14",
+   "hn2|2026-09-13",
+   "hn2|2026-09-11",
+   "hn2|2026-09-09",
+   "hn2|2026-09-08",
+   "hn2|2026-09-07",
+   "hn2|2026-09-05",
+   "hn2|2026-09-04",
+   "hn2|2026-09-02",
+   "hn2|2026-09-01",
+   "hn2|2026-08-30"
+  ],
+  "cfg": {
+   "student": true,
+   "rpg": true,
+   "rpgSince": "2026-10-12",
+   "restDays": "2026-10-28",
+   "lvl2": "2",
+   "lvl3": "4",
+   "eliteTarget": "55"
+  }
+ },
+ "rpg": {
+  "weeks": [
+   {
+    "key": "2026-W35",
+    "keys": [
+     "2026-08-24",
+     "2026-08-25",
+     "2026-08-26",
+     "2026-08-27",
+     "2026-08-28",
+     "2026-08-29",
+     "2026-08-30"
+    ],
+    "tD": 0,
+    "hD": 15,
+    "sD": 0,
+    "fD": 0,
+    "total": 15,
+    "hp": 60,
+    "best": 0,
+    "won": false,
+    "ko": 0
+   },
+   {
+    "key": "2026-W36",
+    "keys": [
+     "2026-08-31",
+     "2026-09-01",
+     "2026-09-02",
+     "2026-09-03",
+     "2026-09-04",
+     "2026-09-05",
+     "2026-09-06"
+    ],
+    "tD": 0,
+    "hD": 57,
+    "sD": 0,
+    "fD": 0,
+    "total": 57,
+    "hp": 60,
+    "best": 0,
+    "won": false,
+    "ko": 0
+   },
+   {
+    "key": "2026-W37",
+    "keys": [
+     "2026-09-07",
+     "2026-09-08",
+     "2026-09-09",
+     "2026-09-10",
+     "2026-09-11",
+     "2026-09-12",
+     "2026-09-13"
+    ],
+    "tD": 248,
+    "hD": 52,
+    "sD": 0,
+    "fD": 24,
+    "total": 324,
+    "hp": 180,
+    "best": 33,
+    "won": true,
+    "ko": 0
+   },
+   {
+    "key": "2026-W38",
+    "keys": [
+     "2026-09-14",
+     "2026-09-15",
+     "2026-09-16",
+     "2026-09-17",
+     "2026-09-18",
+     "2026-09-19",
+     "2026-09-20"
+    ],
+    "tD": 473,
+    "hD": 45,
+    "sD": 0,
+    "fD": 8,
+    "total": 526,
+    "hp": 356,
+    "best": 40,
+    "won": true,
+    "ko": 0
+   },
+   {
+    "key": "2026-W39",
+    "keys": [
+     "2026-09-21",
+     "2026-09-22",
+     "2026-09-23",
+     "2026-09-24",
+     "2026-09-25",
+     "2026-09-26",
+     "2026-09-27"
+    ],
+    "tD": 358,
+    "hD": 53,
+    "sD": 0,
+    "fD": 30,
+    "total": 441,
+    "hp": 232,
+    "best": 45,
+    "won": true,
+    "ko": 0
+   },
+   {
+    "key": "2026-W40",
+    "keys": [
+     "2026-09-28",
+     "2026-09-29",
+     "2026-09-30",
+     "2026-10-01",
+     "2026-10-02",
+     "2026-10-03",
+     "2026-10-04"
+    ],
+    "tD": 383,
+    "hD": 53,
+    "sD": 0,
+    "fD": 54,
+    "total": 490,
+    "hp": 332,
+    "best": 36,
+    "won": true,
+    "ko": 0
+   },
+   {
+    "key": "2026-W41",
+    "keys": [
+     "2026-10-05",
+     "2026-10-06",
+     "2026-10-07",
+     "2026-10-08",
+     "2026-10-09",
+     "2026-10-10",
+     "2026-10-11"
+    ],
+    "tD": 311,
+    "hD": 44,
+    "sD": 12,
+    "fD": 24,
+    "total": 391,
+    "hp": 401,
+    "best": 29,
+    "won": false,
+    "ko": 0
+   },
+   {
+    "key": "2026-W42",
+    "keys": [
+     "2026-10-12",
+     "2026-10-13",
+     "2026-10-14",
+     "2026-10-15",
+     "2026-10-16",
+     "2026-10-17",
+     "2026-10-18"
+    ],
+    "tD": 407,
+    "hD": 45,
+    "sD": 0,
+    "fD": 26,
+    "total": 478,
+    "hp": 416,
+    "best": 45,
+    "won": true,
+    "ko": 0
+   },
+   {
+    "key": "2026-W43",
+    "keys": [
+     "2026-10-19",
+     "2026-10-20",
+     "2026-10-21",
+     "2026-10-22",
+     "2026-10-23",
+     "2026-10-24",
+     "2026-10-25"
+    ],
+    "tD": 187,
+    "hD": 47,
+    "sD": 8,
+    "fD": 16,
+    "total": 258,
+    "hp": 405,
+    "best": 33,
+    "won": false,
+    "ko": 0
+   },
+   {
+    "key": "2026-W44",
+    "keys": [
+     "2026-10-26",
+     "2026-10-27",
+     "2026-10-28",
+     "2026-10-29",
+     "2026-10-30",
+     "2026-10-31",
+     "2026-11-01"
+    ],
+    "tD": 0,
+    "hD": 0,
+    "sD": 5,
+    "fD": 0,
+    "total": 5,
+    "hp": 437,
+    "best": 0,
+    "won": false,
+    "ko": 1
+   },
+   {
+    "key": "2026-W45",
+    "keys": [
+     "2026-11-02",
+     "2026-11-03",
+     "2026-11-04",
+     "2026-11-05",
+     "2026-11-06",
+     "2026-11-07",
+     "2026-11-08"
+    ],
+    "tD": 249,
+    "hD": 20,
+    "sD": 25,
+    "fD": 26,
+    "total": 320,
+    "hp": 284,
+    "best": 45,
+    "won": true,
+    "ko": 0
+   }
+  ],
+  "xp": 3355,
+  "totT": 2824,
+  "totH": 431,
+  "totS": 50,
+  "clean": 49,
+  "shields": 3,
+  "morale": 100,
+  "kos": 1,
+  "blocked": 3,
+  "hits": 5,
+  "tokens": 5,
+  "dayD": {
+   "2026-08-29": 5,
+   "2026-08-30": 10,
+   "2026-08-31": 10,
+   "2026-09-01": 10,
+   "2026-09-02": 10,
+   "2026-09-03": 5,
+   "2026-09-04": 11,
+   "2026-09-05": 5,
+   "2026-09-06": 6,
+   "2026-09-07": 11,
+   "2026-09-08": 33,
+   "2026-09-09": 5,
+   "2026-09-10": 88,
+   "2026-09-11": 34,
+   "2026-09-12": 40,
+   "2026-09-13": 113,
+   "2026-09-14": 103,
+   "2026-09-15": 5,
+   "2026-09-17": 100,
+   "2026-09-18": 104,
+   "2026-09-19": 98,
+   "2026-09-20": 116,
+   "2026-09-21": 120,
+   "2026-09-22": 5,
+   "2026-09-23": 67,
+   "2026-09-24": 5,
+   "2026-09-25": 72,
+   "2026-09-26": 99,
+   "2026-09-27": 73,
+   "2026-09-28": 123,
+   "2026-09-29": 30,
+   "2026-09-30": 130,
+   "2026-10-01": 110,
+   "2026-10-02": 85,
+   "2026-10-03": 5,
+   "2026-10-04": 7,
+   "2026-10-05": 22,
+   "2026-10-06": 98,
+   "2026-10-07": 113,
+   "2026-10-08": 10,
+   "2026-10-09": 39,
+   "2026-10-10": 49,
+   "2026-10-11": 60,
+   "2026-10-12": 77,
+   "2026-10-13": 54,
+   "2026-10-14": 20,
+   "2026-10-15": 10,
+   "2026-10-16": 132,
+   "2026-10-17": 48,
+   "2026-10-18": 137,
+   "2026-10-19": 72,
+   "2026-10-20": 54,
+   "2026-10-21": 29,
+   "2026-10-22": 56,
+   "2026-10-23": 39,
+   "2026-10-25": 8,
+   "2026-10-28": 5,
+   "2026-11-03": 12,
+   "2026-11-04": 103,
+   "2026-11-05": 119,
+   "2026-11-06": 86
+  }
+ },
+ "tower": {
+  "months": [
+   {
+    "key": "2026-08",
+    "wins": 0,
+    "gd": 0,
+    "hp": 4,
+    "dmg": 0,
+    "won": false,
+    "past": true
+   },
+   {
+    "key": "2026-09",
+    "wins": 3,
+    "gd": 1,
+    "hp": 4,
+    "dmg": 4,
+    "won": true,
+    "past": true
+   },
+   {
+    "key": "2026-10",
+    "wins": 2,
+    "gd": 0,
+    "hp": 5,
+    "dmg": 2,
+    "won": false,
+    "past": true
+   },
+   {
+    "key": "2026-11",
+    "wins": 1,
+    "gd": 0,
+    "hp": 4,
+    "dmg": 1,
+    "won": false,
+    "past": false
+   }
+  ],
+  "years": [
+   {
+    "key": "2026",
+    "gw": 1,
+    "ad": 1,
+    "hp": 10,
+    "dmg": 2,
+    "won": false,
+    "past": false
+   }
+  ]
+ },
+ "elites": [
+  {
+   "id": "e1",
+   "hp": 60,
+   "prep": 25,
+   "pct": 70,
+   "state": "won",
+   "bonus": 50
+  },
+  {
+   "id": "e2",
+   "hp": 30,
+   "prep": 13,
+   "pct": 20,
+   "state": "lost",
+   "bonus": 0
+  },
+  {
+   "id": "e3",
+   "hp": 60,
+   "prep": 38,
+   "pct": null,
+   "state": "prep",
+   "bonus": 0
+  },
+  {
+   "id": "e4",
+   "hp": 60,
+   "prep": 38,
+   "pct": null,
+   "state": "await",
+   "bonus": 0
+  }
+ ]
+}
