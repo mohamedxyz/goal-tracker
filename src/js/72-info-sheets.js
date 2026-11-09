@@ -70,6 +70,7 @@ function openInfo(kind, id) {
       iconPrefix(g) + esc(g.title),
       body,
       iBtn(g.done ? L2('Reopen', 'إعادة فتح') : '✓ ' + L2('Complete', 'إكمال'), 'done-goal', id) +
+        iBtn('✕ ' + L2('Delete', 'حذف'), 'del-goal', id, 'ghost danger') +
         iBtn('✎ ' + L2('Edit', 'تعديل'), 'edit-goal', id, 'btn')
     );
   } else if (kind === 'game') {

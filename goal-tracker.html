@@ -5,6 +5,7 @@
     PATCH = bug fix · MINOR = new feature · MAJOR = breaks old backups or data
 
   Changelog
+  0.88.1 Delete a goal from its details sheet: tap a goal, then Delete (finished or made by mistake). Linked tasks and sub-goals are kept, and Undo or Trash brings it back.
   0.88.0 Goals, calmer: the Goals tab is now just the ladder (the Week, Month, Year and 5 Years tabs are gone). Week and month goals lead, with their tasks under them; year and 5-year goals sit in a closed "Bigger picture" fold you open when you want it.
   0.87.0 A flat, dark-first look made for thumbs: the Habits tab and Today show each habit as one compact row with a progress ring, its own colour and the last 4 days as tap columns, every tap target is at least 44 px, the tab bar is larger, one round + button opens a sheet to add a task, habit or goal, dialogs and menus slide up from the bottom, extra options sit behind one ⋯ button, tips are one line, and the Today score is one big number. New installs start dark; existing themes are kept.
   0.86.0 Three scores instead of one: a Habits score (rewards showing up, a half-tick counts, one isolated miss costs half), a Tasks score (hard work: priority and length earn more, tiny low-priority tasks are capped) and an Overall score (the geometric mean). All are slow 42-day averages, with a week-on-week arrow and a gentle warning when you run far above your pace. Tap the score for the formula.
@@ -6166,7 +6167,7 @@ function rate30(h) {
 }
 
 /* ---------- Version ---------- */
-const APP_VERSION = '0.88.0';
+const APP_VERSION = '0.88.1';
 
 /* Pick the English or Arabic text for the current language. Call it at render time, never while the file is loading. */
 const L2 = (en, ar) => (S.cfg.lang === 'ar' ? ar : en);
@@ -10369,6 +10370,7 @@ function openInfo(kind, id) {
       iconPrefix(g) + esc(g.title),
       body,
       iBtn(g.done ? L2('Reopen', 'إعادة فتح') : '✓ ' + L2('Complete', 'إكمال'), 'done-goal', id) +
+        iBtn('✕ ' + L2('Delete', 'حذف'), 'del-goal', id, 'ghost danger') +
         iBtn('✎ ' + L2('Edit', 'تعديل'), 'edit-goal', id, 'btn')
     );
   } else if (kind === 'game') {
